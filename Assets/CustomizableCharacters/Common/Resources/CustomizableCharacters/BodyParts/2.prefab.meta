@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f8e75ced4604d3646a4d072e5342c76e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152642
+  packageName: Ice Hockey Customizable Characters
+  packageVersion: 1.0
+  assetPath: Assets/CustomizableCharacters/Common/Resources/CustomizableCharacters/BodyParts/2.prefab
+  uploadId: 331840

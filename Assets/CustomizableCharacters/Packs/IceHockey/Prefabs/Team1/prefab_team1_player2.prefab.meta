@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cfa4abd83625504439170dbf5f97c480
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152642
+  packageName: Ice Hockey Customizable Characters
+  packageVersion: 1.0
+  assetPath: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player2.prefab
+  uploadId: 331840

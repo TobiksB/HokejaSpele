@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 69e50be2943d80a45a7d957874e60a4f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152642
+  packageName: Ice Hockey Customizable Characters
+  packageVersion: 1.0
+  assetPath: Assets/CustomizableCharacters/Packs/IceHockey/Source files/HockeyNumber.cs
+  uploadId: 331840

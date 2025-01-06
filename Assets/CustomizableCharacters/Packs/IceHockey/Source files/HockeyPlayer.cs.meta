@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 5d5c56a812761784293c5feb89072172
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152642
+  packageName: Ice Hockey Customizable Characters
+  packageVersion: 1.0
+  assetPath: Assets/CustomizableCharacters/Packs/IceHockey/Source files/HockeyPlayer.cs
+  uploadId: 331840
