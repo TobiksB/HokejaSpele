@@ -61,19 +61,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\UprightPhysics.cs" />
-    <Compile Include="Assets\CustomizableCharacters\Packs\IceHockey\Source files\HockeyPlayer.cs" />
+    <Compile Include="Assets\IceHockey\Source files\HockeyPlayer.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\TransformDeepChildExtension.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\ColorChanger.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\PuckController.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\CharacterBase.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\Item.cs" />
-    <Compile Include="Assets\CustomizableCharacters\Packs\IceHockey\Source files\HockeyNumber.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\DisableOnStartup.cs" />
+    <Compile Include="Assets\IceHockey\Source files\HockeyNumber.cs" />
+    <Compile Include="Assets\Scripts\CameraController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\CustomizableCharacters\Common\Source files\DoubleSided.shader" />
-    <None Include="Assets\CustomizableCharacters\Packs\IceHockey\readme.txt" />
+    <None Include="Assets\IceHockey\readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

@@ -11,19 +11,19 @@ C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Unity.exe
 -name
 AssetImportWorker1
 -projectPath
-C:/Users/user/Desktop/My project
+C:/Users/user/Desktop/HokejaSpele
 -logFile
 Logs/AssetImportWorker1.log
 -srvPort
-58676
+59160
 -job-worker-count
 5
 -background-job-worker-count
 8
 -asset-garbage-collectors
 1
-Successfully changed project path to: C:/Users/user/Desktop/My project
-C:/Users/user/Desktop/My project
+Successfully changed project path to: C:/Users/user/Desktop/HokejaSpele
+C:/Users/user/Desktop/HokejaSpele
 [UnityMemory] Configuration Parameters - Can be set up in boot.config
     "memorysetup-bucket-allocator-granularity=16"
     "memorysetup-bucket-allocator-bucket-count=8"
@@ -59,18 +59,18 @@ C:/Users/user/Desktop/My project
     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
     "memorysetup-temp-allocator-size-gfx=262144"
-Player connection [3204]  Target information:
+Player connection [22848]  Target information:
 
-Player connection [3204]  * "[IP] 25.48.63.229 [Port] 0 [Flags] 2 [Guid] 4023244565 [EditorId] 4023244565 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [22848]  * "[IP] 25.48.63.229 [Port] 0 [Flags] 2 [Guid] 3156542919 [EditorId] 3156542919 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [3204]  * "[IP] 192.168.0.103 [Port] 0 [Flags] 2 [Guid] 4023244565 [EditorId] 4023244565 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [22848]  * "[IP] 192.168.0.103 [Port] 0 [Flags] 2 [Guid] 3156542919 [EditorId] 3156542919 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [3204]  * "[IP] 10.147.19.93 [Port] 0 [Flags] 2 [Guid] 4023244565 [EditorId] 4023244565 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [22848]  * "[IP] 10.147.19.93 [Port] 0 [Flags] 2 [Guid] 3156542919 [EditorId] 3156542919 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [3204]  * "[IP] 172.24.148.111 [Port] 0 [Flags] 2 [Guid] 4023244565 [EditorId] 4023244565 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [22848]  * "[IP] 172.24.148.111 [Port] 0 [Flags] 2 [Guid] 3156542919 [EditorId] 3156542919 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [3204] Host joined multi-casting on [225.0.0.222:54997]...
-Player connection [3204] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Player connection [22848] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [22848] Host joined alternative multi-casting on [225.0.0.222:34997]...
 JobSystem: Creating JobQueue using job-worker-count value 5
 [Physics::Module] Initialized fallback backend.
 [Physics::Module] Id: 0xdecafbad
@@ -81,11 +81,11 @@ Library Redirect Path: Library/
 [Physics::Module] SDK Version: 4.1.2
 [Physics::Module] Integration Version: 1.0.0
 [Physics::Module] Threading Mode: Multi-Threaded
-Refreshing native plugins compatible for Editor in 8.21 ms, found 3 plugins.
+Refreshing native plugins compatible for Editor in 3.38 ms, found 3 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Initialize engine version: 6000.0.24f1 (11fa355cd605)
 [Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/Resources/UnitySubsystems
-[Subsystems] Discovering subsystems at path C:/Users/user/Desktop/My project/Assets
+[Subsystems] Discovering subsystems at path C:/Users/user/Desktop/HokejaSpele/Assets
 GfxDevice: creating device client; kGfxThreadingModeNonThreaded
 Direct3D:
     Version:  Direct3D 11.0 [level 11.1]
@@ -97,199 +97,1445 @@ Initialize mono
 Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/Managed'
 Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
 Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56044
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56700
 Begin MonoManager ReloadAssembly
 Registering precompiled unity dll's ...
 Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
 Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
-Registered in 0.010488 seconds.
-- Loaded All Assemblies, in  0.828 seconds
+Registered in 0.009424 seconds.
+- Loaded All Assemblies, in  0.775 seconds
 Native extension for WindowsStandalone target not found
 Native extension for WebGL target not found
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  1.915 seconds
-Domain Reload Profiling: 2737ms
-	BeginReloadAssembly (224ms)
+- Finished resetting the current domain, in  0.557 seconds
+Domain Reload Profiling: 1327ms
+	BeginReloadAssembly (288ms)
 		ExecutionOrderSort (0ms)
 		DisableScriptedObjects (0ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
 		CreateAndSetChildDomain (1ms)
-	RebuildCommonClasses (64ms)
-	RebuildNativeTypeToScriptingClass (16ms)
-	initialDomainReloadingComplete (91ms)
-	LoadAllAssembliesAndSetupDomain (426ms)
-		LoadAssemblies (218ms)
+	RebuildCommonClasses (68ms)
+	RebuildNativeTypeToScriptingClass (17ms)
+	initialDomainReloadingComplete (89ms)
+	LoadAllAssembliesAndSetupDomain (307ms)
+		LoadAssemblies (285ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (420ms)
-			TypeCache.Refresh (418ms)
-				TypeCache.ScanAssembly (383ms)
+		AnalyzeDomain (301ms)
+			TypeCache.Refresh (299ms)
+				TypeCache.ScanAssembly (274ms)
 			BuildScriptInfoCaches (0ms)
 			ResolveRequiredComponents (1ms)
-	FinalizeReload (1916ms)
+	FinalizeReload (557ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (1803ms)
+		SetupLoadedEditorAssemblies (501ms)
 			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (105ms)
-			SetLoadedEditorAssemblies (31ms)
-			BeforeProcessingInitializeOnLoad (15ms)
-			ProcessInitializeOnLoadAttributes (872ms)
-			ProcessInitializeOnLoadMethodAttributes (351ms)
-			AfterProcessingInitializeOnLoad (428ms)
+			InitializePlatformSupportModulesInManaged (38ms)
+			SetLoadedEditorAssemblies (6ms)
+			BeforeProcessingInitializeOnLoad (10ms)
+			ProcessInitializeOnLoadAttributes (305ms)
+			ProcessInitializeOnLoadMethodAttributes (129ms)
+			AfterProcessingInitializeOnLoad (12ms)
 			EditorAssembliesLoaded (0ms)
 		ExecutionOrderSort2 (0ms)
 		AwakeInstancesAfterBackupRestoration (0ms)
-Assertion failed on expression: 'IsFileCreated(assemblyPath)'
-Assertion failed on expression: 'IsFileCreated(assemblyPath)'
-Assertion failed on expression: 'IsFileCreated(assemblyPath)'
-Assertion failed on expression: 'IsFileCreated(assemblyPath)'
-Assertion failed on expression: 'IsFileCreated(assemblyPath)'
-Assertion failed on expression: 'IsFileCreated(assemblyPath)'
-Compilation Pipeline: Could not read file Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef
-Fatal Error! Compilation Pipeline: Could not read file Packages/com.unity.collab-proxy/Editor/PlasticSCM/Toolbar/Unity.CollabProxy.Editor.asmdef
-Crash!!!
-SymInit: Symbol-SearchPath: 'C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/Mono;.;C:\Users\user\Desktop\My project;C:\Users\user\Desktop\My project\Library\BurstCache\JIT;C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor;C:\WINDOWS;C:\WINDOWS\system32;', symOptions: 534, UserName: 'user'
-OS-Version: 10.0.0
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Unity.exe:Unity.exe (00007FF6A4160000), size: 299008 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 6000.0.24.64053
-C:\WINDOWS\SYSTEM32\ntdll.dll:ntdll.dll (00007FFABD1F0000), size: 2191360 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\KERNEL32.DLL:KERNEL32.DLL (00007FFABBE20000), size: 802816 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4391
-C:\WINDOWS\System32\KERNELBASE.dll:KERNELBASE.dll (00007FFABA4C0000), size: 3907584 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\USER32.dll:USER32.dll (00007FFABBAF0000), size: 1761280 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\win32u.dll:win32u.dll (00007FFABA9A0000), size: 155648 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4601
-C:\WINDOWS\System32\GDI32.dll:GDI32.dll (00007FFABBF00000), size: 167936 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4036
-C:\WINDOWS\System32\gdi32full.dll:gdi32full.dll (00007FFABAB10000), size: 1159168 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4391
-C:\WINDOWS\System32\msvcp_win.dll:msvcp_win.dll (00007FFABA900000), size: 630784 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3374
-C:\WINDOWS\System32\ucrtbase.dll:ucrtbase.dll (00007FFABADD0000), size: 1118208 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3593
-C:\WINDOWS\System32\IMM32.DLL:IMM32.DLL (00007FFABC2B0000), size: 200704 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3374
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Unity.dll:Unity.dll (00007FF9FCCC0000), size: 86921216 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 6000.0.24.64053
-C:\WINDOWS\System32\CRYPT32.dll:CRYPT32.dll (00007FFABAC60000), size: 1466368 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\bcrypt.dll:bcrypt.dll (00007FFABAC30000), size: 163840 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\WINDOWS\System32\ADVAPI32.dll:ADVAPI32.dll (00007FFABC000000), size: 729088 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4391
-C:\WINDOWS\System32\msvcrt.dll:msvcrt.dll (00007FFABC0C0000), size: 684032 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 7.0.22621.2506
-C:\WINDOWS\System32\sechost.dll:sechost.dll (00007FFABC360000), size: 684032 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\RPCRT4.dll:RPCRT4.dll (00007FFABB650000), size: 1130496 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4249
-C:\WINDOWS\System32\ole32.dll:ole32.dll (00007FFABAFF0000), size: 1724416 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3958
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\libfbxsdk.dll:libfbxsdk.dll (00007FFA0DCF0000), size: 8019968 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2020.3.7.0
-C:\WINDOWS\System32\combase.dll:combase.dll (00007FFABC4A0000), size: 3731456 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\SETUPAPI.dll:SETUPAPI.dll (00007FFABB1C0000), size: 4669440 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\etccompress.dll:etccompress.dll (00007FFA100E0000), size: 5070848 (result: 0), SymType: '-deferred-', PDB: ''
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\s3tcompress.dll:s3tcompress.dll (00007FFAA0510000), size: 180224 (result: 0), SymType: '-deferred-', PDB: ''
-C:\WINDOWS\System32\SHELL32.dll:SHELL32.dll (00007FFABC930000), size: 8880128 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\compress_bc7e.dll:compress_bc7e.dll (00007FFA175B0000), size: 1433600 (result: 0), SymType: '-deferred-', PDB: ''
-C:\WINDOWS\System32\SHLWAPI.dll:SHLWAPI.dll (00007FFABC250000), size: 385024 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\ispc_texcomp.dll:ispc_texcomp.dll (00007FFA17710000), size: 1826816 (result: 0), SymType: '-deferred-', PDB: ''
-C:\WINDOWS\System32\WS2_32.dll:WS2_32.dll (00007FFABBF80000), size: 462848 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\System32\OLEAUT32.dll:OLEAUT32.dll (00007FFABAF10000), size: 880640 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3672
-C:\WINDOWS\System32\WINTRUST.dll:WINTRUST.dll (00007FFABAA90000), size: 466944 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\WinPixEventRuntime.dll:WinPixEventRuntime.dll (00007FFAA0560000), size: 53248 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.0.2201.24001
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\umbraoptimizer64.dll:umbraoptimizer64.dll (00007FFA17480000), size: 1187840 (result: 0), SymType: '-deferred-', PDB: ''
-C:\WINDOWS\SYSTEM32\d3d11.dll:d3d11.dll (00007FFAB5940000), size: 2453504 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\d3d12.dll:d3d12.dll (00007FFA4F9D0000), size: 155648 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\dwmapi.dll:dwmapi.dll (00007FFAB7BF0000), size: 176128 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\dxgi.dll:dxgi.dll (00007FFAB7AE0000), size: 1011712 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4036
-C:\WINDOWS\SYSTEM32\IPHLPAPI.DLL:IPHLPAPI.DLL (00007FFAB8FA0000), size: 184320 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\MSVCP140.dll:MSVCP140.dll (00007FFA9E5E0000), size: 577536 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.42.34433.0
-C:\WINDOWS\SYSTEM32\VCRUNTIME140.dll:VCRUNTIME140.dll (00007FFA9FB40000), size: 122880 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.42.34433.0
-C:\WINDOWS\SYSTEM32\VCRUNTIME140_1.dll:VCRUNTIME140_1.dll (00007FFA9FB30000), size: 49152 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.42.34433.0
-C:\WINDOWS\SYSTEM32\HID.DLL:HID.DLL (00007FFAB8CD0000), size: 57344 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\OPENGL32.dll:OPENGL32.dll (00007FFA14B70000), size: 1048576 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\FreeImage.dll:FreeImage.dll (0000000180000000), size: 5783552 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 3.18.0.0
-C:\WINDOWS\SYSTEM32\WINHTTP.dll:WINHTTP.dll (00007FFAB5800000), size: 1269760 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\WINMM.dll:WINMM.dll (00007FFAB1760000), size: 212992 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\GLU32.dll:GLU32.dll (00007FFA4F700000), size: 184320 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\SketchUpAPI.dll:SketchUpAPI.dll (00007FFA0D450000), size: 8990720 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 23.0.0.0
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\NativeProxyHelper.dll:NativeProxyHelper.dll (00007FFA14180000), size: 1789952 (result: 0), SymType: '-deferred-', PDB: ''
-C:\WINDOWS\SYSTEM32\VERSION.dll:VERSION.dll (00007FFAB46D0000), size: 40960 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\WSOCK32.dll:WSOCK32.dll (00007FFAA7800000), size: 36864 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\SketchUpCommonPreferences.dll:SketchUpCommonPreferences.dll (00007FFA4F680000), size: 499712 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 23.0.0.0
-C:\WINDOWS\SYSTEM32\Secur32.dll:Secur32.dll (00007FFAB9390000), size: 49152 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\SSPICLI.DLL:SSPICLI.DLL (00007FFAB9810000), size: 274432 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3810
-C:\WINDOWS\SYSTEM32\dxcore.dll:dxcore.dll (00007FFAB7AA0000), size: 225280 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\OpenRL.dll:OpenRL.dll (000001CF57BC0000), size: 12779520 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.5.0.2907
-C:\WINDOWS\SYSTEM32\cfgmgr32.DLL:cfgmgr32.DLL (00007FFABA1B0000), size: 319488 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\WINDOWS\SYSTEM32\MSVCP100.dll:MSVCP100.dll (0000000073B80000), size: 622592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.40219.325
-C:\WINDOWS\SYSTEM32\MSWSOCK.DLL:MSWSOCK.DLL (00007FFAB9A20000), size: 430080 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\WINDOWS\SYSTEM32\MSVCR100.dll:MSVCR100.dll (0000000073AA0000), size: 860160 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.40219.325
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\embree.dll:embree.dll (00007FFA0C460000), size: 16711680 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2.14.0.0
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\tbb.dll:tbb.dll (00007FFA14B20000), size: 303104 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2020.3.2022.1111
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\OpenRL_pthread.dll:OpenRL_pthread.dll (000001CF58810000), size: 61440 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2.9.0.0
-C:\WINDOWS\SYSTEM32\MSASN1.dll:MSASN1.dll (00007FFAB9DC0000), size: 73728 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\WINDOWS\System32\bcryptprimitives.dll:bcryptprimitives.dll (00007FFABA880000), size: 503808 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4317
-C:\WINDOWS\SYSTEM32\kernel.appcore.dll:kernel.appcore.dll (00007FFAB95B0000), size: 98304 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3958
-C:\WINDOWS\system32\uxtheme.dll:uxtheme.dll (00007FFAB7950000), size: 724992 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\windows.storage.dll:windows.storage.dll (00007FFAB83C0000), size: 9469952 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4601
-C:\WINDOWS\SYSTEM32\wintypes.dll:wintypes.dll (00007FFAB8280000), size: 1306624 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3810
-C:\WINDOWS\System32\SHCORE.dll:SHCORE.dll (00007FFABC830000), size: 1024000 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\profapi.dll:profapi.dll (00007FFABA3F0000), size: 176128 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\system32\IconCodecService.dll:IconCodecService.dll (00007FFA4E210000), size: 36864 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\WindowsCodecs.dll:WindowsCodecs.dll (00007FFAB7790000), size: 1769472 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\clbcatq.dll:clbcatq.dll (00007FFABB880000), size: 720896 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2001.12.10941.16384
-C:\WINDOWS\System32\netprofm.dll:netprofm.dll (00007FFAB75B0000), size: 491520 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3527
-C:\WINDOWS\System32\npmproxy.dll:npmproxy.dll (00007FFAB46E0000), size: 98304 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3527
-C:\WINDOWS\System32\NSI.dll:NSI.dll (00007FFABBE10000), size: 36864 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\dhcpcsvc6.DLL:dhcpcsvc6.DLL (00007FFAB6550000), size: 102400 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\WINDOWS\SYSTEM32\dhcpcsvc.DLL:dhcpcsvc.DLL (00007FFAB5170000), size: 126976 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\WINDOWS\SYSTEM32\DNSAPI.dll:DNSAPI.dll (00007FFAB8FD0000), size: 1056768 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\system32\napinsp.dll:napinsp.dll (00007FFA865E0000), size: 94208 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\system32\pnrpnsp.dll:pnrpnsp.dll (00007FFA865C0000), size: 110592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\System32\winrnr.dll:winrnr.dll (00007FFA86520000), size: 69632 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\system32\wshbth.dll:wshbth.dll (00007FFA9D110000), size: 86016 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3958
-C:\WINDOWS\system32\nlansp_c.dll:nlansp_c.dll (00007FFA864F0000), size: 159744 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\fwpuclnt.dll:fwpuclnt.dll (00007FFAB4760000), size: 536576 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4249
-C:\Windows\System32\rasadhlp.dll:rasadhlp.dll (00007FFAAE7F0000), size: 40960 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\AMDUnityPlugin.DLL:AMDUnityPlugin.DLL (00007FF9FB760000), size: 8814592 (result: 0), SymType: '-deferred-', PDB: ''
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\NVUnityPlugin.DLL:NVUnityPlugin.DLL (00007FFA087B0000), size: 1609728 (result: 0), SymType: '-deferred-', PDB: ''
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Data\Tools\astcenc-avx2.dll:astcenc-avx2.dll (00007FFA08750000), size: 364544 (result: 0), SymType: '-deferred-', PDB: ''
-C:\WINDOWS\System32\MMDevApi.dll:MMDevApi.dll (00007FFAB3620000), size: 647168 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4111
-C:\WINDOWS\System32\DEVOBJ.dll:DEVOBJ.dll (00007FFABA180000), size: 180224 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\WINDOWS\SYSTEM32\directxdatabasehelper.dll:directxdatabasehelper.dll (00007FFAB4380000), size: 299008 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_9425e4c3b1ac1c47\nvldumdx.dll:nvldumdx.dll (00007FFAAF620000), size: 802816 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.15.6636
-C:\WINDOWS\SYSTEM32\cryptnet.dll:cryptnet.dll (00007FFAB4690000), size: 204800 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\cryptbase.dll:cryptbase.dll (00007FFAB9D50000), size: 49152 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\wldp.dll:wldp.dll (00007FFAB9CA0000), size: 311296 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\drvstore.dll:drvstore.dll (00007FFAB4520000), size: 1449984 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\System32\imagehlp.dll:imagehlp.dll (00007FFABAEF0000), size: 126976 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\SYSTEM32\CRYPTSP.dll:CRYPTSP.dll (00007FFAB9D70000), size: 110592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3672
-C:\WINDOWS\system32\rsaenh.dll:rsaenh.dll (00007FFAB9510000), size: 217088 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4249
-C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_9425e4c3b1ac1c47\nvgpucomp64.dll:nvgpucomp64.dll (00007FFAA8890000), size: 47251456 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.15.6636
-C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_9425e4c3b1ac1c47\Display.NvContainer\NvMessageBus.dll:NvMessageBus.dll (00007FFAABEB0000), size: 3506176 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 3.12.3354.5005
-C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_9425e4c3b1ac1c47\nvwgf2umx.dll:nvwgf2umx.dll (00007FFAA1B00000), size: 71815168 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.15.6636
-C:\WINDOWS\SYSTEM32\powrprof.dll:powrprof.dll (00007FFAB9310000), size: 315392 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3958
-C:\WINDOWS\SYSTEM32\UMPDC.dll:UMPDC.dll (00007FFAB92F0000), size: 77824 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\system32\nvspcap64.dll:nvspcap64.dll (00007FFA1EBA0000), size: 3125248 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 11.0.1.189
-C:\WINDOWS\SYSTEM32\ntmarta.dll:ntmarta.dll (00007FFAB96C0000), size: 212992 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.1
-C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_9425e4c3b1ac1c47\nvppex.dll:nvppex.dll (00007FFA8A9C0000), size: 1396736 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.15.6636
-C:\WINDOWS\system32\wbem\wbemprox.dll:wbemprox.dll (00007FFAB2EF0000), size: 65536 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3672
-C:\WINDOWS\SYSTEM32\wbemcomn.dll:wbemcomn.dll (00007FFAB2E70000), size: 524288 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.2506
-C:\WINDOWS\system32\wbem\wbemsvc.dll:wbemsvc.dll (00007FFAB1620000), size: 81920 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3672
-C:\WINDOWS\system32\wbem\fastprox.dll:fastprox.dll (00007FFAA7100000), size: 1015808 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.4541
-C:\WINDOWS\SYSTEM32\amsi.dll:amsi.dll (00007FFAB1600000), size: 118784 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3527
-C:\WINDOWS\SYSTEM32\USERENV.dll:USERENV.dll (00007FFAB9AC0000), size: 163840 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3527
-C:\ProgramData\Microsoft\Windows Defender\Platform\4.18.24090.11-0\MpOav.dll:MpOav.dll (00007FFAA6CC0000), size: 536576 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 4.18.24090.11
-C:\WINDOWS\SYSTEM32\opencl.dll:opencl.dll (00007FFA1B280000), size: 483328 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 3.0.6.0
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\radeonrays.dll:radeonrays.dll (00007FFA14370000), size: 344064 (result: 0), SymType: '-deferred-', PDB: ''
-C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Data\MonoBleedingEdge\EmbedRuntime\mono-2.0-bdwgc.dll:mono-2.0-bdwgc.dll (00007FF9FAD10000), size: 10756096 (result: 0), SymType: '-deferred-', PDB: ''
-C:\WINDOWS\SYSTEM32\dbghelp.dll:dbghelp.dll (00007FFAAF6F0000), size: 2301952 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.22621.3593
+========================================================================
+Worker process is ready to serve import requests
+Import Worker Mode flag is 0x00
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  1.456 seconds
+Refreshing native plugins compatible for Editor in 1.74 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.422 seconds
+Domain Reload Profiling: 2872ms
+	BeginReloadAssembly (601ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (8ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (37ms)
+	RebuildCommonClasses (48ms)
+	RebuildNativeTypeToScriptingClass (16ms)
+	initialDomainReloadingComplete (46ms)
+	LoadAllAssembliesAndSetupDomain (738ms)
+		LoadAssemblies (550ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (338ms)
+			TypeCache.Refresh (269ms)
+				TypeCache.ScanAssembly (247ms)
+			BuildScriptInfoCaches (56ms)
+			ResolveRequiredComponents (9ms)
+	FinalizeReload (1423ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (1091ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (9ms)
+			BeforeProcessingInitializeOnLoad (177ms)
+			ProcessInitializeOnLoadAttributes (838ms)
+			ProcessInitializeOnLoadMethodAttributes (43ms)
+			AfterProcessingInitializeOnLoad (20ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (17ms)
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.03 seconds
+Refreshing native plugins compatible for Editor in 2.68 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 10 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.7 MB). Loaded Objects now: 4261.
+Memory consumption went from 111.1 MB to 110.4 MB.
+Total: 10.397300 ms (FindLiveObjects: 0.788900 ms CreateObjectMapping: 0.375300 ms MarkObjects: 7.685800 ms  DeleteObjects: 1.544800 ms)
 
-========== OUTPUTTING STACK TRACE ==================
+========================================================================
+Received Import Request.
+  Time since last request: 8133.145362 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Armature.fbx
+  artifactKey: Guid(6f2e9e286aafb5a4cb3bb87ddf1dbcea) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Armature.fbx using Guid(6f2e9e286aafb5a4cb3bb87ddf1dbcea) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'b99fa2b3454281a70ce00c733bd33c76') in 0.5136424 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 70
 
-0x00007FFABA51FB4C (KERNELBASE) RaiseException
-0x00007FF9FE859B65 (Unity) EditorMonoConsole::LogToConsoleImplementation
-0x00007FF9FE85A82A (Unity) EditorMonoConsole::LogToConsoleImplementation
-0x00007FF9FF50971D (Unity) DebugStringToFilePostprocessedStacktrace
-0x00007FF9FF508AB8 (Unity) DebugStringToFile
-0x00007FF9FEE0F0EC (Unity) RegisterAssemblyDefinition
-0x00007FF9FF23C2E6 (Unity) ProcessAssemblyAssets
-0x00007FF9FF23CFF6 (Unity) UpdateScriptCompilationPipelineCaches
-0x00007FF9FF118244 (Unity) InitializeScriptPipelineCaches
-0x00007FF9FE964E64 (Unity) Application::InitializeProject
-0x00007FF9FEF6A353 (Unity) UnityMain
-0x00007FF6A4162FBA (Unity) __scrt_common_main_seh
-0x00007FFABBE3259D (KERNEL32) BaseThreadInitThunk
-0x00007FFABD24AF38 (ntdll) RtlUserThreadStart
+========================================================================
+Received Import Request.
+  Time since last request: 2.577554 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Misc/prefab_refree.prefab
+  artifactKey: Guid(a96bd5b6045031042be58794e15d5b37) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Misc/prefab_refree.prefab using Guid(a96bd5b6045031042be58794e15d5b37) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '58e8ba5efed5dd0f68679312c0a94b78') in 0.0270975 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
 
-========== END OF STACKTRACE ===========
+========================================================================
+Received Import Request.
+  Time since last request: 0.000017 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Misc/Prefab_Trohpy.prefab
+  artifactKey: Guid(82b1f6d453344d0428942758d3811ca6) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Misc/Prefab_Trohpy.prefab using Guid(82b1f6d453344d0428942758d3811ca6) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'c9fa5de3552ac9c7ee10e7d9e6bd3df8') in 0.0183629 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 11
 
-A crash has been intercepted by the crash handler. For call stack and other details, see the latest crash report generated in:
- * C:/Users/user/AppData/Local/Temp/Unity/Editor/Crashes
+========================================================================
+Received Import Request.
+  Time since last request: 0.000022 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Misc/Prefab_Rink.prefab
+  artifactKey: Guid(f4d7d5ed7fcd20c4fb4866e690f79aa4) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Misc/Prefab_Rink.prefab using Guid(f4d7d5ed7fcd20c4fb4866e690f79aa4) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '2dbff95531f1d60ca02ac928a5507ba2') in 0.3281433 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 18
+
+========================================================================
+Received Import Request.
+  Time since last request: 138.142154 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player2.prefab
+  artifactKey: Guid(cfa4abd83625504439170dbf5f97c480) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player2.prefab using Guid(cfa4abd83625504439170dbf5f97c480) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'e18a7eab69bcb6c7f942f10f2aa0a1c6') in 0.0239181 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000028 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player4.prefab
+  artifactKey: Guid(ccef356b2c62d4448a940a22fc2b096b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player4.prefab using Guid(ccef356b2c62d4448a940a22fc2b096b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '773304d6196d05a9147d34841018e943') in 0.0130187 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000023 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player9.prefab
+  artifactKey: Guid(0dd2bcf197143e341bb78c96277dbdf3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player9.prefab using Guid(0dd2bcf197143e341bb78c96277dbdf3) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'cb63e5d9965c19e635dfc2d03ce73a15') in 0.0205652 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000024 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player6.prefab
+  artifactKey: Guid(ef25e4b1ff1ace449aa866f4e79e2a23) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player6.prefab using Guid(ef25e4b1ff1ace449aa866f4e79e2a23) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '4128c59607942b55f4f8d38960a348da') in 0.012429 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player5.prefab
+  artifactKey: Guid(e91f2d7ee290a014991ea86df57e856c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player5.prefab using Guid(e91f2d7ee290a014991ea86df57e856c) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '6f865ab60d31a66beb0cb8b1149a8b3d') in 0.0134743 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player3.prefab
+  artifactKey: Guid(180c98a04647321478385120b8d47951) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player3.prefab using Guid(180c98a04647321478385120b8d47951) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '5c516038c74625dd6b4c19bb7508f5c5') in 0.0125419 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000020 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player8.prefab
+  artifactKey: Guid(2db4a72f88f75e3469127d11355ac8e0) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player8.prefab using Guid(2db4a72f88f75e3469127d11355ac8e0) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '58f91d0f780c520c95b75c0806faddfd') in 0.013156 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000017 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player7.prefab
+  artifactKey: Guid(b1562db456fdffa4f8b1defe6034e98b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team1/prefab_team1_player7.prefab using Guid(b1562db456fdffa4f8b1defe6034e98b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'ab43f30b9e4f31aa62bfb003d0ec2d1f') in 0.0125939 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 19.041933 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team2/prefab_team2_player2.prefab
+  artifactKey: Guid(d6b3bf10c816b6c4fa8183cdd8772168) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team2/prefab_team2_player2.prefab using Guid(d6b3bf10c816b6c4fa8183cdd8772168) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'd24e1b3012aae7ac7ab8f57d56478bcb') in 0.0135489 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000017 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team2/prefab_team2_player4.prefab
+  artifactKey: Guid(b541a11b566c29749a62e0e4f5528a3c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team2/prefab_team2_player4.prefab using Guid(b541a11b566c29749a62e0e4f5528a3c) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '91cdc1d833229c0ec8a952394aacdfe4') in 0.0148842 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000022 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team2/prefab_team2_player8.prefab
+  artifactKey: Guid(54430515aae94194390a53710308b873) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team2/prefab_team2_player8.prefab using Guid(54430515aae94194390a53710308b873) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '821b676f0144b3a56e0221f37f2a554b') in 0.0117749 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000027 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team2/prefab_team2_player5.prefab
+  artifactKey: Guid(363b93f38c809e64eabbdaa7d3b98a86) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team2/prefab_team2_player5.prefab using Guid(363b93f38c809e64eabbdaa7d3b98a86) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '950874099c195356b7ee986bd774f653') in 0.0126268 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.488910 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team4/prefab_team4_player2.prefab
+  artifactKey: Guid(843205dd85789f84ea466c725cadf958) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team4/prefab_team4_player2.prefab using Guid(843205dd85789f84ea466c725cadf958) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'dde0079a91f67ccca167626701593d36') in 0.0111684 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000023 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team4/prefab_team4_player8.prefab
+  artifactKey: Guid(40d1868af46261d439546db0fa4e951a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team4/prefab_team4_player8.prefab using Guid(40d1868af46261d439546db0fa4e951a) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '2e142fa3efc18d120437d1a7ef844394') in 0.0121258 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000023 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team4/prefab_team4_player5.prefab
+  artifactKey: Guid(7578478deb96ff2468f5e90f06a2b123) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team4/prefab_team4_player5.prefab using Guid(7578478deb96ff2468f5e90f06a2b123) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'efacde7b53457c17bceee58fe0f11db8') in 0.0141829 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 2.618228 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/202.prefab
+  artifactKey: Guid(e386cbd095cb1c44ab8f6e8ea4d2e52a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/202.prefab using Guid(e386cbd095cb1c44ab8f6e8ea4d2e52a) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'a0abebcbbe8ca908768fe4bb7daf2190') in 0.278299 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 76
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000023 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/220.prefab
+  artifactKey: Guid(9e73a7b3f935eeb408387f29af1852e6) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/220.prefab using Guid(9e73a7b3f935eeb408387f29af1852e6) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '34ac040bda52cea12c84d1a5f867833c') in 0.0193457 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 74
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000034 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/225.prefab
+  artifactKey: Guid(2ca3b33337163d74da6fcae0fbb785ce) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/225.prefab using Guid(2ca3b33337163d74da6fcae0fbb785ce) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '301f4945124502d2d6585704117d799b') in 0.0208627 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 69
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000018 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/205.prefab
+  artifactKey: Guid(d27917ad3a04dd04994b3f2617fef7f8) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/205.prefab using Guid(d27917ad3a04dd04994b3f2617fef7f8) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'c914fa9662fb9dbbccacb92eec07726e') in 0.0206813 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 71
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000023 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/217.prefab
+  artifactKey: Guid(2abd7acd23ef29941bc3dcebf1965fdc) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/217.prefab using Guid(2abd7acd23ef29941bc3dcebf1965fdc) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '0574176b44e309e104df5ef860419b92') in 0.0180388 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 16
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000017 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/215.prefab
+  artifactKey: Guid(900f635c5ce0cbf43af293e4b3868b8e) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/215.prefab using Guid(900f635c5ce0cbf43af293e4b3868b8e) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'e7826f9496f6079cec55890ea737adc3') in 0.0200362 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 70
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000021 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/204.prefab
+  artifactKey: Guid(33a8efa99c18a8b49864e415f96dc22d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/204.prefab using Guid(33a8efa99c18a8b49864e415f96dc22d) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '22d5a658a1e52fd136e412f8d953424f') in 0.0216776 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 74
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.001488 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/222.prefab
+  artifactKey: Guid(77f6aa061e22fa9429c4b35f792b09cd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/Equipment/222.prefab using Guid(77f6aa061e22fa9429c4b35f792b09cd) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '4196d7575d78b0b6986b32c857f698d3') in 0.0185181 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 72
+
+========================================================================
+Received Import Request.
+  Time since last request: 1.585507 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/2.png
+  artifactKey: Guid(429ff3e9d445555498dfbd701ec140d2) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/2.png using Guid(429ff3e9d445555498dfbd701ec140d2) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'c2db046b1a51f546a08d12791d1a4823') in 0.0399311 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000025 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/28.png
+  artifactKey: Guid(51bee9f92f68bcc4998814c8445f7379) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/28.png using Guid(51bee9f92f68bcc4998814c8445f7379) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '21b3f23c53b704cd46e5f1589f38a71f') in 0.0173305 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000017 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/48.png
+  artifactKey: Guid(c1ebf3006794f5d4c99599e6b96ed68c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/48.png using Guid(c1ebf3006794f5d4c99599e6b96ed68c) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '3b1d8eae5c1032cd63991a3d11b0674d') in 0.0168973 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000020 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/45.png
+  artifactKey: Guid(abc5d90b360f592439dc2a3aced2ad03) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/45.png using Guid(abc5d90b360f592439dc2a3aced2ad03) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '6adea545d1a711f6f4e6b349243735c7') in 0.0169149 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000042 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/41.png
+  artifactKey: Guid(92beae7f54cab6b4cb23e5aadd533eab) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/41.png using Guid(92beae7f54cab6b4cb23e5aadd533eab) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '6d958a21b9c24de7aec00d2d2c3ee362') in 0.0176292 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000051 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/11.png
+  artifactKey: Guid(54d2b36c9f721144eb0edb019c2add5d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/11.png using Guid(54d2b36c9f721144eb0edb019c2add5d) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '526e2c79088caafebb6c9c7f182ed2fb') in 0.0192039 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/5.png
+  artifactKey: Guid(dd4bd8b2de58e63459c88159421df992) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/5.png using Guid(dd4bd8b2de58e63459c88159421df992) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'f7e7edceab91f14b8cc7166d36c18a5e') in 0.0165576 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000168 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/31.png
+  artifactKey: Guid(7465e637492fa7b4d90559e76fe34a69) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/31.png using Guid(7465e637492fa7b4d90559e76fe34a69) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'efb094bbbb565b98e8a7b0f932054d4b') in 0.0179212 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000016 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/30.png
+  artifactKey: Guid(fab8ddfadc254c94b87d5b4e72f0a540) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/30.png using Guid(fab8ddfadc254c94b87d5b4e72f0a540) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '5aa86ca3d567ab97b288c0a941e11573') in 0.0187203 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000021 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/10.png
+  artifactKey: Guid(910417018fc31d54a81b456d53c94bbf) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/10.png using Guid(910417018fc31d54a81b456d53c94bbf) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'ec1076449f7b78d0c525d3ea697e1593') in 0.0190038 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000036 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/57.png
+  artifactKey: Guid(840931e33cd3e80419ea7d9aab365a9b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/57.png using Guid(840931e33cd3e80419ea7d9aab365a9b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '991b493089ccc7731603ea6e1e5a6ac4') in 0.0179472 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000040 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/7.png
+  artifactKey: Guid(37654b39ac104d045b173592d43bc437) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/7.png using Guid(37654b39ac104d045b173592d43bc437) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '09d06926d19e4a52b195be758a2839cc') in 0.0175488 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000018 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/37.png
+  artifactKey: Guid(6f02e97410cb8664db66360ddbf4ed97) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/37.png using Guid(6f02e97410cb8664db66360ddbf4ed97) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '506c6487079f48a6223cf8de9c5165cb') in 0.0164372 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/17.png
+  artifactKey: Guid(8ebf13589df647b428cb8651b5f470ad) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/17.png using Guid(8ebf13589df647b428cb8651b5f470ad) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '520aac48a7b487d116cc6d6195013824') in 0.0184514 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000018 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/24.png
+  artifactKey: Guid(fc85a99a0b2c3a44fb1f7ff890cad748) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/24.png using Guid(fc85a99a0b2c3a44fb1f7ff890cad748) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '5e9f8a36769da2f3243b79b3bd1bd204') in 0.0178651 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000076 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/15.png
+  artifactKey: Guid(09deab33176964e429a81edf551ef09d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/15.png using Guid(09deab33176964e429a81edf551ef09d) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'bd937f62fd2898dbc6bc1aac868120fb') in 0.0176994 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000031 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/54.png
+  artifactKey: Guid(39389b7915923f74eb2aa1c456c85ebf) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/54.png using Guid(39389b7915923f74eb2aa1c456c85ebf) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'aac3d01203bc225fd2513ecb17808e82') in 0.0179378 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000020 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/22.png
+  artifactKey: Guid(8fccc391bce5ca74b84c2506dc5a63fe) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/22.png using Guid(8fccc391bce5ca74b84c2506dc5a63fe) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '9dfef1c13841d2b297fc004015631a2e') in 0.0167324 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000021 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/49.png
+  artifactKey: Guid(f3924dd50e3096f4da540ce88bf5929e) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/49.png using Guid(f3924dd50e3096f4da540ce88bf5929e) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '24adb87289f9ff3ab81417a1f6ac1c4d') in 0.0178464 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000023 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/39.png
+  artifactKey: Guid(005941b5a43b9bd4c877795c779611c7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/39.png using Guid(005941b5a43b9bd4c877795c779611c7) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '0b526dc4d9026e20ef28f1aa4a513284') in 0.0163856 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000119 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/50.png
+  artifactKey: Guid(3c1ebc1e00a867a44b1000df94dfc616) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/50.png using Guid(3c1ebc1e00a867a44b1000df94dfc616) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '470f5dc26f03c621790083e45bd389c3') in 0.0165314 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 14.792184 seconds.
+  path: Assets/CustomizableCharacters/Common/Resources/CustomizableCharacters/Beard/2.prefab
+  artifactKey: Guid(6b974b9694fb0124c82d6909cbdeae9b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Resources/CustomizableCharacters/Beard/2.prefab using Guid(6b974b9694fb0124c82d6909cbdeae9b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'fb97dc1d3cd955dc599475c233cacc8e') in 0.0292495 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 69
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000016 seconds.
+  path: Assets/CustomizableCharacters/Common/Resources/CustomizableCharacters/Beard/6.prefab
+  artifactKey: Guid(f64f44301816c334dad0df9890c77d60) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Resources/CustomizableCharacters/Beard/6.prefab using Guid(f64f44301816c334dad0df9890c77d60) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'ecff5ebf4ab6de3fb23a51d9230ac3fc') in 0.0028501 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 9
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.595442 seconds.
+  path: Assets/CustomizableCharacters/Common/Resources/CustomizableCharacters/BodyParts/2.prefab
+  artifactKey: Guid(f8e75ced4604d3646a4d072e5342c76e) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Resources/CustomizableCharacters/BodyParts/2.prefab using Guid(f8e75ced4604d3646a4d072e5342c76e) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '16fbdb5007d6fd51fc724cfae8d82a0a') in 0.0407515 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 128
+
+========================================================================
+Received Import Request.
+  Time since last request: 2.590500 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Beard/Mesh_Beard_2.fbx
+  artifactKey: Guid(8c0e7e3a457b67e4eaf27b9374af4df2) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Beard/Mesh_Beard_2.fbx using Guid(8c0e7e3a457b67e4eaf27b9374af4df2) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '7ebb90d770167c5a7d6dcb5ea5867fa2') in 0.1276506 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 60
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000026 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Beard/Mesh_Beard_4.fbx
+  artifactKey: Guid(560c77dd43e91c241a43743a42654139) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Beard/Mesh_Beard_4.fbx using Guid(560c77dd43e91c241a43743a42654139) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '6e8e7583badf1131c6361d0ea366a286') in 0.0283821 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 60
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.362729 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/BodyParts/Female_Hands.fbx
+  artifactKey: Guid(c1f18d6d488a4bd4288be153d05e87f4) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/BodyParts/Female_Hands.fbx using Guid(c1f18d6d488a4bd4288be153d05e87f4) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'fd6261a3ea38196ea9afadc1bdb67364') in 0.024858 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 60
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000020 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/BodyParts/Male_Legs.fbx
+  artifactKey: Guid(9d20452b20872054fa63afb1deccbf48) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/BodyParts/Male_Legs.fbx using Guid(9d20452b20872054fa63afb1deccbf48) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '9d44bd0d8f2e1bbd5f6c4942bba92ef4') in 0.0267829 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 60
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000026 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/BodyParts/Female_Torso.fbx
+  artifactKey: Guid(a4656b0dc9859044ab908db27a38f91b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/BodyParts/Female_Torso.fbx using Guid(a4656b0dc9859044ab908db27a38f91b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '1bf29d010fbc0c120e8535b5466eed44') in 0.0266879 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 60
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.514072 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Eyebrow/Mesh_Eyebrow_1_Male.fbx
+  artifactKey: Guid(16564fa92a205ee49b4ba10f4905f30c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Eyebrow/Mesh_Eyebrow_1_Male.fbx using Guid(16564fa92a205ee49b4ba10f4905f30c) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '093ba6ae6555a0204681a7feb1036dbb') in 0.0232998 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 60
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.452995 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Hair/Mesh_Hair_Female_1.fbx
+  artifactKey: Guid(4d0cb746682121e418e1c4c2d9f3eb36) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Hair/Mesh_Hair_Female_1.fbx using Guid(4d0cb746682121e418e1c4c2d9f3eb36) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '3c0a2dae621986a6852a68d0c7f3db32') in 0.0589834 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 7
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000030 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Hair/Mesh_Hair_Female_4.fbx
+  artifactKey: Guid(920726048037acb46bd43b102f90191a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Hair/Mesh_Hair_Female_4.fbx using Guid(920726048037acb46bd43b102f90191a) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '80133f692aa33a700ba98888ba994ba3') in 0.0275026 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 7
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000043 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Hair/Mesh_Hair_Male_5.fbx
+  artifactKey: Guid(2c9223eaccf636c4ea793cb852f13f78) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Hair/Mesh_Hair_Male_5.fbx using Guid(2c9223eaccf636c4ea793cb852f13f78) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'cd8a9ba372c4a2350ccf4d0203468514') in 0.018762 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 7
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000021 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Hair/Mesh_Hair_Male_4.fbx
+  artifactKey: Guid(7e05ccdcafa69bf42afdf658df7a0ae2) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Hair/Mesh_Hair_Male_4.fbx using Guid(7e05ccdcafa69bf42afdf658df7a0ae2) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '0b94511de6c2280debf179145290b1b4') in 0.0221635 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 7
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.441321 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Materials/Mat_DemoGroundGreen.mat
+  artifactKey: Guid(abbd765bb30144b449634fb76d207aab) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Materials/Mat_DemoGroundGreen.mat using Guid(abbd765bb30144b449634fb76d207aab) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '32ec9acc1b88e25b5b9de4146071d38b') in 0.0146452 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000076 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Hair.mat
+  artifactKey: Guid(096ea32bac5e61048bbda6bf3e4df086) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Hair.mat using Guid(096ea32bac5e61048bbda6bf3e4df086) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '75b753de516a97537dabd38b828395fd') in 0.013979 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000083 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Skin.mat
+  artifactKey: Guid(0a8af12c37363244eb71ddee649f9ab9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Skin.mat using Guid(0a8af12c37363244eb71ddee649f9ab9) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '50cfd651820b66281a0c8780e9aa2a35') in 0.0147503 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
+
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 1.69 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3665 unused Assets / (1.0 MB). Loaded Objects now: 4312.
+Memory consumption went from 117.0 MB to 116.0 MB.
+Total: 8.194100 ms (FindLiveObjects: 0.502400 ms CreateObjectMapping: 0.190500 ms MarkObjects: 6.102000 ms  DeleteObjects: 1.397600 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.885 seconds
+Refreshing native plugins compatible for Editor in 1.89 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.107 seconds
+Domain Reload Profiling: 1988ms
+	BeginReloadAssembly (250ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (6ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (52ms)
+	RebuildCommonClasses (45ms)
+	RebuildNativeTypeToScriptingClass (17ms)
+	initialDomainReloadingComplete (33ms)
+	LoadAllAssembliesAndSetupDomain (535ms)
+		LoadAssemblies (477ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (196ms)
+			TypeCache.Refresh (9ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (177ms)
+			ResolveRequiredComponents (7ms)
+	FinalizeReload (1108ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (838ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (5ms)
+			SetLoadedEditorAssemblies (9ms)
+			BeforeProcessingInitializeOnLoad (159ms)
+			ProcessInitializeOnLoadAttributes (619ms)
+			ProcessInitializeOnLoadMethodAttributes (29ms)
+			AfterProcessingInitializeOnLoad (16ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (16ms)
+Refreshing native plugins compatible for Editor in 1.73 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 1 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3672 unused Assets / (0.9 MB). Loaded Objects now: 4312.
+Memory consumption went from 117.5 MB to 116.6 MB.
+Total: 6.846300 ms (FindLiveObjects: 0.505800 ms CreateObjectMapping: 0.189400 ms MarkObjects: 5.159500 ms  DeleteObjects: 0.989900 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.854 seconds
+Refreshing native plugins compatible for Editor in 1.66 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.028 seconds
+Domain Reload Profiling: 1878ms
+	BeginReloadAssembly (243ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (8ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (52ms)
+	RebuildCommonClasses (40ms)
+	RebuildNativeTypeToScriptingClass (17ms)
+	initialDomainReloadingComplete (36ms)
+	LoadAllAssembliesAndSetupDomain (513ms)
+		LoadAssemblies (459ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (187ms)
+			TypeCache.Refresh (10ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (168ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (1028ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (799ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (8ms)
+			BeforeProcessingInitializeOnLoad (145ms)
+			ProcessInitializeOnLoadAttributes (597ms)
+			ProcessInitializeOnLoadMethodAttributes (30ms)
+			AfterProcessingInitializeOnLoad (15ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (13ms)
+Refreshing native plugins compatible for Editor in 2.36 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3672 unused Assets / (1.0 MB). Loaded Objects now: 4312.
+Memory consumption went from 117.4 MB to 116.5 MB.
+Total: 7.171700 ms (FindLiveObjects: 0.581100 ms CreateObjectMapping: 0.211100 ms MarkObjects: 5.027000 ms  DeleteObjects: 1.350600 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 128.960552 seconds.
+  path: Assets/Scripts/PlayerController.cs
+  artifactKey: Guid(70a9ba18a4eb9f94596696bc0b54c7aa) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/PlayerController.cs using Guid(70a9ba18a4eb9f94596696bc0b54c7aa) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'd55b2eb9b29a71eb020017e820a10bbb') in 0.0035416 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 1.71 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3666 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 117.6 MB to 116.8 MB.
+Total: 7.005400 ms (FindLiveObjects: 0.515000 ms CreateObjectMapping: 0.182700 ms MarkObjects: 5.205600 ms  DeleteObjects: 1.100700 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.909 seconds
+Refreshing native plugins compatible for Editor in 1.98 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.178 seconds
+Domain Reload Profiling: 2080ms
+	BeginReloadAssembly (258ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (6ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (51ms)
+	RebuildCommonClasses (44ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (39ms)
+	LoadAllAssembliesAndSetupDomain (546ms)
+		LoadAssemblies (480ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (216ms)
+			TypeCache.Refresh (9ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (197ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (1178ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (871ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (10ms)
+			BeforeProcessingInitializeOnLoad (157ms)
+			ProcessInitializeOnLoadAttributes (659ms)
+			ProcessInitializeOnLoadMethodAttributes (25ms)
+			AfterProcessingInitializeOnLoad (16ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (18ms)
+Refreshing native plugins compatible for Editor in 1.69 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 117.5 MB to 116.6 MB.
+Total: 6.361700 ms (FindLiveObjects: 0.481900 ms CreateObjectMapping: 0.190500 ms MarkObjects: 4.761400 ms  DeleteObjects: 0.927000 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.838 seconds
+Refreshing native plugins compatible for Editor in 1.40 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.067 seconds
+Domain Reload Profiling: 1901ms
+	BeginReloadAssembly (245ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (7ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (50ms)
+	RebuildCommonClasses (46ms)
+	RebuildNativeTypeToScriptingClass (17ms)
+	initialDomainReloadingComplete (38ms)
+	LoadAllAssembliesAndSetupDomain (488ms)
+		LoadAssemblies (440ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (185ms)
+			TypeCache.Refresh (8ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (168ms)
+			ResolveRequiredComponents (6ms)
+	FinalizeReload (1067ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (797ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (6ms)
+			BeforeProcessingInitializeOnLoad (140ms)
+			ProcessInitializeOnLoadAttributes (599ms)
+			ProcessInitializeOnLoadMethodAttributes (29ms)
+			AfterProcessingInitializeOnLoad (19ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (16ms)
+Refreshing native plugins compatible for Editor in 1.48 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.6 MB.
+Total: 7.963900 ms (FindLiveObjects: 0.721700 ms CreateObjectMapping: 0.198700 ms MarkObjects: 5.922800 ms  DeleteObjects: 1.118900 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 29.529244 seconds.
+  path: Assets/Scripts/PuckController.cs
+  artifactKey: Guid(daaaa29af7307bb48a06c4ff40ac8c80) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/PuckController.cs using Guid(daaaa29af7307bb48a06c4ff40ac8c80) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '1d2150dd9f5327b3a37365adde1b8c12') in 0.0034603 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.853 seconds
+Refreshing native plugins compatible for Editor in 1.54 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.921 seconds
+Domain Reload Profiling: 1768ms
+	BeginReloadAssembly (241ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (7ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (51ms)
+	RebuildCommonClasses (41ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (35ms)
+	LoadAllAssembliesAndSetupDomain (515ms)
+		LoadAssemblies (463ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (190ms)
+			TypeCache.Refresh (8ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (172ms)
+			ResolveRequiredComponents (7ms)
+	FinalizeReload (921ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (686ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (3ms)
+			SetLoadedEditorAssemblies (5ms)
+			BeforeProcessingInitializeOnLoad (120ms)
+			ProcessInitializeOnLoadAttributes (520ms)
+			ProcessInitializeOnLoadMethodAttributes (25ms)
+			AfterProcessingInitializeOnLoad (13ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (12ms)
+Refreshing native plugins compatible for Editor in 1.69 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.7 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.7 MB.
+Total: 7.079600 ms (FindLiveObjects: 0.583000 ms CreateObjectMapping: 0.390700 ms MarkObjects: 4.753300 ms  DeleteObjects: 1.351100 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.891 seconds
+Refreshing native plugins compatible for Editor in 1.81 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.129 seconds
+Domain Reload Profiling: 2016ms
+	BeginReloadAssembly (246ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (6ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (49ms)
+	RebuildCommonClasses (42ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (36ms)
+	LoadAllAssembliesAndSetupDomain (548ms)
+		LoadAssemblies (476ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (213ms)
+			TypeCache.Refresh (7ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (194ms)
+			ResolveRequiredComponents (8ms)
+	FinalizeReload (1130ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (835ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (3ms)
+			SetLoadedEditorAssemblies (5ms)
+			BeforeProcessingInitializeOnLoad (144ms)
+			ProcessInitializeOnLoadAttributes (639ms)
+			ProcessInitializeOnLoadMethodAttributes (28ms)
+			AfterProcessingInitializeOnLoad (15ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (18ms)
+Refreshing native plugins compatible for Editor in 1.55 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.9 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.6 MB.
+Total: 7.995600 ms (FindLiveObjects: 0.683800 ms CreateObjectMapping: 0.623500 ms MarkObjects: 5.356700 ms  DeleteObjects: 1.329900 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.866 seconds
+Refreshing native plugins compatible for Editor in 1.48 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.952 seconds
+Domain Reload Profiling: 1812ms
+	BeginReloadAssembly (246ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (6ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (48ms)
+	RebuildCommonClasses (51ms)
+	RebuildNativeTypeToScriptingClass (21ms)
+	initialDomainReloadingComplete (38ms)
+	LoadAllAssembliesAndSetupDomain (503ms)
+		LoadAssemblies (470ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (182ms)
+			TypeCache.Refresh (8ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (164ms)
+			ResolveRequiredComponents (6ms)
+	FinalizeReload (953ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (716ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (6ms)
+			BeforeProcessingInitializeOnLoad (127ms)
+			ProcessInitializeOnLoadAttributes (541ms)
+			ProcessInitializeOnLoadMethodAttributes (25ms)
+			AfterProcessingInitializeOnLoad (14ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (14ms)
+Refreshing native plugins compatible for Editor in 1.55 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.6 MB.
+Total: 7.649400 ms (FindLiveObjects: 0.497500 ms CreateObjectMapping: 0.179900 ms MarkObjects: 6.032200 ms  DeleteObjects: 0.938400 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.873 seconds
+Refreshing native plugins compatible for Editor in 1.51 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.168 seconds
+Domain Reload Profiling: 2037ms
+	BeginReloadAssembly (238ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (6ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (49ms)
+	RebuildCommonClasses (48ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (34ms)
+	LoadAllAssembliesAndSetupDomain (533ms)
+		LoadAssemblies (453ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (216ms)
+			TypeCache.Refresh (6ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (199ms)
+			ResolveRequiredComponents (6ms)
+	FinalizeReload (1169ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (842ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (6ms)
+			BeforeProcessingInitializeOnLoad (154ms)
+			ProcessInitializeOnLoadAttributes (631ms)
+			ProcessInitializeOnLoadMethodAttributes (29ms)
+			AfterProcessingInitializeOnLoad (17ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (16ms)
+Refreshing native plugins compatible for Editor in 1.89 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.6 MB.
+Total: 7.100900 ms (FindLiveObjects: 0.566300 ms CreateObjectMapping: 0.209600 ms MarkObjects: 5.395800 ms  DeleteObjects: 0.927900 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.820 seconds
+Refreshing native plugins compatible for Editor in 1.99 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.180 seconds
+Domain Reload Profiling: 1996ms
+	BeginReloadAssembly (231ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (7ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (47ms)
+	RebuildCommonClasses (45ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (34ms)
+	LoadAllAssembliesAndSetupDomain (491ms)
+		LoadAssemblies (435ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (186ms)
+			TypeCache.Refresh (6ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (171ms)
+			ResolveRequiredComponents (6ms)
+	FinalizeReload (1181ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (926ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (5ms)
+			BeforeProcessingInitializeOnLoad (152ms)
+			ProcessInitializeOnLoadAttributes (721ms)
+			ProcessInitializeOnLoadMethodAttributes (28ms)
+			AfterProcessingInitializeOnLoad (16ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (17ms)
+Refreshing native plugins compatible for Editor in 2.12 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.6 MB.
+Total: 7.549800 ms (FindLiveObjects: 0.688500 ms CreateObjectMapping: 0.506900 ms MarkObjects: 5.404800 ms  DeleteObjects: 0.948000 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 499.958479 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Source files/Stick/Mat_StickTape.mat
+  artifactKey: Guid(5203eabd0c6d3c34c9407440ca4e305f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Source files/Stick/Mat_StickTape.mat using Guid(5203eabd0c6d3c34c9407440ca4e305f) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'e4c4c4854b09011a1dfa88fb14231cc7') in 0.0958912 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000021 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Source files/Stick/Mesh_Stick.fbx
+  artifactKey: Guid(73d9d102c333b7045ba4030ef61949c6) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Source files/Stick/Mesh_Stick.fbx using Guid(73d9d102c333b7045ba4030ef61949c6) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '2213b2927740928b63a0f1fc41936a29') in 0.0418268 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 7
+
+========================================================================
+Received Import Request.
+  Time since last request: 3.355367 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Source files/Gloves/Mesh_Gloves.fbx
+  artifactKey: Guid(174a8e92ca1836f4fa88840052083687) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Source files/Gloves/Mesh_Gloves.fbx using Guid(174a8e92ca1836f4fa88840052083687) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'e31bba07af9a58e57db5e7741d261445') in 0.0257234 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 60
+
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.896 seconds
+Refreshing native plugins compatible for Editor in 1.43 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.100 seconds
+Domain Reload Profiling: 1992ms
+	BeginReloadAssembly (265ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (6ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (56ms)
+	RebuildCommonClasses (41ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (39ms)
+	LoadAllAssembliesAndSetupDomain (533ms)
+		LoadAssemblies (510ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (177ms)
+			TypeCache.Refresh (7ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (159ms)
+			ResolveRequiredComponents (6ms)
+	FinalizeReload (1101ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (826ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (6ms)
+			BeforeProcessingInitializeOnLoad (149ms)
+			ProcessInitializeOnLoadAttributes (624ms)
+			ProcessInitializeOnLoadMethodAttributes (27ms)
+			AfterProcessingInitializeOnLoad (16ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (16ms)
+Refreshing native plugins compatible for Editor in 1.69 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (1.1 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.3 MB.
+Total: 8.332900 ms (FindLiveObjects: 0.728100 ms CreateObjectMapping: 0.468000 ms MarkObjects: 5.417900 ms  DeleteObjects: 1.717300 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.832 seconds
+Refreshing native plugins compatible for Editor in 1.96 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.050 seconds
+Domain Reload Profiling: 1878ms
+	BeginReloadAssembly (241ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (8ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (55ms)
+	RebuildCommonClasses (45ms)
+	RebuildNativeTypeToScriptingClass (17ms)
+	initialDomainReloadingComplete (32ms)
+	LoadAllAssembliesAndSetupDomain (492ms)
+		LoadAssemblies (438ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (184ms)
+			TypeCache.Refresh (6ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (166ms)
+			ResolveRequiredComponents (8ms)
+	FinalizeReload (1050ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (801ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (5ms)
+			SetLoadedEditorAssemblies (6ms)
+			BeforeProcessingInitializeOnLoad (150ms)
+			ProcessInitializeOnLoadAttributes (602ms)
+			ProcessInitializeOnLoadMethodAttributes (23ms)
+			AfterProcessingInitializeOnLoad (15ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (15ms)
+Refreshing native plugins compatible for Editor in 1.64 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.6 MB.
+Total: 7.177500 ms (FindLiveObjects: 0.564500 ms CreateObjectMapping: 0.216900 ms MarkObjects: 5.431600 ms  DeleteObjects: 0.962800 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.812 seconds
+Refreshing native plugins compatible for Editor in 1.60 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.079 seconds
+Domain Reload Profiling: 1885ms
+	BeginReloadAssembly (230ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (7ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (47ms)
+	RebuildCommonClasses (42ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (33ms)
+	LoadAllAssembliesAndSetupDomain (485ms)
+		LoadAssemblies (432ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (185ms)
+			TypeCache.Refresh (6ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (170ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (1080ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (819ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (5ms)
+			SetLoadedEditorAssemblies (6ms)
+			BeforeProcessingInitializeOnLoad (149ms)
+			ProcessInitializeOnLoadAttributes (615ms)
+			ProcessInitializeOnLoadMethodAttributes (28ms)
+			AfterProcessingInitializeOnLoad (16ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (14ms)
+Refreshing native plugins compatible for Editor in 1.54 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.6 MB.
+Total: 7.828600 ms (FindLiveObjects: 0.459700 ms CreateObjectMapping: 0.186600 ms MarkObjects: 6.182400 ms  DeleteObjects: 0.998300 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 198.744971 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team3/prefab_team3_player2.prefab
+  artifactKey: Guid(64bc37e6b8352d74b8607b06662562d1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team3/prefab_team3_player2.prefab using Guid(64bc37e6b8352d74b8607b06662562d1) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '2b092852c26060bf9b690397b4caa2a6') in 0.1071739 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000027 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team3/prefab_team3_player4.prefab
+  artifactKey: Guid(43649a3673c36304d8ad63896cf584b0) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team3/prefab_team3_player4.prefab using Guid(43649a3673c36304d8ad63896cf584b0) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '8acf5225edefe778271c6eda5d27514f') in 0.0139653 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000021 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team3/prefab_team3_player6.prefab
+  artifactKey: Guid(c15b62c8badf8ed449b9779e897faf84) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team3/prefab_team3_player6.prefab using Guid(c15b62c8badf8ed449b9779e897faf84) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'a9f3fd1f98822f6cd66e722bb6846660') in 0.013773 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000024 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team3/prefab_team3_player9.prefab
+  artifactKey: Guid(3ccfe80f3490c1f46ac446ea5afe7f25) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Prefabs/Team3/prefab_team3_player9.prefab using Guid(3ccfe80f3490c1f46ac446ea5afe7f25) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '6f3aafeb4db3aad717bd0f3bb7da69ac') in 0.0204699 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 17.278530 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/64.png
+  artifactKey: Guid(fce68109a00e6b34daaaefd4e161bb3a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/64.png using Guid(fce68109a00e6b34daaaefd4e161bb3a) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '9ba0a0291b1a07e2dca73e2dbe57c0e6') in 0.0328521 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000147 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/71.png
+  artifactKey: Guid(2c5392c174f19a848a8291d7cfdd11f7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/71.png using Guid(2c5392c174f19a848a8291d7cfdd11f7) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '8e1145b98f1b11402dd16ee5571de535') in 0.0189017 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/67.png
+  artifactKey: Guid(6fe77cfe0222a6a42a761c74e8d1bc16) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/67.png using Guid(6fe77cfe0222a6a42a761c74e8d1bc16) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '8de058853e5ba42ea412313c1f87e8ee') in 0.0189858 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000043 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/70.png
+  artifactKey: Guid(f014b3ec74a313949b2fb50fb75260c7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/70.png using Guid(f014b3ec74a313949b2fb50fb75260c7) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'd4d4eb81f7878861bdcb5b8be03cf00b') in 0.0188271 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000049 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/69.png
+  artifactKey: Guid(d101df515c894374c8eaf908ca7fe18b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/69.png using Guid(d101df515c894374c8eaf908ca7fe18b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '4c8c63f89c9963ba716e3225a96740f9') in 0.0181395 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000037 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/74.png
+  artifactKey: Guid(de21ae5d10fd11c4ca23ff253b5fb7c1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/74.png using Guid(de21ae5d10fd11c4ca23ff253b5fb7c1) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '7a5c4efd1e215106189ec7c572b6ca1d') in 0.0198407 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.484292 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/79.png
+  artifactKey: Guid(4223b327a4ad0284f968218183405bc3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/79.png using Guid(4223b327a4ad0284f968218183405bc3) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '50e8cabbc8298f4192187a1e76fc2a58') in 0.0166093 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000025 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/87.png
+  artifactKey: Guid(9f0f1356d527ac146b1d09804d74bf26) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/87.png using Guid(9f0f1356d527ac146b1d09804d74bf26) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '787cbaebb9945a4b0021d4129cfa1bcb') in 0.0184752 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/81.png
+  artifactKey: Guid(2824f0e1a3fc1254fb8d6aee62a0c162) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/81.png using Guid(2824f0e1a3fc1254fb8d6aee62a0c162) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'eb0516476f788a8061e4750b87272b8e') in 0.0200137 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000018 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/86.png
+  artifactKey: Guid(5c698b062c1b9534db90b77febaa708a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/86.png using Guid(5c698b062c1b9534db90b77febaa708a) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'b59c354fff8333022b0c3e79471c8725') in 0.0175345 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000016 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/83.png
+  artifactKey: Guid(3f636b2491220af49944d5ccc0150ba9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/83.png using Guid(3f636b2491220af49944d5ccc0150ba9) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'de57d76d3e56ff3d13209a631439da81') in 0.0172365 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.248748 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/94.png
+  artifactKey: Guid(e585307ce9b3d1b4eab8c0bc2e55224b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/94.png using Guid(e585307ce9b3d1b4eab8c0bc2e55224b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'e2aea9f3efd92552253a054fb352e072') in 0.0168488 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000056 seconds.
+  path: Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/97.png
+  artifactKey: Guid(4d8ce17406ff39644b584e564c5fc0e1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Packs/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/97.png using Guid(4d8ce17406ff39644b584e564c5fc0e1) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '12932cc0ffb080695c85fc2cbc14c022') in 0.0180153 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.915 seconds
+Refreshing native plugins compatible for Editor in 2.26 ms, found 3 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.238 seconds
+Domain Reload Profiling: 2148ms
+	BeginReloadAssembly (254ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (7ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (53ms)
+	RebuildCommonClasses (43ms)
+	RebuildNativeTypeToScriptingClass (18ms)
+	initialDomainReloadingComplete (35ms)
+	LoadAllAssembliesAndSetupDomain (560ms)
+		LoadAssemblies (483ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (221ms)
+			TypeCache.Refresh (8ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (204ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (1239ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (951ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (17ms)
+			BeforeProcessingInitializeOnLoad (181ms)
+			ProcessInitializeOnLoadAttributes (695ms)
+			ProcessInitializeOnLoadMethodAttributes (35ms)
+			AfterProcessingInitializeOnLoad (19ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (15ms)
+Refreshing native plugins compatible for Editor in 1.89 ms, found 3 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3673 unused Assets / (0.8 MB). Loaded Objects now: 4313.
+Memory consumption went from 119.4 MB to 118.6 MB.
+Total: 6.916400 ms (FindLiveObjects: 0.484200 ms CreateObjectMapping: 0.199800 ms MarkObjects: 5.223800 ms  DeleteObjects: 1.006800 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+Editor requested this worker to shutdown with reason: Scaling down because of idle timeout
+AssetImportWorker is now disconnected from the server
+Process exiting
+Exiting without the bug reporter. Application will terminate with return code 0
