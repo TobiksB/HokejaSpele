@@ -408,8 +408,7 @@
 "Assets/IceHockey/Source files/HockeyPlayer.cs"
 "Assets/Scripts/CameraController.cs"
 "Assets/Scripts/PlayerController.cs"
-"Assets/Scripts/PuckController.cs"
-"Assets/Scripts/UprightPhysics.cs"
+"Assets/Scripts/PuckScript.cs"
 -langversion:9.0
 /deterministic
 /optimize-

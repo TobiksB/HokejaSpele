@@ -2,30 +2,22 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public float mouseSensitivity = 100f; // Adjust mouse sensitivity
-    public Transform playerBody;         // Reference to the player's body
+    public Transform target; // The object the camera will follow (e.g., puck or player)
+    public Vector3 offset = new Vector3(0, 10, -10); // Camera offset
+    public float followSpeed = 5f; // Speed of camera movement
+    public float rotationSpeed = 5f; // Speed of camera rotation
 
-    private float xRotation = 0f;        // Keeps track of vertical rotation
-
-    void Start()
+    void LateUpdate()
     {
-        Cursor.lockState = CursorLockMode.Locked; // Lock the cursor to the center of the screen
-    }
+        if (target != null)
+        {
+            // Smoothly move the camera to the target's position with an offset
+            Vector3 desiredPosition = target.position + offset;
+            transform.position = Vector3.Lerp(transform.position, desiredPosition, followSpeed * Time.deltaTime);
 
-    void Update()
-    {
-        // Get mouse input
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
-
-        // Rotate the camera vertically (clamping to avoid over-rotation)
-        xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, -90f, 90f); // Limit the vertical rotation
-
-        // Apply rotation to the camera
-        transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
-
-        // Rotate the player body horizontally
-        playerBody.Rotate(Vector3.up * mouseX);
+            // Optionally rotate the camera to face the target
+            Quaternion desiredRotation = Quaternion.LookRotation(target.position - transform.position);
+            transform.rotation = Quaternion.Lerp(transform.rotation, desiredRotation, rotationSpeed * Time.deltaTime);
+        }
     }
 }

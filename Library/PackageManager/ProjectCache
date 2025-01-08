@@ -5,16 +5,16 @@ m_ProjectFiles:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638717787403339802
-    m_Hash: 2838340770
+      ticks: 638718657379804900
+    m_Hash: 3139948669
   m_LockFileStatus:
     m_FilePath: C:/Users/user/Desktop/HokejaSpele/Packages/packages-lock.json
     m_PathExists: 1
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638717787403423825
-    m_Hash: 1045276508
+      ticks: 638718657379814961
+    m_Hash: 1477258268
 m_EmbeddedPackageManifests:
   m_ManifestsStatus: {}
 m_LocalPackages:

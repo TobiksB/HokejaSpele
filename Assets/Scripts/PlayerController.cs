@@ -1,55 +1,43 @@
 using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
-    public float moveSpeed = 5f;         // Movement speed
-    public float jumpForce = 10f;        // Jump force
-    public float rotationSpeed = 700f;   // Rotation speed
-    public float uprightForce = 10f;     // Force to keep player upright
-
-    private Rigidbody rb;
-    private float horizontalInput;
-    private float verticalInput;
+    public float moveSpeed = 5f;
+    public float acceleration = 8f;
+    public float deceleration = 6f;
+    public Rigidbody rb;
+    private Vector3 velocity;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
     }
 
+    void Update()
+    {
+        // Get input
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+
+        Vector3 targetVelocity = new Vector3(horizontal, 0, vertical).normalized * moveSpeed;
+
+        // Smoothly accelerate/decelerate
+        velocity = Vector3.Lerp(velocity, targetVelocity, acceleration * Time.deltaTime);
+
+        // Add a friction-like deceleration when no input is detected
+        if (targetVelocity.magnitude < 0.1f)
+            velocity = Vector3.Lerp(velocity, Vector3.zero, deceleration * Time.deltaTime);
+
+        // Rotate player to face movement direction
+        if (velocity.magnitude > 0.1f)
+        {
+            transform.rotation = Quaternion.LookRotation(velocity);
+        }
+    }
+
     void FixedUpdate()
     {
-        HandleMovement();
-        HandleRotation();
-        MaintainUpright();
-    }
-
-    void HandleMovement()
-    {
-        horizontalInput = Input.GetAxis("Horizontal");  // A/D or Left/Right arrow keys
-        verticalInput = Input.GetAxis("Vertical");      // W/S or Up/Down arrow keys
-
-        // Create a movement vector based on user input
-        Vector3 movement = new Vector3(horizontalInput, 0f, verticalInput) * moveSpeed;
-
-        // Apply the movement to the Rigidbody
-        rb.AddForce(movement, ForceMode.VelocityChange);
-    }
-
-    void HandleRotation()
-    {
-        // Get the current rotation angle around the Y axis
-        float turn = horizontalInput * rotationSpeed * Time.deltaTime;
-
-        // Apply rotation around the Y axis
-        rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, turn, 0f));
-    }
-
-    void MaintainUpright()
-    {
-        // Apply an upward force to maintain the player's upright position
-        if (transform.up.y < 0.5f)  // Detect if the player is leaning too much
-        {
-            rb.AddTorque(Vector3.up * uprightForce, ForceMode.Force);
-        }
+        // Apply velocity to the rigidbody
+        rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
     }
 }
