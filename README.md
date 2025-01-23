@@ -4,4 +4,4 @@ Spēlē būs 3D izskatā un būs iespēja spēlēt vairākos spēles režīmos, 
 Šī spēle piedāvās režīmus kā: "Treniņu režīms", "Viens pret Viens", "Divi pret Divi".
 
 # Unity versija
-Spele tiek veidota uz Unity 6000.0.34f1 versijas
+Spele tiek veidota uz Unity 6000.0.24f1 versijas
