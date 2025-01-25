@@ -1,0 +1,20 @@
+# Ignore the Library folder
+/Library/
+
+# Ignore the Temp folder
+/Temp/
+
+# Ignore the Obj folder
+/Obj/
+
+# Ignore the Build folder
+/Build/
+
+# Ignore the UserSettings folder
+/UserSettings/
+
+# Ignore .vs folder (for Visual Studio)
+.vs/
+
+# Ignore the .idea folder (for JetBrains Rider)
+.idea/
