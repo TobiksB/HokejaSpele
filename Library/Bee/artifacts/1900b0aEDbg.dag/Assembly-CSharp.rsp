@@ -437,6 +437,7 @@
 "Assets/IceHockey/Source files/HockeyPlayer.cs"
 "Assets/Scripts/CameraController.cs"
 "Assets/Scripts/PlayerController.cs"
+"Assets/Scripts/PlayerCustomization.cs"
 "Assets/Scripts/PuckScript.cs"
 "Assets/Scripts/SettingsScript.cs"
 -langversion:9.0
