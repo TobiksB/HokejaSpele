@@ -1,0 +1,838 @@
+Using pre-set license
+Built from '6000.0/staging' branch; Version is '6000.0.24f1 (11fa355cd605) revision 1178165'; Using compiler version '193933523'; Build Type 'Release'
+OS: 'Windows 11  (10.0.22631) 64bit Professional' Language: 'lv' Physical Memory: 16318 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1, IsPro: 1
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Unity.exe
+-adb2
+-batchMode
+-noUpm
+-name
+AssetImportWorker3
+-projectPath
+C:/Users/user/Desktop/HokejaSpele
+-logFile
+Logs/AssetImportWorker3.log
+-srvPort
+50425
+-job-worker-count
+5
+-background-job-worker-count
+8
+-asset-garbage-collectors
+1
+Successfully changed project path to: C:/Users/user/Desktop/HokejaSpele
+C:/Users/user/Desktop/HokejaSpele
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gfx=262144"
+Player connection [26388]  Target information:
+
+Player connection [26388]  * "[IP] 25.48.63.229 [Port] 0 [Flags] 2 [Guid] 881116160 [EditorId] 881116160 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [26388]  * "[IP] 192.168.0.103 [Port] 0 [Flags] 2 [Guid] 881116160 [EditorId] 881116160 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [26388]  * "[IP] 10.147.19.93 [Port] 0 [Flags] 2 [Guid] 881116160 [EditorId] 881116160 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [26388]  * "[IP] 172.24.148.111 [Port] 0 [Flags] 2 [Guid] 881116160 [EditorId] 881116160 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-RMGSU0G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [26388] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [26388] Host joined alternative multi-casting on [225.0.0.222:34997]...
+JobSystem: Creating JobQueue using job-worker-count value 5
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 3.26 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.0.24f1 (11fa355cd605)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/user/Desktop/HokejaSpele/Assets
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 3060 (ID=0x2504)
+    Vendor:   NVIDIA
+    VRAM:     12115 MB
+    Driver:   32.0.15.6636
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56252
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.0.24f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.007703 seconds.
+- Loaded All Assemblies, in  0.462 seconds
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.449 seconds
+Domain Reload Profiling: 907ms
+	BeginReloadAssembly (164ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (1ms)
+	RebuildCommonClasses (43ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (64ms)
+	LoadAllAssembliesAndSetupDomain (171ms)
+		LoadAssemblies (159ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (168ms)
+			TypeCache.Refresh (166ms)
+				TypeCache.ScanAssembly (152ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (1ms)
+	FinalizeReload (449ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (405ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (35ms)
+			SetLoadedEditorAssemblies (7ms)
+			BeforeProcessingInitializeOnLoad (8ms)
+			ProcessInitializeOnLoadAttributes (259ms)
+			ProcessInitializeOnLoadMethodAttributes (93ms)
+			AfterProcessingInitializeOnLoad (3ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+========================================================================
+Worker process is ready to serve import requests
+Import Worker Mode flag is 0x00
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  1.223 seconds
+Refreshing native plugins compatible for Editor in 2.22 ms, found 4 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.094 seconds
+Domain Reload Profiling: 2309ms
+	BeginReloadAssembly (440ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (7ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (32ms)
+	RebuildCommonClasses (44ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (46ms)
+	LoadAllAssembliesAndSetupDomain (671ms)
+		LoadAssemblies (481ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (310ms)
+			TypeCache.Refresh (238ms)
+				TypeCache.ScanAssembly (221ms)
+			BuildScriptInfoCaches (64ms)
+			ResolveRequiredComponents (6ms)
+	FinalizeReload (1094ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (877ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (3ms)
+			SetLoadedEditorAssemblies (9ms)
+			BeforeProcessingInitializeOnLoad (170ms)
+			ProcessInitializeOnLoadAttributes (636ms)
+			ProcessInitializeOnLoadMethodAttributes (45ms)
+			AfterProcessingInitializeOnLoad (14ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (13ms)
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.02 seconds
+Refreshing native plugins compatible for Editor in 2.92 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 32 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4843 unused Assets / (1.5 MB). Loaded Objects now: 5455.
+Memory consumption went from 124.2 MB to 122.7 MB.
+Total: 8.275100 ms (FindLiveObjects: 0.632800 ms CreateObjectMapping: 0.260100 ms MarkObjects: 5.837800 ms  DeleteObjects: 1.543100 ms)
+
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 3.38 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4830 unused Assets / (1.0 MB). Loaded Objects now: 5455.
+Memory consumption went from 114.5 MB to 113.5 MB.
+Total: 8.613300 ms (FindLiveObjects: 0.672100 ms CreateObjectMapping: 0.302200 ms MarkObjects: 6.316400 ms  DeleteObjects: 1.320700 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 10.39 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4830 unused Assets / (1.2 MB). Loaded Objects now: 5455.
+Memory consumption went from 114.5 MB to 113.3 MB.
+Total: 12.474200 ms (FindLiveObjects: 1.406000 ms CreateObjectMapping: 0.775500 ms MarkObjects: 8.477700 ms  DeleteObjects: 1.813300 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 5.28 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4830 unused Assets / (1.1 MB). Loaded Objects now: 5455.
+Memory consumption went from 114.5 MB to 113.4 MB.
+Total: 11.545000 ms (FindLiveObjects: 0.702400 ms CreateObjectMapping: 0.293200 ms MarkObjects: 8.215800 ms  DeleteObjects: 2.332200 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.948 seconds
+Refreshing native plugins compatible for Editor in 2.27 ms, found 4 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.091 seconds
+Domain Reload Profiling: 2033ms
+	BeginReloadAssembly (262ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (15ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (59ms)
+	RebuildCommonClasses (44ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (34ms)
+	LoadAllAssembliesAndSetupDomain (587ms)
+		LoadAssemblies (498ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (220ms)
+			TypeCache.Refresh (11ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (200ms)
+			ResolveRequiredComponents (6ms)
+	FinalizeReload (1091ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (841ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (9ms)
+			BeforeProcessingInitializeOnLoad (182ms)
+			ProcessInitializeOnLoadAttributes (588ms)
+			ProcessInitializeOnLoadMethodAttributes (44ms)
+			AfterProcessingInitializeOnLoad (14ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (16ms)
+Refreshing native plugins compatible for Editor in 2.29 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4841 unused Assets / (1.1 MB). Loaded Objects now: 5458.
+Memory consumption went from 116.3 MB to 115.2 MB.
+Total: 6.973000 ms (FindLiveObjects: 0.590200 ms CreateObjectMapping: 0.267000 ms MarkObjects: 5.012800 ms  DeleteObjects: 1.102100 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.937 seconds
+Refreshing native plugins compatible for Editor in 3.89 ms, found 4 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.191 seconds
+Domain Reload Profiling: 2122ms
+	BeginReloadAssembly (240ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (15ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (51ms)
+	RebuildCommonClasses (41ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (36ms)
+	LoadAllAssembliesAndSetupDomain (598ms)
+		LoadAssemblies (496ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (228ms)
+			TypeCache.Refresh (7ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (211ms)
+			ResolveRequiredComponents (7ms)
+	FinalizeReload (1192ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (922ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (10ms)
+			BeforeProcessingInitializeOnLoad (199ms)
+			ProcessInitializeOnLoadAttributes (645ms)
+			ProcessInitializeOnLoadMethodAttributes (50ms)
+			AfterProcessingInitializeOnLoad (14ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (21ms)
+Refreshing native plugins compatible for Editor in 2.84 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4841 unused Assets / (1.0 MB). Loaded Objects now: 5460.
+Memory consumption went from 118.2 MB to 117.2 MB.
+Total: 9.104000 ms (FindLiveObjects: 0.844800 ms CreateObjectMapping: 0.590400 ms MarkObjects: 6.364400 ms  DeleteObjects: 1.302400 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.971 seconds
+Refreshing native plugins compatible for Editor in 3.26 ms, found 4 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.178 seconds
+Domain Reload Profiling: 2145ms
+	BeginReloadAssembly (241ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (15ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (58ms)
+	RebuildCommonClasses (41ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (35ms)
+	LoadAllAssembliesAndSetupDomain (634ms)
+		LoadAssemblies (501ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (252ms)
+			TypeCache.Refresh (7ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (235ms)
+			ResolveRequiredComponents (7ms)
+	FinalizeReload (1179ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (912ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (3ms)
+			SetLoadedEditorAssemblies (10ms)
+			BeforeProcessingInitializeOnLoad (197ms)
+			ProcessInitializeOnLoadAttributes (642ms)
+			ProcessInitializeOnLoadMethodAttributes (44ms)
+			AfterProcessingInitializeOnLoad (15ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (16ms)
+Refreshing native plugins compatible for Editor in 2.57 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4841 unused Assets / (1.2 MB). Loaded Objects now: 5462.
+Memory consumption went from 118.2 MB to 117.1 MB.
+Total: 7.915900 ms (FindLiveObjects: 0.803000 ms CreateObjectMapping: 0.254100 ms MarkObjects: 5.299000 ms  DeleteObjects: 1.558000 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 17240.154373 seconds.
+  path: Assets/Sprites/Prefabs/Misc/Prefab_Net.prefab
+  artifactKey: Guid(6cdda13d471476d479fa9e5ca7a8aa02) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Sprites/Prefabs/Misc/Prefab_Net.prefab using Guid(6cdda13d471476d479fa9e5ca7a8aa02) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '6ce5b996c13ea66d6af79b7f4fac9070') in 0.1232861 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 14
+
+========================================================================
+Received Import Request.
+  Time since last request: 10.351001 seconds.
+  path: Assets/Sprites/Prefabs/Team1/prefab_team1_player2.prefab
+  artifactKey: Guid(cfa4abd83625504439170dbf5f97c480) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Sprites/Prefabs/Team1/prefab_team1_player2.prefab using Guid(cfa4abd83625504439170dbf5f97c480) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '65602324f613f1ba50110ddf73a0475f') in 0.0292071 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000017 seconds.
+  path: Assets/Sprites/Prefabs/Team1/prefab_team1_player6.prefab
+  artifactKey: Guid(ef25e4b1ff1ace449aa866f4e79e2a23) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Sprites/Prefabs/Team1/prefab_team1_player6.prefab using Guid(ef25e4b1ff1ace449aa866f4e79e2a23) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'b92c5617551736d59f79835507bad581') in 0.0110589 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000025 seconds.
+  path: Assets/Sprites/Prefabs/Team1/prefab_team1_player7.prefab
+  artifactKey: Guid(b1562db456fdffa4f8b1defe6034e98b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Sprites/Prefabs/Team1/prefab_team1_player7.prefab using Guid(b1562db456fdffa4f8b1defe6034e98b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '0e77cd0f8e00f2f9419c9e0b8d410a10') in 0.0109144 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000020 seconds.
+  path: Assets/Sprites/Prefabs/Team1/prefab_team1_player9.prefab
+  artifactKey: Guid(0dd2bcf197143e341bb78c96277dbdf3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Sprites/Prefabs/Team1/prefab_team1_player9.prefab using Guid(0dd2bcf197143e341bb78c96277dbdf3) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'a3effc35cf984413c7aa570f8dfabdae') in 0.0175676 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 147
+
+========================================================================
+Received Prepare
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  1.089 seconds
+Refreshing native plugins compatible for Editor in 3.36 ms, found 4 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.280 seconds
+Domain Reload Profiling: 2363ms
+	BeginReloadAssembly (272ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (21ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (59ms)
+	RebuildCommonClasses (50ms)
+	RebuildNativeTypeToScriptingClass (16ms)
+	initialDomainReloadingComplete (41ms)
+	LoadAllAssembliesAndSetupDomain (702ms)
+		LoadAssemblies (565ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (278ms)
+			TypeCache.Refresh (10ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (257ms)
+			ResolveRequiredComponents (7ms)
+	FinalizeReload (1281ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (1005ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (9ms)
+			BeforeProcessingInitializeOnLoad (210ms)
+			ProcessInitializeOnLoadAttributes (716ms)
+			ProcessInitializeOnLoadMethodAttributes (50ms)
+			AfterProcessingInitializeOnLoad (15ms)
+			EditorAssembliesLoaded (1ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (15ms)
+Refreshing native plugins compatible for Editor in 3.37 ms, found 4 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4841 unused Assets / (1.0 MB). Loaded Objects now: 5474.
+Memory consumption went from 126.6 MB to 125.6 MB.
+Total: 9.926600 ms (FindLiveObjects: 0.695600 ms CreateObjectMapping: 0.466800 ms MarkObjects: 7.292300 ms  DeleteObjects: 1.470500 ms)
+
+Prepare: number of updated asset objects reloaded= 0
+========================================================================
+Received Import Request.
+  Time since last request: 45.670150 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/202.prefab
+  artifactKey: Guid(e386cbd095cb1c44ab8f6e8ea4d2e52a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/202.prefab using Guid(e386cbd095cb1c44ab8f6e8ea4d2e52a) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'fd5f8235d10ba7fd0c1f59f30766af18') in 0.1192125 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 76
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/212.prefab
+  artifactKey: Guid(1e243f7a7fadc8c45aa9e9b53fea63d1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/212.prefab using Guid(1e243f7a7fadc8c45aa9e9b53fea63d1) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'bb3f77574e10ac4d7cbe5493a849f667') in 0.0566763 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 69
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000021 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/207.prefab
+  artifactKey: Guid(6fcdcb55320eea745bcf338693bb0181) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/207.prefab using Guid(6fcdcb55320eea745bcf338693bb0181) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'b837fb37ca3d04c01d607875d292ee2e') in 0.0224338 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 70
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000031 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/206.prefab
+  artifactKey: Guid(fca601c7929410842bd7cd70b701e07a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/206.prefab using Guid(fca601c7929410842bd7cd70b701e07a) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'f4a19ae587f7645b33e86745d504b361') in 0.0244412 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 71
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000018 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/225.prefab
+  artifactKey: Guid(2ca3b33337163d74da6fcae0fbb785ce) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/225.prefab using Guid(2ca3b33337163d74da6fcae0fbb785ce) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '9449df1d5d366eaa9cd8747012bddef6') in 0.0340926 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 69
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000022 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/211.prefab
+  artifactKey: Guid(9accdb76d41cc4b4f87c505fa9d6efc2) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/211.prefab using Guid(9accdb76d41cc4b4f87c505fa9d6efc2) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '9449dde8f2dbc7c066f49cf0b5044d0d') in 0.016522 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 69
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/217.prefab
+  artifactKey: Guid(2abd7acd23ef29941bc3dcebf1965fdc) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/217.prefab using Guid(2abd7acd23ef29941bc3dcebf1965fdc) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'a3ec044e1b75888fb0e63248609eb9cb') in 0.0246703 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 16
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/226.prefab
+  artifactKey: Guid(042f646ee54686740b0e6f95660bc208) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/226.prefab using Guid(042f646ee54686740b0e6f95660bc208) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '5e463cb0c718fec61504e297c433a016') in 0.0159331 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 69
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/215.prefab
+  artifactKey: Guid(900f635c5ce0cbf43af293e4b3868b8e) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/215.prefab using Guid(900f635c5ce0cbf43af293e4b3868b8e) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '8f24f8193ef7b578d7127b78e71f5421') in 0.0175993 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 70
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000019 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/213.prefab
+  artifactKey: Guid(47a5b98637291ae44beb6f6265f75048) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/213.prefab using Guid(47a5b98637291ae44beb6f6265f75048) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'd3fe4521a7f4630a6f1f5ebd58fc5d99') in 0.0233244 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 70
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000021 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/219.prefab
+  artifactKey: Guid(8bd0b6dd8ea1b804cacfa5182701c49e) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/219.prefab using Guid(8bd0b6dd8ea1b804cacfa5182701c49e) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '30af4ad7a41ea347fee968029164ceb1') in 0.0177758 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 72
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000020 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/Equipment/222.prefab
+  artifactKey: Guid(77f6aa061e22fa9429c4b35f792b09cd) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/Equipment/222.prefab using Guid(77f6aa061e22fa9429c4b35f792b09cd) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '192c0b2fad0479e89270bc7955c9432c') in 0.017962 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 72
+
+========================================================================
+Received Import Request.
+  Time since last request: 3.905067 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Materials/Mat_DemoGroundGreen.mat
+  artifactKey: Guid(abbd765bb30144b449634fb76d207aab) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Materials/Mat_DemoGroundGreen.mat using Guid(abbd765bb30144b449634fb76d207aab) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '32ec9acc1b88e25b5b9de4146071d38b') in 0.0327979 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000018 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Mouth.mat
+  artifactKey: Guid(c9223552e974b7f48819a6927319e695) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Mouth.mat using Guid(c9223552e974b7f48819a6927319e695) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'b74e57495e1592bb77c8ab7c9cf4c7e6') in 0.0148577 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000074 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Skin.mat
+  artifactKey: Guid(0a8af12c37363244eb71ddee649f9ab9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Skin.mat using Guid(0a8af12c37363244eb71ddee649f9ab9) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '50cfd651820b66281a0c8780e9aa2a35') in 0.0146498 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000024 seconds.
+  path: Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Underwear.mat
+  artifactKey: Guid(8c3b43dc85d07364c8d627b6b8db133d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/CustomizableCharacters/Common/Source files/Materials/Mat_Underwear.mat using Guid(8c3b43dc85d07364c8d627b6b8db133d) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '88a3a27388347754c9fc532286cd0797') in 0.0131765 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
+
+========================================================================
+Received Import Request.
+  Time since last request: 49.459369 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/3.png
+  artifactKey: Guid(f5f10f15d836a7547b72119027abc0d9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/3.png using Guid(f5f10f15d836a7547b72119027abc0d9) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'b0702d9a5802db1d215506eeb6789cc0') in 0.0327612 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000017 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/6.png
+  artifactKey: Guid(314fcc62b438ab44890e73b9247319b8) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/6.png using Guid(314fcc62b438ab44890e73b9247319b8) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '781f2f09eb6d78882af7366de8d4206c') in 0.0162824 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000025 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/9.png
+  artifactKey: Guid(4a326017e00e62a46b9dc17968ffe2db) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/9.png using Guid(4a326017e00e62a46b9dc17968ffe2db) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '962d039368938508a2e933a683992bbb') in 0.0159597 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000081 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/11.png
+  artifactKey: Guid(54d2b36c9f721144eb0edb019c2add5d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/11.png using Guid(54d2b36c9f721144eb0edb019c2add5d) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '7e13a1ecd8104633cc6162ebc446b199') in 0.018074 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000017 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/7.png
+  artifactKey: Guid(37654b39ac104d045b173592d43bc437) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/7.png using Guid(37654b39ac104d045b173592d43bc437) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '3fe49ebdb38225cd0cba42930c6b7671') in 0.0150031 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000040 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/15.png
+  artifactKey: Guid(09deab33176964e429a81edf551ef09d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/15.png using Guid(09deab33176964e429a81edf551ef09d) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'eb193b425fc3217942a3087196642283') in 0.0164913 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.005254 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/18.png
+  artifactKey: Guid(cabdfdf82b85cc247bdadffef4ac8eef) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/18.png using Guid(cabdfdf82b85cc247bdadffef4ac8eef) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'c2bb00db85ffbe3743c8550816be1196') in 0.0150653 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.010212 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/21.png
+  artifactKey: Guid(46fc0ae0f3530424586497b992b8332d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/21.png using Guid(46fc0ae0f3530424586497b992b8332d) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'd01650c503154c13b84a7f8de7fbd0e4') in 0.0179151 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000023 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/24.png
+  artifactKey: Guid(fc85a99a0b2c3a44fb1f7ff890cad748) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/24.png using Guid(fc85a99a0b2c3a44fb1f7ff890cad748) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '01751b7fc6298f8c77306f5be4091a07') in 0.0163297 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.007087 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/27.png
+  artifactKey: Guid(72f48bb1139ab4642abbae3e2d7ef0bb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/27.png using Guid(72f48bb1139ab4642abbae3e2d7ef0bb) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '0adfb86e1f65c49d5d019ed0e900a3ba') in 0.0154345 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.013493 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/31.png
+  artifactKey: Guid(7465e637492fa7b4d90559e76fe34a69) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/31.png using Guid(7465e637492fa7b4d90559e76fe34a69) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'edc732630a5b9aa113299b7bbad496bc') in 0.0161658 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.006385 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/34.png
+  artifactKey: Guid(85c7d0261ae52b04ea14c8cd6062a286) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/34.png using Guid(85c7d0261ae52b04ea14c8cd6062a286) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '515cf30c22cf425b52d797c6f464cb45') in 0.0160953 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.007950 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/37.png
+  artifactKey: Guid(6f02e97410cb8664db66360ddbf4ed97) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/37.png using Guid(6f02e97410cb8664db66360ddbf4ed97) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'ad0504ca4c82cb6671f1b641095eda9a') in 0.0175185 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.014659 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/41.png
+  artifactKey: Guid(92beae7f54cab6b4cb23e5aadd533eab) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/41.png using Guid(92beae7f54cab6b4cb23e5aadd533eab) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'f376cd3c49509678551bd9464e5fe6de') in 0.0167662 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.005744 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/44.png
+  artifactKey: Guid(d814690a860dfb94ba5d4e09526fecf9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/44.png using Guid(d814690a860dfb94ba5d4e09526fecf9) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'cc207374a4221a80bd2884f3ea614e40') in 0.0153569 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.007063 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/47.png
+  artifactKey: Guid(a4d9803097ccbb5479968c93f70bcbe3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/47.png using Guid(a4d9803097ccbb5479968c93f70bcbe3) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'd8f9689a1f77a85e453797dbb09fa803') in 0.0157874 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.007014 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/50.png
+  artifactKey: Guid(3c1ebc1e00a867a44b1000df94dfc616) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/50.png using Guid(3c1ebc1e00a867a44b1000df94dfc616) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'de07390a9e811917687668d38e4f8047') in 0.0157887 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.006869 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/53.png
+  artifactKey: Guid(27c3227e0eba12547bf3593e728c1720) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/53.png using Guid(27c3227e0eba12547bf3593e728c1720) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '3a5178de5c6b52e1ba66a1117bd3f691') in 0.0175981 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.005784 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/56.png
+  artifactKey: Guid(4bc22307287b91f41a8fb34ff304b14f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/56.png using Guid(4bc22307287b91f41a8fb34ff304b14f) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '5bbabf76b6641bf42c85768896d107f2') in 0.0154497 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 1.928913 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/60.png
+  artifactKey: Guid(3991da2642b8d594d9347e3b4f12c030) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/60.png using Guid(3991da2642b8d594d9347e3b4f12c030) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'dafc07ad678df50214afa8a7eb7b1143') in 0.0152011 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.007095 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/63.png
+  artifactKey: Guid(c675e495117ddbe4da57bbd87896a3b9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/63.png using Guid(c675e495117ddbe4da57bbd87896a3b9) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '6a38a2da9db771227e0d45d8fbfea00d') in 0.0160266 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.006820 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/66.png
+  artifactKey: Guid(a96ec0c807fa14945b948f5652c11be3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/66.png using Guid(a96ec0c807fa14945b948f5652c11be3) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '792b308e69665a72123846a5cadcc82f') in 0.0158523 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.006560 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/69.png
+  artifactKey: Guid(d101df515c894374c8eaf908ca7fe18b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/69.png using Guid(d101df515c894374c8eaf908ca7fe18b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'b660f5302069e0ae87cf9847ca82fa64') in 0.0168148 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.043408 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/74.png
+  artifactKey: Guid(de21ae5d10fd11c4ca23ff253b5fb7c1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/74.png using Guid(de21ae5d10fd11c4ca23ff253b5fb7c1) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'c16af168fe47945f81d1560b1a9ef2e3') in 0.015091 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.006486 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/77.png
+  artifactKey: Guid(c1e7f4df0064adf459afa648cd34b78b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/77.png using Guid(c1e7f4df0064adf459afa648cd34b78b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '263a07ac6235c168297dc0c31c92d4a9') in 0.01572 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.005879 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/80.png
+  artifactKey: Guid(35c878ec9ce72124c96dca9e4e5ca934) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/80.png using Guid(35c878ec9ce72124c96dca9e4e5ca934) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '15eaaa37fafeb3174658c4aeab25ff5e') in 0.0149172 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.014301 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/84.png
+  artifactKey: Guid(fbfe02eba7396fe42b46daf225f604b1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/84.png using Guid(fbfe02eba7396fe42b46daf225f604b1) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'e2c825846e322bb5fdef8e811f3eaa80') in 0.016462 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.080522 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/88.png
+  artifactKey: Guid(9c651707d94093040842b45f172b38b6) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/88.png using Guid(9c651707d94093040842b45f172b38b6) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: '1dd5809e843a896b5548be2ba367bffe') in 0.0169789 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.007788 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/91.png
+  artifactKey: Guid(de50d4902c9ebd945a0dd6d8ef0e4ffb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/91.png using Guid(de50d4902c9ebd945a0dd6d8ef0e4ffb) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'c480db066907eb937019c886db2416d6') in 0.0156162 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.007404 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/94.png
+  artifactKey: Guid(e585307ce9b3d1b4eab8c0bc2e55224b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/94.png using Guid(e585307ce9b3d1b4eab8c0bc2e55224b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'dc32340fec246e3278d8784dcb2abb99') in 0.0151243 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.015352 seconds.
+  path: Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/98.png
+  artifactKey: Guid(cbcc7a7d25b81994b90e5376b6ca6803) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/IceHockey/Resources/CustomizableCharacters/HockeyNumbers/98.png using Guid(cbcc7a7d25b81994b90e5376b6ca6803) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (artifact id: 'da7518448889f39a0c67670d9f5096d8') in 0.0161206 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 3
+
+Editor requested this worker to shutdown with reason: Scaling down because of idle timeout
+AssetImportWorker is now disconnected from the server
+Process exiting
+Exiting without the bug reporter. Application will terminate with return code 0
