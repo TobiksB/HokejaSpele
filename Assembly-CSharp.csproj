@@ -66,10 +66,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\IceHockey\Source files\HockeyPlayer.cs" />
+    <Compile Include="Assets\Scripts\SceneChangeScript.cs" />
+    <Compile Include="Assets\Scripts\SelectedPlayer.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\TransformDeepChildExtension.cs" />
     <Compile Include="Assets\Scripts\SettingsScript.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\ColorChanger.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\PlayerSpawner.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\CharacterBase.cs" />
     <Compile Include="Assets\Scripts\PlayerCustomization.cs" />
     <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\Item.cs" />

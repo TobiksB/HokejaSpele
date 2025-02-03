@@ -39,6 +39,7 @@ public class CharacterBase : MonoBehaviour {
     public SkinnedMeshRenderer referenceMesh; // used for rigging items to the skeleton
 
     protected bool isInitialized = false;
+    public bool IsInitialized => isInitialized;
 
     protected virtual void Awake() {
         bodyParts = new List<GameObject>();
@@ -257,61 +258,71 @@ public class CharacterBase : MonoBehaviour {
             return null;
         }
 
-        string resourcePath = "CustomizableCharacters/" + itemType.ToString() + "/" + itemId;
-        GameObject loadedItem = null;
-        object loadedObject = Resources.Load(resourcePath, typeof(GameObject));
-        
-        if (loadedObject == null) {
-            Debug.LogError($"Failed to load item {itemId}. Make sure you are using the correct item ID!");
-            return null;
-        }
+        try {
+            string resourcePath = "CustomizableCharacters/" + itemType.ToString() + "/" + itemId;
+            object loadedObject = Resources.Load(resourcePath, typeof(GameObject));
+            
+            if (loadedObject == null) {
+                Debug.LogError($"[{gameObject.name}] Failed to load item {itemId} from path: {resourcePath}");
+                return null;
+            }
 
-        loadedItem = GameObject.Instantiate((GameObject)loadedObject);
-        Item item = loadedItem.GetComponent<Item>();
-        
-        if (item == null) {
-            Debug.LogError($"Item {itemId} prefab does not have an Item component!");
-            GameObject.Destroy(loadedItem);
-            return null;
-        }
+            GameObject loadedItem = Instantiate((GameObject)loadedObject);
+            if (loadedItem == null) {
+                Debug.LogError($"[{gameObject.name}] Failed to instantiate item {itemId}");
+                return null;
+            }
 
-        EquipmentSlot slot = GetEquipmentSlot(item.equipmentSlot);
-        GameObject itemObject = null;
-        
-        item.male.SetActive(true);  // Always use male model since we're removing female
-        item.female.SetActive(false);
-        itemObject = item.male;     // Always use male model
+            Item item = loadedItem.GetComponent<Item>();
+            
+            if (item == null) {
+                Debug.LogError($"Item {itemId} prefab does not have an Item component!");
+                GameObject.Destroy(loadedItem);
+                return null;
+            }
 
-        if (item.skinned && itemObject != null) {
-            var renderer = itemObject.GetComponentInChildren<SkinnedMeshRenderer>();
-            if (renderer != null && referenceMesh != null && referenceMesh.bones != null) {
-                renderer.bones = referenceMesh.bones;
-                renderer.updateWhenOffscreen = true;
+            EquipmentSlot slot = GetEquipmentSlot(item.equipmentSlot);
+            GameObject itemObject = null;
+            
+            item.male.SetActive(true);  // Always use male model since we're removing female
+            item.female.SetActive(false);
+            itemObject = item.male;     // Always use male model
+
+            if (item.skinned && itemObject != null) {
+                var renderer = itemObject.GetComponentInChildren<SkinnedMeshRenderer>();
+                if (renderer != null && referenceMesh != null && referenceMesh.bones != null) {
+                    renderer.bones = referenceMesh.bones;
+                    renderer.updateWhenOffscreen = true;
+                    item.transform.SetParent(transform);
+                }
+            } else if (slot?.container != null) {
+                item.transform.SetParent(slot.container);
+            } else {
                 item.transform.SetParent(transform);
             }
-        } else if (slot?.container != null) {
-            item.transform.SetParent(slot.container);
-        } else {
-            item.transform.SetParent(transform);
-        }
 
-        loadedItem.transform.localPosition = Vector3.zero;
-        loadedItem.transform.localScale = Vector3.one;
-        loadedItem.transform.localRotation = Quaternion.identity;
+            loadedItem.transform.localPosition = Vector3.zero;
+            loadedItem.transform.localScale = Vector3.one;
+            loadedItem.transform.localRotation = Quaternion.identity;
 
-        if (slot != null) {
-            if (slot.inUse) {
-                GameObject.Destroy(slot.instancedObject);
+            if (slot != null) {
+                if (slot.inUse) {
+                    GameObject.Destroy(slot.instancedObject);
+                }
+                slot.item = item;
+                slot.itemId = itemId;
+                slot.inUse = true;
+                slot.instancedObject = loadedItem;
+                slot.activeObject = itemObject;
             }
-            slot.item = item;
-            slot.itemId = itemId;
-            slot.inUse = true;
-            slot.instancedObject = loadedItem;
-            slot.activeObject = itemObject;
-        }
 
-        SetItemColor(itemObject);
-        return item;
+            SetItemColor(itemObject);
+            return item;
+        }
+        catch (System.Exception e) {
+            Debug.LogError($"[{gameObject.name}] Error loading item {itemId}: {e.Message}\n{e.StackTrace}");
+            return null;
+        }
     }
 
     void SetupSlots() {
@@ -368,5 +379,16 @@ public class CharacterBase : MonoBehaviour {
                     break;
             }
         }
+    }
+
+    void OnDestroy() {
+        // Clean up resources
+        ClearBody();
+        foreach (var slot in equipmentSlots) {
+            if (slot.instancedObject != null) {
+                Destroy(slot.instancedObject);
+            }
+        }
+        equipmentSlots.Clear();
     }
 }

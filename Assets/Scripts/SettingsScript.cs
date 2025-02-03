@@ -22,6 +22,8 @@ public class SettingsScript : MonoBehaviour
         musicSlider.onValueChanged.AddListener(SetMusicVolume);
         effectsSlider.onValueChanged.AddListener(SetEffectsVolume);
 
+        LoadSettings();
+
         // Populate resolution dropdown
         // resolutionDropdown.ClearOptions();
         // List<string> options = new List<string>();
@@ -40,6 +42,21 @@ public class SettingsScript : MonoBehaviour
         // resolutionDropdown.RefreshShownValue();
     }
 
+    private void LoadSettings()
+    {
+        musicSlider.value = PlayerPrefs.GetFloat("MusicVolume", 1.0f);
+        effectsSlider.value = PlayerPrefs.GetFloat("EffectsVolume", 1.0f);
+        fullscreenToggle.isOn = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
+    }
+
+    private void SaveSettings()
+    {
+        PlayerPrefs.SetFloat("MusicVolume", musicSlider.value);
+        PlayerPrefs.SetFloat("EffectsVolume", effectsSlider.value);
+        PlayerPrefs.SetInt("Fullscreen", fullscreenToggle.isOn ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
     public void OpenSettingsPanel()
     {
         settingsPanel.SetActive(true);
@@ -48,6 +65,7 @@ public class SettingsScript : MonoBehaviour
 
     private void CloseSettingsPanel()
     {
+        SaveSettings();
         settingsPanel.SetActive(false);
         mainMenuPanel.SetActive(true);
     }

@@ -1,5 +1,5 @@
 sceneSetups:
-- path: Assets/Scenes/GalvenaIzvelne.unity
+- path: Assets/Scenes/SpelesAina.unity
   isLoaded: 1
   isActive: 1
   isSubScene: 0

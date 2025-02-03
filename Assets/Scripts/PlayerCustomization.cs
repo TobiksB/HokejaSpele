@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 
 public class PlayerCustomization : MonoBehaviour
 {
@@ -16,26 +17,132 @@ public class PlayerCustomization : MonoBehaviour
     public Dropdown beardStyleDropdown;
     public Dropdown eyebrowStyleDropdown;
 
+    private bool ValidateComponents()
+    {
+        bool isValid = true;
+        
+        if (customizationPanel == null)
+        {
+            Debug.LogError("Customization Panel is not assigned!");
+            isValid = false;
+        }
+        if (mainMenuPanel == null)
+        {
+            Debug.LogError("Main Menu Panel is not assigned!");
+            isValid = false;
+        }
+        if (openCustomizationButton == null)
+        {
+            Debug.LogError("Open Customization Button is not assigned!");
+            isValid = false;
+        }
+        if (closeCustomizationButton == null)
+        {
+            Debug.LogError("Close Customization Button is not assigned!");
+            isValid = false;
+        }
+        if (skinColorSlider == null)
+        {
+            Debug.LogError("Skin Color Slider is not assigned!");
+            isValid = false;
+        }
+        if (hairStyleDropdown == null)
+        {
+            Debug.LogError("Hair Style Dropdown is not assigned!");
+            isValid = false;
+        }
+        if (beardStyleDropdown == null)
+        {
+            Debug.LogError("Beard Style Dropdown is not assigned!");
+            isValid = false;
+        }
+        if (eyebrowStyleDropdown == null)
+        {
+            Debug.LogError("Eyebrow Style Dropdown is not assigned!");
+            isValid = false;
+        }
+        if (characterBase == null)
+        {
+            Debug.LogError("Character Base is not assigned!");
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+
     private void Start()
     {
-        openCustomizationButton.onClick.AddListener(OpenCustomizationPanel);
-        closeCustomizationButton.onClick.AddListener(CloseCustomizationPanel);
-
-        if (customizationPanel != null)
+        if (!ValidateComponents())
         {
-            customizationPanel.SetActive(false); // Ensure the panel is hidden at the start
+            Debug.LogError("Component validation failed. Please check the Inspector for missing references.");
+            enabled = false;
+            return;
         }
 
-        // Add listeners to the sliders and dropdowns
+        // Initialize UI elements
+        openCustomizationButton.onClick.AddListener(OpenCustomizationPanel);
+        closeCustomizationButton.onClick.AddListener(CloseCustomizationPanel);
+        customizationPanel.SetActive(false);
+
+        // Initialize sliders and dropdowns
         skinColorSlider.onValueChanged.AddListener(ChangeSkinColor);
         hairStyleDropdown.onValueChanged.AddListener(ChangeHairStyle);
         beardStyleDropdown.onValueChanged.AddListener(ChangeBeardStyle);
         eyebrowStyleDropdown.onValueChanged.AddListener(ChangeEyebrowStyle);
 
-        // Populate dropdowns with available styles
-        PopulateDropdown(hairStyleDropdown, characterBase.GetAvailableHairStyles());
-        PopulateDropdown(beardStyleDropdown, characterBase.GetAvailableBeardStyles());
-        PopulateDropdown(eyebrowStyleDropdown, characterBase.GetAvailableEyebrowStyles());
+        StartCoroutine(InitializeCustomization());
+    }
+
+    private IEnumerator InitializeCustomization()
+    {
+        // Wait for CharacterBase to be ready
+        yield return new WaitForSeconds(0.1f); // Give other scripts time to initialize
+
+        try
+        {
+            PopulateDropdown(hairStyleDropdown, characterBase.GetAvailableHairStyles());
+            PopulateDropdown(beardStyleDropdown, characterBase.GetAvailableBeardStyles());
+            PopulateDropdown(eyebrowStyleDropdown, characterBase.GetAvailableEyebrowStyles());
+            StartCoroutine(LoadCustomizationWhenReady());
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error during initialization: {e.Message}");
+        }
+    }
+
+    private IEnumerator LoadCustomizationWhenReady()
+    {
+        // Wait until character is initialized
+        while (!characterBase.IsInitialized)
+        {
+            yield return null;
+        }
+        
+        // Now load the settings
+        LoadCustomizationSettings();
+    }
+
+    private void LoadCustomizationSettings()
+    {
+        skinColorSlider.value = PlayerPrefs.GetFloat("SkinColor", 1.0f);
+        hairStyleDropdown.value = PlayerPrefs.GetInt("HairStyle", 0);
+        beardStyleDropdown.value = PlayerPrefs.GetInt("BeardStyle", 0);
+        eyebrowStyleDropdown.value = PlayerPrefs.GetInt("EyebrowStyle", 0);
+
+        ChangeSkinColor(skinColorSlider.value);
+        ChangeHairStyle(hairStyleDropdown.value);
+        ChangeBeardStyle(beardStyleDropdown.value);
+        ChangeEyebrowStyle(eyebrowStyleDropdown.value);
+    }
+
+    private void SaveCustomizationSettings()
+    {
+        PlayerPrefs.SetFloat("SkinColor", skinColorSlider.value);
+        PlayerPrefs.SetInt("HairStyle", hairStyleDropdown.value);
+        PlayerPrefs.SetInt("BeardStyle", beardStyleDropdown.value);
+        PlayerPrefs.SetInt("EyebrowStyle", eyebrowStyleDropdown.value);
+        PlayerPrefs.Save();
     }
 
     public void OpenCustomizationPanel()
@@ -46,6 +153,7 @@ public class PlayerCustomization : MonoBehaviour
 
     public void CloseCustomizationPanel()
     {
+        SaveCustomizationSettings();
         customizationPanel.SetActive(false);
         mainMenuPanel.SetActive(true);
     }
@@ -77,7 +185,10 @@ public class PlayerCustomization : MonoBehaviour
 
     private void PopulateDropdown(Dropdown dropdown, List<string> options)
     {
-        dropdown.ClearOptions();
-        dropdown.AddOptions(options);
+        if (dropdown != null && options != null)
+        {
+            dropdown.ClearOptions();
+            dropdown.AddOptions(options);
+        }
     }
 }
