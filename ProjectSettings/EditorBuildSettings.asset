@@ -6,11 +6,11 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/GalvenaIzvelne.unity
-    guid: 62cc64b7b8765e642b7f24e9214ff16a
-  - enabled: 1
-    path: Assets/Scenes/SpelesAina.unity
+    path: Assets/Scenes/MainMenu.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/Scenes/PlayScene.unity
+    guid: d374129a1504bb74b8683ec8b0c2fc9f
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 289c1b55c9541489481df5cc06664110, type: 3}
   m_UseUCBPForAssetBundles: 0
