@@ -5,3 +5,15 @@ Spēlē būs 3D izskatā un būs iespēja spēlēt vairākos spēles režīmos, 
 
 # Unity versija
 Spele tiek veidota uz Unity 6000.0.24f1 versijas
+
+# Uzdevumu apraksts
+- [ ] - Izveidot sakuma ekrānu
+- [ ] - Izveidot iestatijuma ekrānu
+- [ ] - Izveidot spēlētāja izveides ekrānu
+- [ ] - Pievienot fona mūziku un skaņas effektus
+- [ ] - Izveidot funckionālas spēlētāja kontroles
+- [ ] - Izveidot punktu skaitīšanas sistēmu
+- [ ] - Realizēt treniņu režīmu
+- [ ] - Pievienot vairāku spēlētāju režīmu (lokālā savienojumā)
+- [ ] - Pievienot iespeju mainīt spēles kontroles
+- [ ] - Izveidot mākslīgā intelekta pretinieku
