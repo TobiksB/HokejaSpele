@@ -10,6 +10,7 @@ public class PlayerCustomization : MonoBehaviour
     public GameObject mainMenuPanel;
     public Button openCustomizationButton;
     public Button closeCustomizationButton;
+    [SerializeField] private Button startGameButton; // Add this field
 
     private CharacterBase characterBase; // Changed to private
 
@@ -97,12 +98,44 @@ public class PlayerCustomization : MonoBehaviour
             return;
         }
 
+        // Ensure the prefab is in a Resources folder
+        if (playerPrefab != null)
+        {
+            // Move or copy your player prefab to a Resources folder in your project
+            string prefabPath = "Prefabs/Player"; // Adjust this path to match your Resources folder structure
+            GameObject resourcesPrefab = Resources.Load<GameObject>(prefabPath);
+            if (resourcesPrefab != null)
+            {
+                var instance = SelectedPlayer.Instance; // Ensure instance exists
+                SelectedPlayer.playerPrefab = resourcesPrefab;
+                Debug.Log($"[PlayerCustomization] Set player prefab from Resources: {resourcesPrefab.name}");
+            }
+            else
+            {
+                Debug.LogError($"[PlayerCustomization] Could not load player prefab from Resources at path: {prefabPath}");
+            }
+        }
+
+        // Ensure SelectedPlayer component exists in scene
+        if (FindObjectOfType<SelectedPlayer>() == null)
+        {
+            new GameObject("SelectedPlayer").AddComponent<SelectedPlayer>();
+        }
+
         // Store the prefab for later use
         SelectedPlayer.playerPrefab = playerPrefab;
+        Debug.Log($"Player prefab {playerPrefab.name} set in PlayerCustomization");
 
         // Initialize UI elements
         openCustomizationButton.onClick.AddListener(OpenCustomizationPanel);
         closeCustomizationButton.onClick.AddListener(CloseCustomizationPanel);
+        if (startGameButton != null)
+        {
+            startGameButton.onClick.AddListener(() => {
+                SaveCustomizationSettings();
+                FindObjectOfType<SceneLoader>()?.LoadGameScene();
+            });
+        }
         customizationPanel.SetActive(false);
 
         // Initialize sliders and dropdowns
@@ -159,6 +192,12 @@ public class PlayerCustomization : MonoBehaviour
 
     private void SaveCustomizationSettings()
     {
+        // Ensure prefab is set before scene transition
+        if (SelectedPlayer.playerPrefab == null)
+        {
+            SelectedPlayer.playerPrefab = playerPrefab;
+        }
+        
         PlayerCustomizationData.Current.skinColorValue = skinColorSlider.value;
         PlayerCustomizationData.Current.hairStyle = hairStyleDropdown.value;
         PlayerCustomizationData.Current.beardStyle = beardStyleDropdown.value;

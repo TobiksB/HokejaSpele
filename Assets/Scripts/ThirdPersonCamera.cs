@@ -11,7 +11,7 @@ public class ThirdPersonCamera : MonoBehaviour
     void Start()
     {
         // Set initial rotation and keep it fixed
-        transform.rotation = Quaternion.Euler(0f, 0f, 0f); // 15 degrees down-tilt
+        transform.rotation = Quaternion.Euler(0f, 0f, -3f); // 15 degrees down-tilt
         StartCoroutine(FindPlayer());
     }
 

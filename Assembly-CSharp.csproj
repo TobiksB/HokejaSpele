@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\PlayerData.cs" />
     <Compile Include="Assets\Scripts\Puck.cs" />
     <Compile Include="Assets\Scripts\ThirdPersonCamera.cs" />
+    <Compile Include="Assets\Scripts\ScoreManager.cs" />
     <Compile Include="Assets\Scripts\SceneChangeScript.cs" />
     <Compile Include="Assets\Scripts\SelectedPlayer.cs" />
     <Compile Include="Assets\Scripts\PlayerComponents.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Assets\Scripts\SettingScript.cs" />
     <Compile Include="Assets\Scripts\PlayerSpawner.cs" />
     <Compile Include="Assets\Scripts\PlayerColorLoader.cs" />
+    <Compile Include="Assets\Scripts\GoalTrigger.cs" />
     <Compile Include="Assets\Scripts\PlayerCustomization.cs" />
     <Compile Include="Assets\Scripts\ShootingIndicator.cs" />
     <Compile Include="Assets\Scripts\MainMenuScript.cs" />

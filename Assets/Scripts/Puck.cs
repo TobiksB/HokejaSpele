@@ -22,8 +22,8 @@ public class Puck : MonoBehaviour
         
         // Configure Rigidbody
         rb.mass = 0.17f; // NHL puck mass in kg
-        rb.drag = 0.3f;
-        rb.angularDrag = 0.5f;
+        rb.linearDamping = 0.3f;
+        rb.angularDamping = 0.5f;
         rb.useGravity = true;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
@@ -41,11 +41,11 @@ public class Puck : MonoBehaviour
 
     private void CreatePuckPhysicMaterial()
     {
-        PhysicMaterial puckMaterial = new PhysicMaterial("PuckMaterial");
+        PhysicsMaterial puckMaterial = new PhysicsMaterial("PuckMaterial");
         puckMaterial.dynamicFriction = 0.1f;
         puckMaterial.staticFriction = 0.1f;
         puckMaterial.bounciness = 0.5f;
-        puckMaterial.frictionCombine = PhysicMaterialCombine.Minimum;
+        puckMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
         puckMaterial.bounceCombine = PhysicsMaterialCombine.Average;
         
         puckCollider.material = puckMaterial;
@@ -90,7 +90,7 @@ public class Puck : MonoBehaviour
         isControlled = true;
         controllingPlayer = player;
         rb.isKinematic = true;
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
     }
 }
