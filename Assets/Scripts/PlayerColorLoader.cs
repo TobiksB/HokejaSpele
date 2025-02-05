@@ -17,32 +17,61 @@ public class PlayerColorLoader : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"[PlayerColorLoader] Checking for player prefab... Current value: {(SelectedPlayer.playerPrefab != null ? SelectedPlayer.playerPrefab.name : "null")}");
+        
+        if (SelectedPlayer.playerPrefab == null)
+        {
+            Debug.LogError("[PlayerColorLoader] No player prefab selected! Returning to main menu...");
+            // Wait one frame before loading main menu to ensure proper error logging
+            StartCoroutine(LoadMainMenuDelayed());
+            return;
+        }
         SpawnPlayer();
+    }
+
+    private System.Collections.IEnumerator LoadMainMenuDelayed()
+    {
+        yield return null;
+        FindObjectOfType<SceneLoader>()?.LoadMainMenu();
     }
 
     void SpawnPlayer()
     {
-        if (PlayerData.Instance != null && PlayerData.Instance.playerPrefab != null && spawnPoint != null)
+        if (spawnPoint == null)
         {
-            GameObject player = Instantiate(PlayerData.Instance.playerPrefab, 
-                                         spawnPoint.position, 
-                                         spawnPoint.rotation);
-            
-            // Get all renderers and their materials
-            Renderer[] renderers = player.GetComponentsInChildren<Renderer>();
-            Material[] materials = renderers.SelectMany(r => r.materials).ToArray();
+            Debug.LogError("Spawn point is not set! Using default position.");
+            spawnPoint = transform;
+        }
 
-            foreach (Material mat in materials)
+        GameObject player = Instantiate(SelectedPlayer.playerPrefab, 
+                                     spawnPoint.position, 
+                                     spawnPoint.rotation);
+        player.tag = "Player"; // Add this line
+        
+        Debug.Log($"Player {player.name} spawned at {spawnPoint.position}");
+        
+        // Get all renderers and their materials
+        Renderer[] renderers = player.GetComponentsInChildren<Renderer>();
+        if (renderers != null && renderers.Length > 0)
+        {
+            foreach (Renderer renderer in renderers)
             {
-                if (mat != null)
+                foreach (Material mat in renderer.materials)
                 {
-                    mat.color = PlayerData.Instance.playerColor;
+                    if (mat != null)
+                    {
+                        // Load saved color
+                        float r = PlayerPrefs.GetFloat("PlayerColorR", 1f);
+                        float g = PlayerPrefs.GetFloat("PlayerColorG", 1f);
+                        float b = PlayerPrefs.GetFloat("PlayerColorB", 1f);
+                        mat.color = new Color(r, g, b);
+                    }
                 }
             }
         }
         else
         {
-            Debug.LogError("Missing required references for player spawn!");
+            Debug.LogError("Missing required references for player spawn! Check if player prefab is selected in the main menu.");
         }
     }
 
