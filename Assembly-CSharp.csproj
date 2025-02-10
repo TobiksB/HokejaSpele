@@ -71,7 +71,6 @@
     <Compile Include="Assets\Scripts\ScoreManager.cs" />
     <Compile Include="Assets\Scripts\SceneChangeScript.cs" />
     <Compile Include="Assets\Scripts\SelectedPlayer.cs" />
-    <Compile Include="Assets\Scripts\PlayerComponents.cs" />
     <Compile Include="Assets\Scripts\HockeyPlayer.cs" />
     <Compile Include="Assets\TeKniKo_Free\Power_Ups\Scripts\ObjectBounce.cs" />
     <Compile Include="Assets\Scripts\PlayerCreation.cs" />

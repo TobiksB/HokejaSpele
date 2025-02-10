@@ -13,15 +13,15 @@ public class ShootingIndicator : MonoBehaviour
     void Start()
     {
         // Assuming the arrow is a child object with a renderer
-        arrowTransform = transform.GetChild(0);
-        arrowMaterial = arrowTransform.GetComponent<Renderer>().material;
-        gameObject.SetActive(false);
+        // arrowTransform = transform.GetChild(0);
+        // arrowMaterial = arrowTransform.GetComponent<Renderer>().material;
+        // gameObject.SetActive(false);
     }
 
     public void UpdatePower(float percentage)
     {
-        float scale = Mathf.Lerp(minScale, maxScale, percentage);
-        arrowTransform.localScale = new Vector3(scale, scale, scale);
-        arrowMaterial.color = Color.Lerp(minColor, maxColor, percentage);
+        // float scale = Mathf.Lerp(minScale, maxScale, percentage);
+        // arrowTransform.localScale = new Vector3(scale, scale, scale);
+        // arrowMaterial.color = Color.Lerp(minColor, maxColor, percentage);
     }
 }

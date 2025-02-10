@@ -9,17 +9,19 @@ public class Puck : MonoBehaviour
     [SerializeField] private float stickOffset = 1.5f;
     [SerializeField] private float puckHeight = 0.25f; // Height of the puck
     [SerializeField] private float puckRadius = 0.375f; // Standard hockey puck radius
-    
+    [SerializeField] private float bounceForce = 10f;
+    [SerializeField] private float maxVelocity = 20f;
+
     private Rigidbody rb;
     private CapsuleCollider puckCollider;
     private bool isControlled;
     private Transform controllingPlayer;
-    
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         puckCollider = GetComponent<CapsuleCollider>();
-        
+
         // Configure Rigidbody
         rb.mass = 0.17f; // NHL puck mass in kg
         rb.linearDamping = 0.3f;
@@ -34,7 +36,7 @@ public class Puck : MonoBehaviour
         puckCollider.height = puckHeight;
         puckCollider.radius = puckRadius;
         puckCollider.isTrigger = false;
-        
+
         // Create and assign PhysicMaterial
         CreatePuckPhysicMaterial();
     }
@@ -47,7 +49,7 @@ public class Puck : MonoBehaviour
         puckMaterial.bounciness = 0.5f;
         puckMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
         puckMaterial.bounceCombine = PhysicsMaterialCombine.Average;
-        
+
         puckCollider.material = puckMaterial;
     }
 
@@ -71,6 +73,25 @@ public class Puck : MonoBehaviour
                 transform.position = pos;
             }
         }
+
+        // Clamp velocity to prevent excessive speed
+        if (rb.linearVelocity.magnitude > maxVelocity)
+        {
+            rb.linearVelocity = rb.linearVelocity.normalized * maxVelocity;
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            // Calculate bounce direction
+            Vector3 normal = collision.contacts[0].normal;
+            Vector3 reflection = Vector3.Reflect(rb.linearVelocity, normal);
+
+            // Apply bounce force
+            rb.linearVelocity = reflection.normalized * Mathf.Min(rb.linearVelocity.magnitude * bounceForce, maxVelocity);
+        }
     }
 
     public void Shoot(float powerPercentage, Vector3 direction)
@@ -78,7 +99,7 @@ public class Puck : MonoBehaviour
         isControlled = false;
         controllingPlayer = null;
         rb.isKinematic = false;
-        
+
         // Apply force slightly upward to prevent ground sticking
         Vector3 shootDirection = direction + Vector3.up * 0.1f;
         float force = maxShootForce * powerPercentage;

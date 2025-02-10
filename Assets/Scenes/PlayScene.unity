@@ -1247,7 +1247,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1462725882}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 114114a50c43b934c91aef311d5b6d64, type: 3}
   m_Name: 
@@ -1888,6 +1888,8 @@ MonoBehaviour:
   stickOffset: 1.5
   puckHeight: 0.25
   puckRadius: 0.375
+  bounceForce: 10
+  maxVelocity: 20
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
