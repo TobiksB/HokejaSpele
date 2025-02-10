@@ -9,12 +9,15 @@ public class Puck : MonoBehaviour
     [SerializeField] private float stickOffset = 1.5f;
     [SerializeField] private float puckHeight = 0.25f; // Height of the puck
     [SerializeField] private float puckRadius = 0.375f; // Standard hockey puck radius
-    [SerializeField] private float bounceForce = 10f;
+    [SerializeField] private float bounceForce = 0.8f; // Reduced bounce force
     [SerializeField] private float maxVelocity = 20f;
+    [SerializeField] private Vector3 startPosition;
+    private float lastBounceTime;
+    private const float MIN_BOUNCE_INTERVAL = 0.1f;
 
     private Rigidbody rb;
     private CapsuleCollider puckCollider;
-    private bool isControlled;
+    public bool isControlled { get; private set; }
     private Transform controllingPlayer;
 
     void Awake()
@@ -22,35 +25,35 @@ public class Puck : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         puckCollider = GetComponent<CapsuleCollider>();
 
-        // Configure Rigidbody
-        rb.mass = 0.17f; // NHL puck mass in kg
-        rb.linearDamping = 0.3f;
-        rb.angularDamping = 0.5f;
+        // Configure Rigidbody with mesh-friendly physics settings
+        rb.mass = 0.17f;
+        rb.linearDamping = 1f; // Increased drag for better control
+        rb.angularDamping = 1f;
         rb.useGravity = true;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        rb.sleepThreshold = 0.0f; // Prevent the puck from sleeping
 
-        // Configure Collider
-        puckCollider.direction = 1; // Y-axis
+        // Configure Collider for mesh collision
+        puckCollider.direction = 1;
         puckCollider.height = puckHeight;
         puckCollider.radius = puckRadius;
         puckCollider.isTrigger = false;
+        puckCollider.material = CreatePuckPhysicMaterial();
 
-        // Create and assign PhysicMaterial
-        CreatePuckPhysicMaterial();
+        startPosition = transform.position;
     }
 
-    private void CreatePuckPhysicMaterial()
+    private PhysicsMaterial CreatePuckPhysicMaterial()
     {
         PhysicsMaterial puckMaterial = new PhysicsMaterial("PuckMaterial");
-        puckMaterial.dynamicFriction = 0.1f;
-        puckMaterial.staticFriction = 0.1f;
+        puckMaterial.dynamicFriction = 0.05f; // Reduced friction
+        puckMaterial.staticFriction = 0.05f;
         puckMaterial.bounciness = 0.5f;
         puckMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
         puckMaterial.bounceCombine = PhysicsMaterialCombine.Average;
-
-        puckCollider.material = puckMaterial;
+        return puckMaterial;
     }
 
     void FixedUpdate()
@@ -83,14 +86,40 @@ public class Puck : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Wall"))
+        if (!rb.isKinematic)
         {
-            // Calculate bounce direction
-            Vector3 normal = collision.contacts[0].normal;
-            Vector3 reflection = Vector3.Reflect(rb.linearVelocity, normal);
+            // Get the collision normal and current velocity
+            ContactPoint contact = collision.GetContact(0);
+            Vector3 normal = contact.normal;
+            Vector3 currentVelocity = rb.linearVelocity;
 
-            // Apply bounce force
-            rb.linearVelocity = reflection.normalized * Mathf.Min(rb.linearVelocity.magnitude * bounceForce, maxVelocity);
+            // Calculate reflection with mesh-aware bounce
+            Vector3 reflection = Vector3.Reflect(currentVelocity, normal.normalized);
+            
+            // Apply velocity with dampening
+            float dampening = Mathf.Clamp01(bounceForce);
+            rb.linearVelocity = reflection * dampening;
+
+            // Add slight upward force to prevent sticking
+            rb.AddForce(Vector3.up * 0.1f, ForceMode.Impulse);
+
+            // Prevent excessive bouncing
+            if (currentVelocity.magnitude < 1f)
+            {
+                rb.linearVelocity = Vector3.zero;
+            }
+
+            lastBounceTime = Time.time;
+            
+            // Debug visualization
+            Debug.DrawRay(contact.point, normal, Color.red, 1f);
+            Debug.DrawRay(contact.point, reflection, Color.green, 1f);
+        }
+        else if (collision.gameObject.CompareTag("Net"))
+        {
+            // Stop the puck when it hits the net
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
     }
 
@@ -99,6 +128,7 @@ public class Puck : MonoBehaviour
         isControlled = false;
         controllingPlayer = null;
         rb.isKinematic = false;
+        transform.parent = null;
 
         // Apply force slightly upward to prevent ground sticking
         Vector3 shootDirection = direction + Vector3.up * 0.1f;
@@ -108,9 +138,21 @@ public class Puck : MonoBehaviour
 
     public void AttachToPlayer(Transform player)
     {
+        Debug.Log($"Attaching puck to player: {player.name}");
         isControlled = true;
         controllingPlayer = player;
         rb.isKinematic = true;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        
+        // Position the puck relative to the player
+        transform.position = player.position + player.forward * stickOffset;
+        transform.position = new Vector3(transform.position.x, puckHeight / 2f, transform.position.z);
+    }
+
+    public void ResetPosition()
+    {
+        transform.position = startPosition;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
     }

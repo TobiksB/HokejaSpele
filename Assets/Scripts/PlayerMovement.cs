@@ -30,6 +30,13 @@ public class PlayerMovement : MonoBehaviour
     private bool isShooting;
     private Puck controlledPuck;
 
+    [Header("Collision Settings")]
+    [SerializeField] private float collisionOffset = 0.5f;
+    [SerializeField] private LayerMask wallLayer; // Assign this in inspector
+    private CapsuleCollider playerCollider;
+    private readonly float skinWidth = 0.1f;
+    private readonly float groundOffset = 0.1f;
+
     private Vector3 currentVelocity;
     private float boostTimer;
     private float boostCooldownTimer;
@@ -41,6 +48,21 @@ public class PlayerMovement : MonoBehaviour
         {
             animator = GetComponentInChildren<Animator>();
         }
+        playerCollider = GetComponent<CapsuleCollider>();
+        if (playerCollider == null)
+        {
+            Debug.LogError("Player must have a CapsuleCollider!");
+            enabled = false;
+        }
+
+        // Set up wall layer mask
+        wallLayer = LayerMask.GetMask("Wall");
+        Debug.Log($"Wall layer mask: {wallLayer}"); // Debug to verify layer is set
+        
+        // Ensure player is slightly above ground
+        Vector3 pos = transform.position;
+        pos.y += groundOffset;
+        transform.position = pos;
     }
 
     void Update()
@@ -50,7 +72,7 @@ public class PlayerMovement : MonoBehaviour
         HandleShooting();
         
         // Handle puck pickup
-        if (Input.GetKeyDown(KeyCode.E) && !controlledPuck)
+        if (Input.GetKeyDown(KeyCode.E))
         {
             TryPickupPuck();
         }
@@ -77,30 +99,59 @@ public class PlayerMovement : MonoBehaviour
 
         bool isMoving = Mathf.Abs(moveForward) > 0.1f || Mathf.Abs(moveSideways) > 0.1f;
         
-        // Update animation states
-        if (animator != null)
+        // Update animations
+        if (animator != null && !isShooting)
         {
-            // Only update skating and idle if not shooting
-            if (!isShooting)
-            {
-                animator.SetBool(IsSkating, isMoving);
-                animator.SetBool(IsIdle, !isMoving);
-            }
+            animator.SetBool(IsSkating, isMoving);
+            animator.SetBool(IsIdle, !isMoving);
         }
 
-        // Apply movement only if actually moving
+        // Apply movement
         if (isMoving)
         {
             float currentSpeed = isBoosting ? maxSpeed * boostMultiplier : maxSpeed;
             currentVelocity += moveDirection * acceleration * Time.fixedDeltaTime;
             currentVelocity = Vector3.ClampMagnitude(currentVelocity, currentSpeed);
+
+            // Try to move
+            Vector3 targetPosition = transform.position + currentVelocity * Time.fixedDeltaTime;
+            
+            // Check if we can move there
+            if (!Physics.CapsuleCast(
+                GetTopCapsulePoint(),
+                GetBottomCapsulePoint(),
+                playerCollider.radius,
+                currentVelocity.normalized,
+                out RaycastHit hit,
+                currentVelocity.magnitude * Time.fixedDeltaTime + collisionOffset,
+                wallLayer))
+            {
+                transform.position = targetPosition;
+            }
+            else
+            {
+                // Try sliding along the wall
+                Vector3 normal = hit.normal;
+                Vector3 deflected = Vector3.ProjectOnPlane(currentVelocity, normal);
+                if (deflected.magnitude > 0.1f)
+                {
+                    transform.position += deflected.normalized * currentSpeed * Time.fixedDeltaTime;
+                }
+            }
         }
 
         // Apply drag
         currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, dragForce * Time.fixedDeltaTime);
+    }
 
-        // Apply movement
-        transform.position += currentVelocity * Time.fixedDeltaTime;
+    private Vector3 GetTopCapsulePoint()
+    {
+        return transform.position + Vector3.up * (playerCollider.height - playerCollider.radius);
+    }
+
+    private Vector3 GetBottomCapsulePoint()
+    {
+        return transform.position + Vector3.up * playerCollider.radius;
     }
 
     void HandleBoost()
@@ -194,12 +245,23 @@ public class PlayerMovement : MonoBehaviour
 
     private void TryPickupPuck()
     {
-        Collider[] colliders = Physics.OverlapSphere(transform.position + transform.forward * 1.5f, 1f);
+        // Increase the detection radius and offset
+        float pickupRadius = 2f;
+        float forwardOffset = 2f;
+        Vector3 checkPosition = transform.position + transform.forward * forwardOffset;
+        
+        Debug.DrawLine(transform.position, checkPosition, Color.yellow, 1f); // Visualize pickup range
+        Collider[] colliders = Physics.OverlapSphere(checkPosition, pickupRadius);
+        
+        Debug.Log($"Checking for puck. Found {colliders.Length} colliders.");
+        
         foreach (Collider col in colliders)
         {
+            Debug.Log($"Found collider: {col.gameObject.name}");
             Puck puck = col.GetComponent<Puck>();
-            if (puck != null)
+            if (puck != null && !puck.isControlled)
             {
+                Debug.Log($"Found pickup-able puck: {puck.gameObject.name}");
                 controlledPuck = puck;
                 puck.AttachToPlayer(transform);
                 break;

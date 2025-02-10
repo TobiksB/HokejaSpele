@@ -1,19 +1,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class HockeyPlayer : CharacterBase {
+public class HockeyPlayer : MonoBehaviour {
     public int number;
     [Header("List of equipped items:")]
     public List<int> items = new List<int>();
+    
+    public bool IsInitialized { get; private set; }
 
-    protected override void Awake() {
-        base.Awake(); // Ensure base initialization happens first
+    protected void Awake() {
+        IsInitialized = true;
     }
 
-    protected override void Start() {
-        base.Start();
-        
-        if (IsInitialized) { // Fixed: changed isInitialized to IsInitialized
+    protected void Start() {
+        if (IsInitialized) {
             // Apply saved customization first
             ApplyCustomization();
             
@@ -39,10 +39,33 @@ public class HockeyPlayer : CharacterBase {
         ChangeEyebrowstyle(PlayerCustomizationData.Current.eyebrowStyle);
     }
 
-    // Added missing EquipItem method
     private void EquipItem(int itemId)
     {
         // TODO: Implement equipment logic here
         Debug.Log($"Equipping item with ID: {itemId}");
+    }
+
+    public void ChangeSkinColor(Color color)
+    {
+        // TODO: Implement skin color change logic
+        Debug.Log($"Changing skin color to: {color}");
+    }
+
+    public void ChangeHairstyle(int style)
+    {
+        // TODO: Implement hairstyle change logic
+        Debug.Log($"Changing hairstyle to: {style}");
+    }
+
+    public void ChangeBeardstyle(int style)
+    {
+        // TODO: Implement beardstyle change logic
+        Debug.Log($"Changing beardstyle to: {style}");
+    }
+
+    public void ChangeEyebrowstyle(int style)
+    {
+        // TODO: Implement eyebrow style change logic
+        Debug.Log($"Changing eyebrow style to: {style}");
     }
 }

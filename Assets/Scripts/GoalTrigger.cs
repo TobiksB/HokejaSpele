@@ -5,6 +5,9 @@ public class GoalTrigger : MonoBehaviour
     public bool isTeam1Goal = true;
     private ScoreManager scoreManager;
     private BoxCollider triggerCollider;
+    private bool goalScored = false;
+    private float goalCooldown = 1f;
+    private float goalTimer = 0f;
 
     private void Start()
     {
@@ -22,18 +25,53 @@ public class GoalTrigger : MonoBehaviour
         triggerCollider.isTrigger = true;
     }
 
+    private void Update()
+    {
+        if (goalScored)
+        {
+            goalTimer += Time.deltaTime;
+            if (goalTimer >= goalCooldown)
+            {
+                goalScored = false;
+                goalTimer = 0f;
+            }
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Puck"))
+        HandleGoal(other);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        HandleGoal(collision.collider);
+    }
+
+    private void HandleGoal(Collider other)
+    {
+        if (goalScored) return;
+
+        Puck puck = other.GetComponent<Puck>();
+        if (puck != null)
         {
-            Debug.Log($"Goal scored! Ball entered {(isTeam1Goal ? "Team 1's" : "Team 2's")} goal");
-            if (isTeam1Goal)
+            goalScored = true;
+            Debug.Log($"Goal scored! Puck entered {(isTeam1Goal ? "Team 1's" : "Team 2's")} goal");
+            if (scoreManager != null)
             {
-                scoreManager.AddScoreTeam2(); // Team 2 scores in Team 1's goal
+                if (isTeam1Goal)
+                {
+                    scoreManager.AddScoreTeam2();
+                }
+                else
+                {
+                    scoreManager.AddScoreTeam1();
+                }
+                puck.ResetPosition();
             }
             else
             {
-                scoreManager.AddScoreTeam1(); // Team 1 scores in Team 2's goal
+                Debug.LogError("ScoreManager not found!");
             }
         }
     }

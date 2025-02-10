@@ -5,14 +5,12 @@ using System.Collections;
 
 public class PlayerCustomization : MonoBehaviour
 {
-    public GameObject playerPrefab; // Add this field - assign your player prefab in inspector
+    public GameObject playerPrefab; 
     public GameObject customizationPanel;
     public GameObject mainMenuPanel;
     public Button openCustomizationButton;
     public Button closeCustomizationButton;
-    [SerializeField] private Button startGameButton; // Add this field
-
-    private CharacterBase characterBase; // Changed to private
+    [SerializeField] private Button startGameButton; 
 
     public Slider skinColorSlider;
     public Dropdown hairStyleDropdown;
@@ -30,14 +28,7 @@ public class PlayerCustomization : MonoBehaviour
         }
 
         // Verify all required components exist on the prefab
-        characterBase = playerPrefab.GetComponent<CharacterBase>();
         HockeyPlayer hockeyPlayer = playerPrefab.GetComponent<HockeyPlayer>();
-        
-        if (characterBase == null)
-        {
-            Debug.LogError("CharacterBase component missing on player prefab!");
-            return false;
-        }
         
         if (hockeyPlayer == null)
         {
@@ -149,14 +140,15 @@ public class PlayerCustomization : MonoBehaviour
 
     private IEnumerator InitializeCustomization()
     {
-        // Wait for CharacterBase to be ready
+        // Wait for initialization
         yield return new WaitForSeconds(0.1f); // Give other scripts time to initialize
 
         try
         {
-            PopulateDropdown(hairStyleDropdown, characterBase.GetAvailableHairStyles());
-            PopulateDropdown(beardStyleDropdown, characterBase.GetAvailableBeardStyles());
-            PopulateDropdown(eyebrowStyleDropdown, characterBase.GetAvailableEyebrowStyles());
+            // Populate dropdowns with dummy data or other sources
+            PopulateDropdown(hairStyleDropdown, new List<string> { "Style1", "Style2" });
+            PopulateDropdown(beardStyleDropdown, new List<string> { "Style1", "Style2" });
+            PopulateDropdown(eyebrowStyleDropdown, new List<string> { "Style1", "Style2" });
             StartCoroutine(LoadCustomizationWhenReady());
         }
         catch (System.Exception e)
@@ -167,12 +159,9 @@ public class PlayerCustomization : MonoBehaviour
 
     private IEnumerator LoadCustomizationWhenReady()
     {
-        // Wait until character is initialized
-        while (!characterBase.IsInitialized)
-        {
-            yield return null;
-        }
-        
+        // Wait until initialization is complete
+        yield return new WaitForSeconds(0.1f);
+
         // Now load the settings
         LoadCustomizationSettings();
     }
@@ -222,25 +211,25 @@ public class PlayerCustomization : MonoBehaviour
     {
         // Convert the slider value to a color (this is just an example, you might want to use a color picker instead)
         Color newColor = new Color(value, value, value);
-        characterBase.ChangeSkinColor(newColor);
+        // Apply the color to the player
     }
 
     private void ChangeHairStyle(int index)
     {
         int newHairStyle = int.Parse(hairStyleDropdown.options[index].text);
-        characterBase.ChangeHairstyle(newHairStyle);
+        // Apply the hairstyle to the player
     }
 
     private void ChangeBeardStyle(int index)
     {
         int newBeardStyle = int.Parse(beardStyleDropdown.options[index].text);
-        characterBase.ChangeBeardstyle(newBeardStyle);
+        // Apply the beard style to the player
     }
 
     private void ChangeEyebrowStyle(int index)
     {
         int newEyebrowStyle = int.Parse(eyebrowStyleDropdown.options[index].text);
-        characterBase.ChangeEyebrowstyle(newEyebrowStyle);
+        // Apply the eyebrow style to the player
     }
 
     private void PopulateDropdown(Dropdown dropdown, List<string> options)
