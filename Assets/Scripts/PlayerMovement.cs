@@ -1,4 +1,5 @@
 using UnityEngine;
+using MainGame;  // Add this line at the top
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -42,6 +43,9 @@ public class PlayerMovement : MonoBehaviour
     private float boostCooldownTimer;
     private bool isBoosting;
 
+    [Header("Hockey Stick")]
+    [SerializeField] private HockeyStickController stickController;
+
     void Start()
     {
         if (animator == null)
@@ -63,6 +67,19 @@ public class PlayerMovement : MonoBehaviour
         Vector3 pos = transform.position;
         pos.y += groundOffset;
         transform.position = pos;
+
+        if (stickController == null)
+        {
+            stickController = GetComponentInChildren<HockeyStickController>();
+            if (stickController != null)
+            {
+                stickController.player = GetComponent<MainGame.HockeyPlayer>();
+            }
+            else
+            {
+                Debug.LogError("Hockey stick controller not found!");
+            }
+        }
     }
 
     void Update()

@@ -59,7 +59,7 @@
     <UnityVersion>6000.0.24f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Users\evita\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.0.5\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="C:\Users\evita\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.1.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -67,25 +67,33 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\WallCollider.cs" />
     <Compile Include="Assets\Scripts\PlayerData.cs" />
-    <Compile Include="Assets\Scripts\Puck.cs" />
     <Compile Include="Assets\Scripts\ThirdPersonCamera.cs" />
+    <Compile Include="Assets\Scripts\Puck.cs" />
     <Compile Include="Assets\Scripts\ScoreManager.cs" />
     <Compile Include="Assets\Scripts\SceneChangeScript.cs" />
+    <Compile Include="Assets\CustomizableCharacters\Packs\IceHockey\Source files\HockeyPlayer.cs" />
     <Compile Include="Assets\Scripts\SelectedPlayer.cs" />
+    <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\TransformDeepChildExtension.cs" />
     <Compile Include="Assets\Scripts\HockeyPlayer.cs" />
+    <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\ColorChanger.cs" />
     <Compile Include="Assets\TeKniKo_Free\Power_Ups\Scripts\ObjectBounce.cs" />
     <Compile Include="Assets\Scripts\PlayerCreation.cs" />
     <Compile Include="Assets\Scripts\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\SettingScript.cs" />
     <Compile Include="Assets\Scripts\PlayerSpawner.cs" />
+    <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\CharacterBase.cs" />
     <Compile Include="Assets\Scripts\PlayerColorLoader.cs" />
     <Compile Include="Assets\Scripts\GoalTrigger.cs" />
     <Compile Include="Assets\Scripts\PlayerCustomization.cs" />
+    <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\Item.cs" />
+    <Compile Include="Assets\CustomizableCharacters\Packs\IceHockey\Source files\HockeyNumber.cs" />
+    <Compile Include="Assets\CustomizableCharacters\Common\Source files\Scripts\DisableOnStartup.cs" />
     <Compile Include="Assets\Scripts\ShootingIndicator.cs" />
     <Compile Include="Assets\Scripts\MainMenuScript.cs" />
     <Compile Include="Assets\Scripts\PlayerCustomizationData.cs" />
     <Compile Include="Assets\Scripts\SceneLoader.cs" />
     <Compile Include="Assets\Scripts\CharacterBase.cs" />
+    <Compile Include="Assets\Scripts\HockeyStickController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
@@ -105,6 +113,7 @@
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
+    <None Include="Assets\CustomizableCharacters\Packs\IceHockey\readme.txt" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\Customizable Skybox\Stylized Sky\Shaders\Stylized Sky.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
