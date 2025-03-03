@@ -48,19 +48,37 @@ namespace MainGame
         public float verticalSensitivity = 2f;
         
         private float currentVerticalAngle = 0f;
-        
+
+        [Header("Stick Position")]
+        public Vector3 stickOffset = new Vector3(0.5f, 0.1f, 0.3f); // Reduced Y value
+        public Vector3 stickRotation = new Vector3(45f, 0f, -90f); // Default hockey stick angles
+        public float baseHeight = 0.1f; // Base height off the ground
+        public float maxHeightAdjustment = 0.3f; // Maximum height the stick can raise
+
+        private Vector3 baseWorldPosition;
+        private Quaternion baseWorldRotation;
+
+        [Header("Stick Control")]
+        public float minStickLength = 1f;    // Minimum distance from player
+        public float maxStickLength = 3f;    // Maximum distance from player
+        public float currentStickLength;      // Current extension length
+        public float stickExtendSpeed = 2f;   // How fast stick extends/retracts
+        public float rotationSpeed = 100f;    // Rotation speed with mouse wheel
+        public float maxSideAngle = 60f;     // Maximum angle for side movement
+        public float heightMultiplier = 0.2f; // How much height increases with length
+
+        private float currentRotation = 0f;   // Current rotation angle
+        private float targetLength;           // Target length for smooth movement
+
         private void Start()
         {
             mainCamera = Camera.main;
             
-            // Store the original local position
+            // Initial setup
             if (player != null)
             {
-                originalLocalPosition = transform.localPosition;
-            }
-            else
-            {
-                Debug.LogWarning("No HockeyPlayer reference set for this stick. The stick may not move correctly.");
+                // Set initial position and rotation
+                UpdateStickTransform();
             }
             
             // Make sure the collider is set to trigger
@@ -69,46 +87,82 @@ namespace MainGame
             {
                 col.isTrigger = false; // We want physical interactions
             }
+
+            currentStickLength = minStickLength;
+            targetLength = currentStickLength;
         }
         
         private void Update()
         {
             if (player == null || mainCamera == null) return;
 
-            // Get mouse position and movement
-            Vector3 mousePos = Input.mousePosition;
+            // Handle mouse wheel rotation
+            float mouseWheel = Input.GetAxis("Mouse ScrollWheel");
+            currentRotation += mouseWheel * rotationSpeed;
+
+            // Handle stick extension with vertical mouse movement
             float mouseY = Input.GetAxis("Mouse Y");
-            
-            // Handle vertical rotation based on mouse Y movement
-            currentVerticalAngle -= mouseY * verticalSensitivity;
-            currentVerticalAngle = Mathf.Clamp(currentVerticalAngle, minVerticalAngle, maxVerticalAngle);
-            
-            mousePos.z = Vector3.Distance(mainCamera.transform.position, player.transform.position);
-            Vector3 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
-            worldPos.y = player.transform.position.y + hoverHeight;
+            targetLength = Mathf.Clamp(targetLength - mouseY * stickExtendSpeed, minStickLength, maxStickLength);
+            currentStickLength = Mathf.Lerp(currentStickLength, targetLength, Time.deltaTime * movementSpeed);
 
-            // Calculate horizontal direction
-            Vector3 direction = (worldPos - player.transform.position).normalized;
-            targetPosition = player.transform.position + (direction * maxDistanceFromPlayer);
+            // Calculate base position (right side of player, but lower)
+            Vector3 basePosition = player.transform.position + 
+                player.transform.right * 0.5f + 
+                Vector3.up * baseHeight; // Start much lower
 
-            // Move to target position
+            // Calculate horizontal angle based on mouse X position
+            float mouseX = Input.mousePosition.x / Screen.width * 2 - 1; // -1 to 1
+            float sideAngle = mouseX * maxSideAngle;
+
+            // Calculate stick position
+            Vector3 stickDirection = Quaternion.Euler(0, player.transform.eulerAngles.y + sideAngle, 0) * Vector3.forward;
+            
+            // Calculate height based on length with reduced multiplier
+            float heightAdjustment = (currentStickLength - minStickLength) * heightMultiplier;
+            heightAdjustment = Mathf.Clamp(heightAdjustment, 0, maxHeightAdjustment);
+            
+            // Set final position
+            targetPosition = basePosition + stickDirection * currentStickLength;
+            targetPosition.y = player.transform.position.y + baseHeight + heightAdjustment;
+
+            // Update stick position
             transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * movementSpeed);
 
-            // Apply both horizontal and vertical rotation
-            if (direction != Vector3.zero)
-            {
-                Quaternion horizontalRotation = Quaternion.LookRotation(direction);
-                Quaternion verticalRotation = Quaternion.Euler(currentVerticalAngle, 0, 0);
-                Quaternion targetRotation = horizontalRotation * verticalRotation;
-                
-                transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * movementSpeed);
-            }
+            // Apply rotation from mouse wheel and keep stick orientation
+            Quaternion targetRotation = Quaternion.Euler(
+                currentRotation,                      // X rotation from mouse wheel
+                player.transform.eulerAngles.y + sideAngle, // Y rotation follows movement
+                -90                                   // Z rotation keeps stick horizontal
+            );
+
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * movementSpeed);
 
             // Debug visualization
-            Debug.DrawLine(player.transform.position, targetPosition, Color.red);
-            Debug.DrawRay(transform.position, transform.up * 0.5f, Color.green);
+            Debug.DrawLine(basePosition, targetPosition, Color.red);
         }
-        
+
+        private Vector3 GetMouseWorldPosition()
+        {
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            Plane groundPlane = new Plane(Vector3.up, Vector3.up * stickOffset.y);
+            if (groundPlane.Raycast(ray, out float distance))
+            {
+                return ray.GetPoint(distance);
+            }
+            return transform.position;
+        }
+
+        private void UpdateStickTransform()
+        {
+            Vector3 newPosition = player.transform.position + 
+                (player.transform.right * stickOffset.x) +
+                (Vector3.up * stickOffset.y) +
+                (player.transform.forward * stickOffset.z);
+
+            transform.position = newPosition;
+            transform.rotation = Quaternion.Euler(stickRotation);
+        }
+
         private void OnCollisionEnter(Collision collision)
         {
             // Check if we hit a puck
