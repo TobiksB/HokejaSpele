@@ -19,18 +19,7 @@ public class PlayerMovement : MonoBehaviour
     private static readonly int IsSkating = Animator.StringToHash("IsSkating");
     private static readonly int IsShooting = Animator.StringToHash("IsShooting");
     private static readonly int IsIdle = Animator.StringToHash("IsIdle");
-    private static readonly int ShootTrigger = Animator.StringToHash("ShootTrigger");
     
-    [Header("Shooting")]
-    [SerializeField] private float shootCooldown = 1f;
-    [SerializeField] private float maxShootCharge = 1f;
-    [SerializeField] private ShootingIndicator shootingIndicator;
-    private float shootTimer;
-    private float currentShootPower;
-    private bool isCharging;
-    private bool isShooting;
-    private Puck controlledPuck;
-
     [Header("Collision Settings")]
     [SerializeField] private float collisionOffset = 0.5f;
     [SerializeField] private LayerMask wallLayer; // Assign this in inspector
@@ -45,6 +34,17 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Hockey Stick")]
     [SerializeField] private HockeyStickController stickController;
+
+    [Header("Camera Settings")]
+    [SerializeField] private Camera playerCamera;
+    [SerializeField] private float cameraFollowSpeed = 5f;
+
+    private bool isShooting;
+
+    void Awake()
+    {
+        Debug.Log("PlayerMovement: Initializing player");
+    }
 
     void Start()
     {
@@ -73,25 +73,94 @@ public class PlayerMovement : MonoBehaviour
             stickController = GetComponentInChildren<HockeyStickController>();
             if (stickController != null)
             {
-                stickController.player = GetComponent<MainGame.HockeyPlayer>();
+                // Set player transform reference directly
+                stickController.playerTransform = this.transform;
+                
+                // Also try to set player component if available
+                MainGame.HockeyPlayer hockeyPlayer = GetComponent<MainGame.HockeyPlayer>();
+                if (hockeyPlayer != null)
+                {
+                    stickController.player = hockeyPlayer;
+                }
+                else
+                {
+                    Debug.LogWarning("Hockey player component not found!");
+                }
             }
             else
             {
-                Debug.LogError("Hockey stick controller not found!");
+                Debug.LogError("Hockey stick controller not found! Make sure it's a child of the player.");
+            }
+        }
+
+        // Use the existing camera in the player prefab
+        if (playerCamera == null)
+        {
+            playerCamera = GetComponentInChildren<Camera>();
+        }
+        if (playerCamera == null)
+        {
+            Debug.LogError("Player camera not found!");
+        }
+
+        // Try finding the hockey stick if not assigned
+        if (stickController == null)
+        {
+            // First look for it as a direct child
+            stickController = GetComponentInChildren<HockeyStickController>();
+            
+            // If not found, search through all children recursively
+            if (stickController == null)
+            {
+                HockeyStickController[] sticks = GetComponentsInChildren<HockeyStickController>();
+                if (sticks.Length > 0)
+                {
+                    stickController = sticks[0];
+                }
+            }
+            
+            // If we found the stick controller, set up references
+            if (stickController != null)
+            {
+                stickController.playerTransform = this.transform;
+                
+                // Also try to set player component if available
+                MainGame.HockeyPlayer hockeyPlayer = GetComponent<MainGame.HockeyPlayer>();
+                if (hockeyPlayer != null)
+                {
+                    stickController.player = hockeyPlayer;
+                }
+                else
+                {
+                    Debug.LogWarning("Hockey player component not found! Adding one...");
+                    hockeyPlayer = gameObject.AddComponent<MainGame.HockeyPlayer>();
+                    stickController.player = hockeyPlayer;
+                }
+            }
+            else
+            {
+                Debug.LogError("Hockey stick controller not found! Make sure it's a child of the player.");
             }
         }
     }
 
     void Update()
     {
-        HandleRotation();
         HandleBoost();
-        HandleShooting();
         
-        // Handle puck pickup
-        if (Input.GetKeyDown(KeyCode.E))
+        // Cursor locking for debugging
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            TryPickupPuck();
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
     }
 
@@ -195,103 +264,6 @@ public class PlayerMovement : MonoBehaviour
                 isBoosting = false;
                 boostCooldownTimer = boostCooldown;
             }
-        }
-    }
-
-    void HandleShooting()
-    {
-        if (shootTimer > 0)
-        {
-            shootTimer -= Time.deltaTime;
-        }
-
-        if (controlledPuck != null)
-        {
-            if (Input.GetMouseButtonDown(0) && !isCharging && shootTimer <= 0)
-            {
-                // Start charging shot
-                isCharging = true;
-                currentShootPower = 0;
-                if (shootingIndicator != null)
-                {
-                    shootingIndicator.gameObject.SetActive(true);
-                }
-            }
-            else if (Input.GetMouseButton(0) && isCharging)
-            {
-                // Charge shot
-                currentShootPower = Mathf.Min(currentShootPower + Time.deltaTime, maxShootCharge);
-                if (shootingIndicator != null)
-                {
-                    shootingIndicator.UpdatePower(currentShootPower / maxShootCharge);
-                }
-            }
-            else if (Input.GetMouseButtonUp(0) && isCharging)
-            {
-                // Release shot
-                ShootPuck();
-            }
-        }
-    }
-
-    private void ShootPuck()
-    {
-        if (controlledPuck != null)
-        {
-            isShooting = true;
-            isCharging = false;
-            shootTimer = shootCooldown;
-
-            if (animator != null)
-            {
-                animator.SetTrigger(ShootTrigger);
-                animator.SetBool(IsShooting, true);
-            }
-
-            controlledPuck.Shoot(currentShootPower / maxShootCharge, transform.forward);
-            controlledPuck = null;
-
-            if (shootingIndicator != null)
-            {
-                shootingIndicator.gameObject.SetActive(false);
-            }
-
-            Invoke(nameof(ResetShootingState), shootCooldown);
-        }
-    }
-
-    private void TryPickupPuck()
-    {
-        // Increase the detection radius and offset
-        float pickupRadius = 2f;
-        float forwardOffset = 2f;
-        Vector3 checkPosition = transform.position + transform.forward * forwardOffset;
-        
-        Debug.DrawLine(transform.position, checkPosition, Color.yellow, 1f); // Visualize pickup range
-        Collider[] colliders = Physics.OverlapSphere(checkPosition, pickupRadius);
-        
-        Debug.Log($"Checking for puck. Found {colliders.Length} colliders.");
-        
-        foreach (Collider col in colliders)
-        {
-            Debug.Log($"Found collider: {col.gameObject.name}");
-            Puck puck = col.GetComponent<Puck>();
-            if (puck != null && !puck.isControlled)
-            {
-                Debug.Log($"Found pickup-able puck: {puck.gameObject.name}");
-                controlledPuck = puck;
-                puck.AttachToPlayer(transform);
-                break;
-            }
-        }
-    }
-
-    private void ResetShootingState()
-    {
-        isShooting = false;
-        if (animator != null)
-        {
-            animator.SetBool(IsShooting, false);
         }
     }
 }

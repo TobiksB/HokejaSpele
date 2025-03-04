@@ -28,6 +28,11 @@ namespace MainGame
         // Reference to the player this stick belongs to
         public HockeyPlayer player;
         
+        // Reference to the player's transform instead of HockeyPlayer component
+        // This helps when player prefab doesn't have HockeyPlayer component properly set
+        [Header("Player Reference")]
+        public Transform playerTransform;
+        
         // Reference to the camera
         private Camera mainCamera;
         
@@ -43,9 +48,6 @@ namespace MainGame
         
         [Tooltip("Minimum angle the stick can be lowered")]
         public float minVerticalAngle = -15f;
-        
-        [Tooltip("How sensitive the vertical movement is")]
-        public float verticalSensitivity = 2f;
         
         private float currentVerticalAngle = 0f;
 
@@ -70,15 +72,48 @@ namespace MainGame
         private float currentRotation = 0f;   // Current rotation angle
         private float targetLength;           // Target length for smooth movement
 
+        [Header("Stick-Puck Interaction")]
+        public float maxHitForce = 15f;      // Maximum force when stick is moved quickly
+        public float minHitForce = 2f;       // Minimum force when stick barely touches puck
+        public float velocityMultiplier = 2f; // How much stick velocity affects hit force
+        public float dragThreshold = 0.5f;    // Velocity threshold for dragging vs hitting
+        public float dragStrength = 5f;       // How strongly the stick "pulls" the puck when moving slowly
+        
+        private Vector3 previousPosition;    // Position from previous frame to calculate velocity
+        private Vector3 currentVelocity;     // Current stick velocity
+        private Rigidbody attachedPuck;      // Reference to a puck being dragged by the stick
+        private Vector3 lastHitDirection;    // Direction of last hit for visual feedback
+
+        [Header("Mouse Control Settings")]
+        public float horizontalSensitivity = 2f;  // Sensitivity for side-to-side movement
+        public float verticalSensitivity = 2f;    // Sensitivity for forward-backward movement
+        public float maxHorizontalDistance = 1.5f; // Maximum distance stick can move horizontally from center
+        public float minForwardDistance = 0.5f;   // Minimum forward distance (when pulled back)
+        public float maxForwardDistance = 2.5f;   // Maximum forward distance (when pushed forward)
+        public float maxRaiseHeight = 0.8f;       // Maximum height the stick can be raised
+        public float stickHeightCurve = 2f;       // How quickly stick raises with extension (higher = more curve)
+
+        private Vector2 stickPosition = Vector2.zero; // Normalized position of stick (-1,1) on both axes
+        private float targetHeight = 0f;             // Target height of the stick
+
         private void Start()
         {
             mainCamera = Camera.main;
             
-            // Initial setup
-            if (player != null)
+            // Get player reference if not assigned
+            if (playerTransform == null)
             {
-                // Set initial position and rotation
-                UpdateStickTransform();
+                playerTransform = transform.parent;
+                Debug.Log("Automatically set player transform to parent: " + 
+                    (playerTransform != null ? playerTransform.name : "NULL"));
+            }
+            
+            // Initial setup
+            if (player == null && playerTransform != null)
+            {
+                player = playerTransform.GetComponent<HockeyPlayer>();
+                Debug.Log("Trying to find HockeyPlayer component: " + 
+                    (player != null ? "Found" : "Not found"));
             }
             
             // Make sure the collider is set to trigger
@@ -90,55 +125,97 @@ namespace MainGame
 
             currentStickLength = minStickLength;
             targetLength = currentStickLength;
+            
+            // Debug to verify mouse input is working
+            Debug.Log("Hockey stick controller initialized. Move your mouse to control the stick.");
+
+            previousPosition = transform.position;
         }
         
         private void Update()
         {
-            if (player == null || mainCamera == null) return;
-
-            // Handle mouse wheel rotation
-            float mouseWheel = Input.GetAxis("Mouse ScrollWheel");
-            currentRotation += mouseWheel * rotationSpeed;
-
-            // Handle stick extension with vertical mouse movement
-            float mouseY = Input.GetAxis("Mouse Y");
-            targetLength = Mathf.Clamp(targetLength - mouseY * stickExtendSpeed, minStickLength, maxStickLength);
-            currentStickLength = Mathf.Lerp(currentStickLength, targetLength, Time.deltaTime * movementSpeed);
-
-            // Calculate base position (right side of player, but lower)
-            Vector3 basePosition = player.transform.position + 
-                player.transform.right * 0.5f + 
-                Vector3.up * baseHeight; // Start much lower
-
-            // Calculate horizontal angle based on mouse X position
-            float mouseX = Input.mousePosition.x / Screen.width * 2 - 1; // -1 to 1
-            float sideAngle = mouseX * maxSideAngle;
-
-            // Calculate stick position
-            Vector3 stickDirection = Quaternion.Euler(0, player.transform.eulerAngles.y + sideAngle, 0) * Vector3.forward;
+            Transform activeTransform = player != null ? player.transform : playerTransform;
             
-            // Calculate height based on length with reduced multiplier
-            float heightAdjustment = (currentStickLength - minStickLength) * heightMultiplier;
-            heightAdjustment = Mathf.Clamp(heightAdjustment, 0, maxHeightAdjustment);
+            if (activeTransform == null || mainCamera == null)
+            {
+                Debug.LogWarning("Missing references in HockeyStickController!");
+                return;
+            }
+
+            // Get mouse input
+            float mouseX = Input.GetAxis("Mouse X") * horizontalSensitivity;
+            float mouseY = Input.GetAxis("Mouse Y") * verticalSensitivity;
             
-            // Set final position
-            targetPosition = basePosition + stickDirection * currentStickLength;
-            targetPosition.y = player.transform.position.y + baseHeight + heightAdjustment;
-
-            // Update stick position
-            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * movementSpeed);
-
-            // Apply rotation from mouse wheel and keep stick orientation
-            Quaternion targetRotation = Quaternion.Euler(
-                currentRotation,                      // X rotation from mouse wheel
-                player.transform.eulerAngles.y + sideAngle, // Y rotation follows movement
-                -90                                   // Z rotation keeps stick horizontal
-            );
-
+            // Update stick position based on mouse movement (-1 to 1 range)
+            stickPosition.x = Mathf.Clamp(stickPosition.x + mouseX * Time.deltaTime, -1f, 1f);
+            stickPosition.y = Mathf.Clamp(stickPosition.y + mouseY * Time.deltaTime, -1f, 1f);
+            
+            // Calculate stick parameters based on position
+            // Forward distance: pulled back (Y=-1) = minimum, pushed forward (Y=1) = maximum
+            float forwardDistance = Mathf.Lerp(minForwardDistance, maxForwardDistance, (stickPosition.y + 1f) * 0.5f);
+            
+            // Horizontal offset: -1 = left, 0 = center, 1 = right
+            float horizontalOffset = stickPosition.x * maxHorizontalDistance;
+            
+            // Stick height: increases as we extend further forward, using a curve for better feel
+            targetHeight = Mathf.Pow((stickPosition.y + 1f) * 0.5f, stickHeightCurve) * maxRaiseHeight;
+            
+            // Calculate base position at player's feet
+            Vector3 basePosition = activeTransform.position + Vector3.up * baseHeight;
+            
+            // Calculate final position using player's forward and right vectors
+            Vector3 targetPos = basePosition 
+                + activeTransform.forward * forwardDistance 
+                + activeTransform.right * horizontalOffset
+                + Vector3.up * targetHeight;
+            
+            // Move stick toward target position
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * movementSpeed);
+            
+            // Calculate stick angle based on height and extension
+            float pitchAngle = -30f + (targetHeight / maxRaiseHeight) * 60f; // -30° when low, +30° when fully raised
+            float yawAngle = activeTransform.eulerAngles.y + (stickPosition.x * 30f); // Rotate slightly with side movement
+            
+            // Apply rotation
+            Quaternion targetRotation = Quaternion.Euler(pitchAngle, yawAngle, -90f);
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * movementSpeed);
-
+            
+            // Calculate stick velocity for puck interactions
+            currentVelocity = (transform.position - previousPosition) / Time.deltaTime;
+            previousPosition = transform.position;
+            
+            // Handle attached puck
+            if (attachedPuck != null)
+            {
+                // Calculate target position slightly in front of the stick blade
+                Vector3 puckTargetPos = transform.position + transform.forward * 0.3f;
+                
+                // Direction to move the puck
+                Vector3 directionToPuck = puckTargetPos - attachedPuck.position;
+                
+                // If puck gets too far, detach it
+                if (directionToPuck.magnitude > 1.2f)
+                {
+                    attachedPuck = null;
+                }
+                else
+                {
+                    // Apply force to guide the puck to follow the stick
+                    float dragMultiplier = 5f - 3f * (directionToPuck.magnitude / 1.2f); // Less force when far away
+                    attachedPuck.AddForce(directionToPuck * dragStrength * dragMultiplier, ForceMode.Acceleration);
+                    
+                    // If stick is moving fast, transfer some of that momentum
+                    if (currentVelocity.magnitude > 1.5f)
+                    {
+                        attachedPuck.AddForce(currentVelocity * 0.3f, ForceMode.Acceleration);
+                    }
+                }
+            }
+            
             // Debug visualization
-            Debug.DrawLine(basePosition, targetPosition, Color.red);
+            Debug.DrawLine(basePosition, transform.position, Color.yellow);
+            Debug.DrawRay(transform.position, transform.forward * 0.5f, Color.blue);
+            Debug.DrawRay(transform.position, currentVelocity * 0.1f, Color.green);
         }
 
         private Vector3 GetMouseWorldPosition()
@@ -154,13 +231,26 @@ namespace MainGame
 
         private void UpdateStickTransform()
         {
-            Vector3 newPosition = player.transform.position + 
-                (player.transform.right * stickOffset.x) +
-                (Vector3.up * stickOffset.y) +
-                (player.transform.forward * stickOffset.z);
+            if (player != null)
+            {
+                Vector3 newPosition = player.transform.position + 
+                    (player.transform.right * stickOffset.x) +
+                    (Vector3.up * stickOffset.y) +
+                    (player.transform.forward * stickOffset.z);
 
-            transform.position = newPosition;
-            transform.rotation = Quaternion.Euler(stickRotation);
+                transform.position = newPosition;
+                transform.rotation = Quaternion.Euler(stickRotation);
+            }
+            else if (playerTransform != null)
+            {
+                Vector3 newPosition = playerTransform.position + 
+                    (playerTransform.right * stickOffset.x) +
+                    (Vector3.up * stickOffset.y) +
+                    (playerTransform.forward * stickOffset.z);
+
+                transform.position = newPosition;
+                transform.rotation = Quaternion.Euler(stickRotation);
+            }
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -172,19 +262,66 @@ namespace MainGame
                 
                 if (puckRb != null)
                 {
-                    // Calculate direction from stick to puck
-                    Vector3 direction = (collision.transform.position - transform.position).normalized;
+                    // Calculate velocity magnitude for force scaling
+                    float velocityMag = currentVelocity.magnitude;
                     
-                    // Apply force to the puck
-                    Vector3 force = direction * hitForce;
+                    // Store the last hit direction for visualization
+                    lastHitDirection = (collision.contacts[0].point - transform.position).normalized;
                     
-                    // Add some upward force to make it look more realistic
-                    force += Vector3.up * 0.5f;
+                    // If the stick is moving slowly, try to "carry" the puck
+                    if (velocityMag < dragThreshold)
+                    {
+                        // Try to attach the puck to the stick for dragging
+                        attachedPuck = puckRb;
+                    }
+                    else
+                    {
+                        // If moving fast, hit the puck with force
+                        // Scale force based on stick movement speed
+                        float force = Mathf.Clamp(velocityMag * velocityMultiplier, minHitForce, maxHitForce);
+                        
+                        // Apply force to the puck in the direction of the hit
+                        Vector3 forceVector = lastHitDirection * force;
+                        
+                        // Add some upward force to make it look more realistic
+                        forceVector += Vector3.up * 0.2f;
+                        
+                        Debug.Log($"Hit puck with force: {force:F1}, velocity: {velocityMag:F1}");
+                        puckRb.AddForce(forceVector, ForceMode.Impulse);
+                    }
+                }
+            }
+        }
+        
+        private void OnCollisionStay(Collision collision)
+        {
+            // Check if we're touching a puck
+            if (((1 << collision.gameObject.layer) & puckLayer) != 0)
+            {
+                Rigidbody puckRb = collision.rigidbody;
+                
+                // If moving slowly, try to take control of the puck
+                if (currentVelocity.magnitude < dragThreshold && puckRb != null)
+                {
+                    attachedPuck = puckRb;
+                }
+            }
+        }
+        
+        private void OnCollisionExit(Collision collision)
+        {
+            // When no longer touching the puck, apply a small force in the direction we were moving
+            if (((1 << collision.gameObject.layer) & puckLayer) != 0)
+            {
+                Rigidbody puckRb = collision.rigidbody;
+                
+                if (puckRb != null && puckRb == attachedPuck)
+                {
+                    // Apply a gentle push in the direction the stick is moving
+                    puckRb.AddForce(currentVelocity * 0.5f, ForceMode.Impulse);
                     
-                    puckRb.AddForce(force, ForceMode.Impulse);
-                    
-                    // Optionally play sound effect here
-                    // AudioSource.PlayClipAtPoint(hitSound, collision.contacts[0].point);
+                    // Clear the attached puck reference
+                    attachedPuck = null;
                 }
             }
         }
