@@ -352,39 +352,7 @@ namespace MainGame
                 rb = gameObject.AddComponent<Rigidbody>();
             }
             
-            // Configure Rigidbody for better physics simulation with ice
-            rb.useGravity = true;             // Let gravity pull the stick down
-            rb.mass = 0.3f;                   // Lightweight hockey stick
-            rb.linearDamping = 0.2f;                   // Low drag for sliding
-            rb.angularDamping = 0.1f;            // Low angular drag
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-            
-            Debug.Log("Configured Rigidbody for better ice physics");
-            
-            // Create a slippery physics material for the stick
-            stickCollider = GetComponent<Collider>();
-            if (stickCollider != null) {
-                PhysicsMaterial slipperyMaterial = new PhysicsMaterial("SlipperyStick");
-                slipperyMaterial.dynamicFriction = 0.05f;  // Very low friction
-                slipperyMaterial.staticFriction = 0.05f;   // Very low static friction
-                slipperyMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
-                slipperyMaterial.bounciness = 0.1f;
-                slipperyMaterial.bounceCombine = PhysicsMaterialCombine.Average;
-                
-                stickCollider.material = slipperyMaterial;
-                Debug.Log("Applied slippery physics material to stick");
-            }
-
-            // Get or add Rigidbody component
-            rb = GetComponent<Rigidbody>();
-            if (rb == null)
-            {
-                rb = gameObject.AddComponent<Rigidbody>();
-            }
-            
-            // Configure rigidbody for better physics interactions
+            // Configure Rigidbody for better physics interactions
             rb.useGravity = false; // Don't use gravity directly
             rb.mass = 0.3f;        // Lightweight hockey stick
             rb.linearDamping = 0.2f;      // Low drag for better sliding
@@ -415,15 +383,33 @@ namespace MainGame
                     meshCol.convex = true;
                 }
             }
+
+            // Ensure rb is properly initialized
+            rb = GetComponent<Rigidbody>();
+            if (rb == null)
+            {
+                rb = gameObject.AddComponent<Rigidbody>();
+                Debug.Log("Added Rigidbody component to Hockey Stick");
+            }
+            
+            // Configure Rigidbody immediately after ensuring it exists
+            rb.useGravity = false; // Don't use gravity directly
+            rb.mass = 0.3f;        // Lightweight hockey stick
+            rb.linearDamping = 0.2f;      // Low drag for better sliding
+            rb.angularDamping = 0.1f;     // Low angular drag
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            // Allow rotation around Y axis only
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
 
         private PhysicsMaterial CreateStickPhysicsMaterial()
         {
-            PhysicsMaterial stickMaterial = new PhysicsMaterial("StickPhysicsMat");
-            stickMaterial.dynamicFriction = 0.4f;
-            stickMaterial.staticFriction = 0.5f;
-            stickMaterial.bounciness = 0.1f;
-            stickMaterial.frictionCombine = PhysicsMaterialCombine.Average;
+            PhysicsMaterial stickMaterial = new PhysicsMaterial("SlipperyHockeyStick");
+            stickMaterial.dynamicFriction = 0.01f;      // VERY low friction for realistic sliding on ice
+            stickMaterial.staticFriction = 0.01f;       // VERY low static friction to prevent sticking
+            stickMaterial.frictionCombine = PhysicsMaterialCombine.Minimum; // Always use minimum friction
+            stickMaterial.bounciness = 0.2f;            // Slight bounce for puck interaction
             stickMaterial.bounceCombine = PhysicsMaterialCombine.Average;
             return stickMaterial;
         }
@@ -648,22 +634,34 @@ namespace MainGame
             Vector3 moveDirection = (targetPosition - transform.position);
             moveDirection.y = 0; // Do not consider vertical component for movement
             
-            // Apply forces rather than direct position changes
-            if (moveDirection.magnitude > 0.01f)
+            // Add null check before using rb
+            // Check if rb is not null before using it
+            if (rb != null)
             {
-                float moveForce = moveDirection.magnitude * movementSpeed;
-                rb.AddForce(moveDirection.normalized * moveForce, ForceMode.Force);
-                
-                // Limit velocity for stability
-                if (rb.linearVelocity.magnitude > maxAllowedVelocity)
+                // Apply forces rather than direct position changes
+                if (moveDirection.magnitude > 0.01f)
                 {
-                    rb.linearVelocity = rb.linearVelocity.normalized * maxAllowedVelocity;
+                    float moveForce = moveDirection.magnitude * movementSpeed;
+                    rb.AddForce(moveDirection.normalized * moveForce, ForceMode.Force);
+                    
+                    // Limit velocity for stability
+                    if (rb.linearVelocity.magnitude > maxAllowedVelocity)
+                    {
+                        rb.linearVelocity = rb.linearVelocity.normalized * maxAllowedVelocity;
+                    }
                 }
+                else
+                {
+                    // Apply some damping when not actively moving
+                    rb.linearVelocity *= 0.9f;
+                }
+                
+                // Calculate stick velocity for puck interactions
+                currentVelocity = rb.linearVelocity;
             }
             else
             {
-                // Apply some damping when not actively moving
-                rb.linearVelocity *= 0.9f;
+                Debug.LogError("Rigidbody component is missing on Hockey Stick!");
             }
             
             // Set rotation more directly - we can use physics for position but rotation is better controlled directly
@@ -1056,18 +1054,46 @@ namespace MainGame
 
             // Only enforce a minimum height but don't force an exact height
             // This allows stick to slide across surfaces
-            if (transform.position.y < fixedGroundHeight + minBladeHeight)
+            if (rb != null)
             {
-                Vector3 pos = transform.position;
-                pos.y = fixedGroundHeight + minBladeHeight;
-                transform.position = pos;
-                
-                // Zero out downward velocity
-                if (rb.linearVelocity.y < 0)
+                // Only enforce a minimum height but don't force an exact height
+                // This allows stick to slide across surfaces
+                if (transform.position.y < fixedGroundHeight + minBladeHeight)
                 {
-                    Vector3 vel = rb.linearVelocity;
-                    vel.y = 0;
-                    rb.linearVelocity = vel;
+                    Vector3 pos = transform.position;
+                    pos.y = fixedGroundHeight + minBladeHeight;
+                    transform.position = pos;
+                    
+                    // Zero out downward velocity
+                    if (rb.linearVelocity.y < 0)
+                    {
+                        Vector3 vel = rb.linearVelocity;
+                        vel.y = 0;
+                        rb.linearVelocity = vel;
+                    }
+                }
+            }
+            else
+            {
+                // If rb is null, still enforce minimum height without velocity adjustment
+                if (transform.position.y < fixedGroundHeight + minBladeHeight)
+                {
+                    Vector3 pos = transform.position;
+                    pos.y = fixedGroundHeight + minBladeHeight;
+                    transform.position = pos;
+                }
+                
+                // Try to recreate the rigidbody if it's missing
+                rb = GetComponent<Rigidbody>();
+                if (rb == null)
+                {
+                    rb = gameObject.AddComponent<Rigidbody>();
+                    Debug.LogWarning("Rigidbody was missing - recreated it in LateUpdate");
+                    
+                    // Configure the newly added rigidbody
+                    rb.useGravity = false;
+                    rb.mass = 0.3f;
+                    rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 }
             }
             
@@ -1257,7 +1283,8 @@ namespace MainGame
         {
             // Don't use tags since "Ice" tag doesn't exist
             int iceLayer = LayerMask.NameToLayer("Ice");
-            if (iceLayer < 0) {
+            if (iceLayer < 0) 
+            {
                 Debug.LogWarning("Ice layer not found! Make sure to create this layer in Unity.");
                 iceLevel = 0.0f;
                 return;
@@ -1267,29 +1294,37 @@ namespace MainGame
             GameObject[] allObjects = FindObjectsOfType<GameObject>();
             List<GameObject> iceObjects = new List<GameObject>();
             
-            foreach(GameObject obj in allObjects) {
-                if (obj.layer == iceLayer) {
+            foreach(GameObject obj in allObjects) 
+            {
+                if (obj.layer == iceLayer) 
+                {
                     iceObjects.Add(obj);
                 }
             }
             
-            if (iceObjects.Count > 0) {  // Fixed: use .Count property without parentheses
-                Debug.Log($"Found {iceObjects.Count} ice objects without using tags");  // Fixed: use .Count property without parentheses
+            if (iceObjects.Count > 0)  // Fixed: use .Count property without parentheses
+            {
+                Debug.Log($"Found {iceObjects.Count} ice objects without using tags");
                 
                 // Check the Y position of each ice object
-                foreach (GameObject ice in iceObjects) {
+                foreach (GameObject ice in iceObjects) 
+                {
                     Debug.Log($"Ice object: {ice.name}, Y position: {ice.transform.position.y}");
                     
                     // Detect the top surface of the ice using its collider
                     Collider iceCollider = ice.GetComponent<Collider>();
-                    if (iceCollider != null) {
+                    if (iceCollider != null) 
+                    {
                         // Get the top of the collider
-                        if (iceCollider is BoxCollider boxCol) {
+                        if (iceCollider is BoxCollider boxCol) 
+                        {
                             // For box collider, calculate top Y
                             iceLevel = ice.transform.position.y + (boxCol.center.y + boxCol.size.y/2) * ice.transform.lossyScale.y;
                             Debug.Log($"Detected ice level at Y={iceLevel} from box collider");
                             return;
-                        } else {
+                        } 
+                        else 
+                        {
                             // For other colliders, use object position as reference
                             iceLevel = ice.transform.position.y;
                             Debug.Log($"Using ice object position as ice level: Y={iceLevel}");
@@ -1301,12 +1336,39 @@ namespace MainGame
             
             // Try finding a ground object if no ice is found
             RaycastHit hit;
-            if (Physics.Raycast(new Vector3(0, 10, 0), Vector3.down, out hit, 20f, LayerMask.GetMask("Ground", "Default"))) {
+            if (Physics.Raycast(new Vector3(0, 10, 0), Vector3.down, out hit, 20f, LayerMask.GetMask("Ground", "Default"))) 
+            {
                 iceLevel = hit.point.y;
                 Debug.Log($"No ice objects found, using ground at Y={iceLevel}");
-            } else {
+            } 
+            else 
+            {
                 Debug.LogWarning("No ice or ground found! Using default level of Y=0.0");
                 iceLevel = 0.0f;
+            }
+        }
+
+        // Add this method to reinitialize physics components if they're missing
+        private void OnEnable()
+        {
+            // Ensure rb is available when the object is enabled
+            if (rb == null)
+            {
+                rb = GetComponent<Rigidbody>();
+                if (rb == null)
+                {
+                    rb = gameObject.AddComponent<Rigidbody>();
+                    Debug.LogWarning("Rigidbody was missing - added it in OnEnable");
+                    
+                    // Configure the newly added rigidbody
+                    rb.useGravity = false;
+                    rb.mass = 0.3f;
+                    rb.linearDamping = 0.2f;
+                    rb.angularDamping = 0.1f;
+                    rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                    rb.interpolation = RigidbodyInterpolation.Interpolate;
+                    rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                }
             }
         }
     }

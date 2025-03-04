@@ -122,6 +122,16 @@ namespace MainGame
             Collider col = stick.GetComponent<Collider>();
             if (col != null)
             {
+                if (stickMaterial == null)
+                {
+                    stickMaterial = new PhysicsMaterial("SlipperyHockeyStick");
+                    stickMaterial.dynamicFriction = 0.01f;
+                    stickMaterial.staticFriction = 0.01f;
+                    stickMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
+                    stickMaterial.bounciness = 0.2f;
+                    stickMaterial.bounceCombine = PhysicsMaterialCombine.Average;
+                }
+                
                 col.material = stickMaterial;
                 col.isTrigger = false; // Ensure it's not a trigger
                 
@@ -140,17 +150,15 @@ namespace MainGame
             }
             
             rb.mass = 0.3f;
-            rb.useGravity = false; // Managed by script, not physics
-            rb.isKinematic = false; // Let physics act on it
-            rb.linearDamping = 0.5f;
-            rb.angularDamping = 0.5f;
+            rb.useGravity = false;
+            rb.isKinematic = false;
+            rb.linearDamping = 0.1f;  // Lower damping for better sliding
+            rb.angularDamping = 0.1f;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
-            
-            // Allow rotation around Y axis only
             rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
             
-            Debug.Log($"Applied stick physics to {stick.name}");
+            Debug.Log($"Applied optimal physics settings to hockey stick: {stick.name}");
         }
     }
 }

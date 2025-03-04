@@ -552,6 +552,7 @@ GameObject:
   - component: {fileID: 874316191}
   - component: {fileID: 874316192}
   - component: {fileID: 874316193}
+  - component: {fileID: 874316194}
   m_Layer: 0
   m_Name: ScriptHolder
   m_TagString: Untagged
@@ -588,7 +589,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   iceMaterial: {fileID: 13400000, guid: e48a227c632eda949be3deaf1d45e79d, type: 2}
   puckMaterial: {fileID: 13400000, guid: b73fa7d60b359ee4a967f1ed32fe0c29, type: 2}
-  stickMaterial: {fileID: 0}
+  stickMaterial: {fileID: 13400000, guid: edeb747d4814b1945a5d0db5c3b1f455, type: 2}
   iceMinFriction: 0.01
   iceMaxFriction: 0.03
   stickIceFriction: 0.02
@@ -610,6 +611,18 @@ MonoBehaviour:
   fixedTimeStep: 0.01
   playerPrefab: {fileID: 186271291}
   puckPrefab: {fileID: 64914956}
+--- !u!114 &874316194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874316190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84498064c967a4048a8c8341487f62e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1022942953
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -831,6 +844,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
+    - target: {fileID: 3298106181457215389, guid: 3876d1c8140e63948bfd76578a82d290, type: 3}
+      propertyPath: m_ProvidesContacts
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3371933647087652623, guid: 3876d1c8140e63948bfd76578a82d290, type: 3}
       propertyPath: m_Layer
       value: 11
@@ -851,6 +868,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
+    - target: {fileID: 3987893406051657221, guid: 3876d1c8140e63948bfd76578a82d290, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 13400000, guid: edeb747d4814b1945a5d0db5c3b1f455, type: 2}
     - target: {fileID: 3987893406051657221, guid: 3876d1c8140e63948bfd76578a82d290, type: 3}
       propertyPath: m_ProvidesContacts
       value: 1
@@ -1824,6 +1845,10 @@ PrefabInstance:
     - target: {fileID: 7285766860600006167, guid: d764d274b0561264cbb5fad49dd8498a, type: 3}
       propertyPath: m_Material
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7599687649700168196, guid: d764d274b0561264cbb5fad49dd8498a, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
