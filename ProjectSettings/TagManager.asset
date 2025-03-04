@@ -15,12 +15,12 @@ TagManager:
   - Water
   - UI
   - Wall
-  - 
+  - Ground
   - Ice
   - Puck
-  - 
-  - 
-  - 
+  - Arena
+  - Player
+  - Trigger
   - 
   - 
   - 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using MainGame; // Add this to reference the Puck class
 
 public class GoalTrigger : MonoBehaviour
 {
