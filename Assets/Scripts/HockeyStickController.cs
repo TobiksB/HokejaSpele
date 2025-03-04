@@ -52,10 +52,11 @@ namespace MainGame
         private float currentVerticalAngle = 0f;
 
         [Header("Stick Position")]
-        public Vector3 stickOffset = new Vector3(0.5f, 0.1f, 0.3f); // Reduced Y value
-        public Vector3 stickRotation = new Vector3(45f, 0f, -90f); // Default hockey stick angles
-        public float baseHeight = 0.1f; // Base height off the ground
+        public Vector3 stickOffset = new Vector3(0.4f, 0.6f, 0.3f); // Position relative to player
+        public Vector3 stickRotation = new Vector3(0f, 0f, -90f); // Default vertical orientation
+        public float baseHeight = 0.6f; // Higher base height for one-handed position
         public float maxHeightAdjustment = 0.3f; // Maximum height the stick can raise
+        public float bladeHeight = 0.02f; // Height of blade from ground (nearly touching)
 
         private Vector3 baseWorldPosition;
         private Quaternion baseWorldRotation;
@@ -130,6 +131,10 @@ namespace MainGame
             Debug.Log("Hockey stick controller initialized. Move your mouse to control the stick.");
 
             previousPosition = transform.position;
+
+            // Set proper hockey stick orientation - blade on ice AWAY from player, shaft extending back toward player
+            transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            Debug.Log($"Initial stick rotation corrected with blade away from player: {transform.localRotation.eulerAngles}");
         }
         
         private void Update()
@@ -158,27 +163,42 @@ namespace MainGame
             float horizontalOffset = stickPosition.x * maxHorizontalDistance;
             
             // Stick height: increases as we extend further forward, using a curve for better feel
+            // But keep it low enough to touch the ground
             targetHeight = Mathf.Pow((stickPosition.y + 1f) * 0.5f, stickHeightCurve) * maxRaiseHeight;
             
-            // Calculate base position at player's feet
-            Vector3 basePosition = activeTransform.position + Vector3.up * baseHeight;
+            // Calculate base position near player's feet - position where the player holds the end of the stick
+            Vector3 basePosition = activeTransform.position + 
+                             activeTransform.right * 0.5f +
+                             Vector3.up * baseHeight;
             
-            // Calculate final position using player's forward and right vectors
+            // Calculate position for the blade end of stick with blade touching the ground
             Vector3 targetPos = basePosition 
-                + activeTransform.forward * forwardDistance 
+                + activeTransform.forward * (forwardDistance + 1.0f) // Make sure blade is away from player 
                 + activeTransform.right * horizontalOffset
-                + Vector3.up * targetHeight;
+                + Vector3.up * bladeHeight; // Keep blade very close to ice
             
-            // Move stick toward target position
+            // Move stick toward target position - this is the BLADE position
             transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * movementSpeed);
             
-            // Calculate stick angle based on height and extension
-            float pitchAngle = -30f + (targetHeight / maxRaiseHeight) * 60f; // -30° when low, +30° when fully raised
-            float yawAngle = activeTransform.eulerAngles.y + (stickPosition.x * 30f); // Rotate slightly with side movement
+            // Blade should always point in the player's forward direction
+            Vector3 bladeDirection = activeTransform.forward;
             
-            // Apply rotation
-            Quaternion targetRotation = Quaternion.Euler(pitchAngle, yawAngle, -90f);
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * movementSpeed);
+            // Shaft direction - should point FROM THE BLADE back toward the player's hands
+            Vector3 shaftDirection = (basePosition - transform.position).normalized;
+            
+            // Don't adjust blade direction based on mouse X input - keep it pointing forward
+            // bladeDirection remains unchanged
+            
+            // Calculate rotation to align stick correctly
+            // This makes the stick's "up" vector (green line/shaft) point BACK toward the player
+            // And the "forward" vector (blue line/blade) point in player's forward direction
+            Quaternion targetRotation = Quaternion.LookRotation(bladeDirection, -shaftDirection);
+            
+            // Apply a fixed correction to account for model orientation
+            targetRotation *= Quaternion.Euler(-90f, 0f, 0f);
+            
+            // Smoothly rotate the stick
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * movementSpeed);
             
             // Calculate stick velocity for puck interactions
             currentVelocity = (transform.position - previousPosition) / Time.deltaTime;
@@ -212,10 +232,11 @@ namespace MainGame
                 }
             }
             
-            // Debug visualization
-            Debug.DrawLine(basePosition, transform.position, Color.yellow);
-            Debug.DrawRay(transform.position, transform.forward * 0.5f, Color.blue);
-            Debug.DrawRay(transform.position, currentVelocity * 0.1f, Color.green);
+            // Debug visualization - improved for clarity
+            Debug.DrawLine(basePosition, transform.position, Color.yellow);         // Line from player to stick
+            Debug.DrawRay(transform.position, transform.forward * 0.5f, Color.blue); // Blade direction
+            Debug.DrawRay(transform.position, transform.up * 1.2f, Color.green);     // Shaft direction toward player
+            Debug.DrawRay(transform.position, transform.right * 0.3f, Color.red);    // Side orientation
         }
 
         private Vector3 GetMouseWorldPosition()
@@ -233,13 +254,20 @@ namespace MainGame
         {
             if (player != null)
             {
+                // Position the stick slightly in front of the player, on the ground
                 Vector3 newPosition = player.transform.position + 
                     (player.transform.right * stickOffset.x) +
-                    (Vector3.up * stickOffset.y) +
-                    (player.transform.forward * stickOffset.z);
+                    (Vector3.up * 0.1f) + // Blade should be on the ice
+                    (player.transform.forward * (stickOffset.z + 1.5f)); // Blade out front
 
                 transform.position = newPosition;
-                transform.rotation = Quaternion.Euler(stickRotation);
+                
+                // Calculate rotation for blade to be on ice, shaft pointing back to player
+                Vector3 shaftDirection = player.transform.position - newPosition;
+                Quaternion lookRotation = Quaternion.LookRotation(player.transform.right, -shaftDirection);
+                
+                // Apply additional rotation to match model orientation
+                transform.rotation = lookRotation * Quaternion.Euler(-90f, 0f, 0f);
             }
             else if (playerTransform != null)
             {
@@ -249,7 +277,7 @@ namespace MainGame
                     (playerTransform.forward * stickOffset.z);
 
                 transform.position = newPosition;
-                transform.rotation = Quaternion.Euler(stickRotation);
+                transform.rotation = Quaternion.Euler(0f, playerTransform.eulerAngles.y, -90f);
             }
         }
 
