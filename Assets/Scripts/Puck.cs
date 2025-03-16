@@ -1,213 +1,290 @@
+using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
+using System.Collections;
 
-namespace MainGame
+[RequireComponent(typeof(NetworkObject))]
+[RequireComponent(typeof(NetworkTransform))]
+public class Puck : NetworkBehaviour
 {
-    [RequireComponent(typeof(Rigidbody))]
-    [RequireComponent(typeof(Collider))]
-    public class Puck : MonoBehaviour
+    [SerializeField] private Transform spawnPoint;
+    [SerializeField] private float forwardOffset = 1f;
+    [SerializeField] private float moveSpeed = 15f; // Renamed from followLerpSpeed
+
+    private NetworkVariable<bool> isPickedUp = new NetworkVariable<bool>();
+    private NetworkVariable<ulong> holderClientId = new NetworkVariable<ulong>();
+    private Transform holder;
+    private Rigidbody rb;
+    private NetworkTransform networkTransform;
+    private Vector3 initialPosition;
+
+    private void Awake()
     {
-        [Header("Puck Settings")]
-        public float mass = 0.17f; // NHL puck is about 170 grams
-        public float drag = 0.05f; // REDUCED for better sliding
-        public float angularDrag = 0.1f; // REDUCED for better sliding
-        public float iceSliding = 0.01f; // REDUCED - Very low friction on ice
-        public float maxSpeed = 30f; // Maximum speed the puck can travel
+        initialPosition = transform.position;
         
-        [Header("Status")]
-        public bool isControlled = false; // Whether a player is carrying the puck
+        networkTransform = GetComponent<NetworkTransform>();
+        if (networkTransform != null)
+        {
+            networkTransform.InLocalSpace = false;
+            networkTransform.Interpolate = true;
+        }
+
+        // Force enable renderer
+        if (TryGetComponent<MeshRenderer>(out var renderer))
+        {
+            renderer.enabled = true;
+        }
+    }
+
+    private void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.useGravity = false;
+        rb.isKinematic = false;
+        rb.mass = 0.5f; // Lighter mass for better physics
+        rb.linearDamping = 0.2f; // Low drag for ice-like movement
+        rb.angularDamping = 0.5f;
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         
-        [Header("Reset Settings")]
-        public Vector3 defaultPosition = Vector3.zero; // Default position to reset to (usually center ice)
-        public float resetHeight = 0.05f;             // Height above ice when resetting
+        holderClientId.OnValueChanged += OnHolderChanged;
+
+        // Store initial spawn position
+        if (spawnPoint != null)
+        {
+            initialPosition = spawnPoint.position;
+            // Set initial position before network spawn
+            transform.position = initialPosition;
+            rb.position = initialPosition;
+        }
+
+        // Make sure the object is visible
+        if (TryGetComponent<Renderer>(out var renderer))
+        {
+            renderer.enabled = true;
+        }
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
         
-        private Rigidbody rb;
-        private Collider puckCollider;
-        private Transform carriedBy;
-        private Vector3 carryOffset = new Vector3(0, 0.05f, 1f); // Position relative to player when carried
-        
-        private void Awake()
+        // Initialize Rigidbody if not already done
+        if (rb == null)
         {
             rb = GetComponent<Rigidbody>();
-            puckCollider = GetComponent<Collider>();
-            
-            // Force-configure rigidbody for realistic puck physics
-            rb.mass = mass;
-            rb.linearDamping = drag;
-            rb.angularDamping = angularDrag;
-            rb.constraints = RigidbodyConstraints.None; // Allow full movement
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic; // Better collision detection
-            rb.interpolation = RigidbodyInterpolation.Interpolate; // Smoother visual movement
-            rb.useGravity = true; // Make sure gravity is enabled
-            
-            // Ensure the collider is NOT a trigger
-            puckCollider.isTrigger = false;
-            
-            // Configure collider for better interactions
-            if (puckCollider is SphereCollider)
-            {
-                // Adjust sphere collider if needed
-                ((SphereCollider)puckCollider).radius = 0.038f; // NHL puck radius (3.8 cm)
-            }
-            
-            // Force-create and apply physics material
-            CreateAndApplyPuckPhysicsMaterial();
-            
-            Debug.Log("Puck physics configured for better sliding");
-        }
-        
-        private void CreateAndApplyPuckPhysicsMaterial()
-        {
-            PhysicsMaterial puckMaterial = new PhysicsMaterial("PuckMaterial");
-            puckMaterial.dynamicFriction = iceSliding;
-            puckMaterial.staticFriction = iceSliding;
-            puckMaterial.bounciness = 0.4f;
-            puckMaterial.frictionCombine = PhysicsMaterialCombine.Minimum; // ALWAYS use minimum friction
-            puckMaterial.bounceCombine = PhysicsMaterialCombine.Average;
-            
-            puckCollider.material = puckMaterial;
-            Debug.Log("Applied low-friction physics material to puck");
-        }
-        
-        private void FixedUpdate()
-        {
-            // Force the puck to stay on the ice - don't let it bounce up
-            if (rb.position.y > 0.1f)
-            {
-                Vector3 pos = rb.position;
-                pos.y = 0.05f; // Keep puck very close to ice
-                rb.MovePosition(pos);
-                
-                // Zero out vertical velocity
-                Vector3 vel = rb.linearVelocity;
-                vel.y = 0;
-                rb.linearVelocity = vel;
-            }
-            
-            // Limit maximum speed if needed
-            if (rb.linearVelocity.magnitude > maxSpeed)
-            {
-                rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
-            }
-            
-            // If being carried by a player, maintain position
-            if (isControlled && carriedBy != null)
-            {
-                Vector3 targetPos = carriedBy.position + carriedBy.forward * carryOffset.z +
-                                    Vector3.up * carryOffset.y;
-                
-                // Move puck to follow player
-                rb.MovePosition(Vector3.Lerp(rb.position, targetPos, 0.3f));
-                
-                // Keep puck velocity aligned with player's movement
-                Vector3 playerVelocity = carriedBy.GetComponent<Rigidbody>()?.linearVelocity ?? Vector3.zero;
-                rb.linearVelocity = playerVelocity;
-            }
-            
-            // Add a small force in the direction of movement to compensate for excessive friction
-            if (rb.linearVelocity.magnitude > 0.5f && rb.linearVelocity.magnitude < 5f)
-            {
-                rb.AddForce(rb.linearVelocity.normalized * 0.1f, ForceMode.Acceleration);
-            }
-        }
-        
-        public void AttachToPlayer(Transform player)
-        {
-            carriedBy = player;
-            isControlled = true;
-            
-            // Make puck kinematic when controlled by player
-            rb.isKinematic = true;
-            
-            Debug.Log($"Puck attached to {player.name}");
-        }
-        
-        public void Shoot(float power, Vector3 direction)
-        {
-            isControlled = false;
-            carriedBy = null;
-            
-            // Make puck dynamic again for physics
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            rb.useGravity = false;
             rb.isKinematic = false;
-            
-            // Apply shooting force
-            float shootForce = 10f + (power * 20f); // Scale by shot power
-            rb.AddForce(direction * shootForce, ForceMode.Impulse);
-            
-            Debug.Log($"Puck shot with power {power}, force: {shootForce}");
+            rb.mass = 1f;
         }
-        
-        public void Release(Vector3 initialVelocity)
+
+        // Ensure visibility
+        gameObject.SetActive(true);
+        if (TryGetComponent<MeshRenderer>(out var renderer))
         {
-            isControlled = false;
-            carriedBy = null;
-            
-            // Make puck dynamic again for physics
-            rb.isKinematic = false;
-            
-            // Apply initial velocity
-            rb.linearVelocity = initialVelocity;
-            
-            Debug.Log("Puck released");
+            renderer.enabled = true;
         }
-        
-        /// <summary>
-        /// Resets the puck to the default position (usually center ice)
-        /// Called when a goal is scored or game is restarted
-        /// </summary>
-        public void ResetPosition()
+
+        if (IsServer)
         {
-            // Release from any player control
-            isControlled = false;
-            carriedBy = null;
-            
-            // Reset physics state
-            rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            
-            // Move back to center ice (or specified default position)
-            Vector3 resetPos = defaultPosition;
-            resetPos.y = resetHeight; // Make sure it's slightly above the ice
-            transform.position = resetPos;
-            
-            Debug.Log("Puck reset to default position");
         }
-        
-        private void OnCollisionEnter(Collision collision)
+    }
+
+    private void OnEnable()
+    {
+        // Ensure visibility whenever the object is enabled
+        if (TryGetComponent<Renderer>(out var renderer))
         {
-            // Check for collision with hockey stick
-            HockeyStickController stick = collision.gameObject.GetComponent<HockeyStickController>();
-            if (stick != null)
+            renderer.enabled = true;
+        }
+    }
+
+    private void OnHolderChanged(ulong previousValue, ulong newValue)
+    {
+        if (IsServer)
+        {
+            if (newValue == ulong.MaxValue)
             {
-                // Calculate impact force based on stick velocity
-                Vector3 stickVelocity = stick.GetCurrentVelocity();
-                float impactForce = stickVelocity.magnitude;
-                
-                Debug.Log($"Puck hit by stick with velocity: {impactForce}");
-                
-                // Only apply strong force if stick was moving fast enough
-                if (impactForce > 1.0f)
+                holder = null;
+                UpdateHolderClientRpc(0);
+            }
+            else
+            {
+                var networkObject = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(newValue);
+                if (networkObject != null)
                 {
-                    // Calculate direction based on stick-to-puck vector
-                    Vector3 hitDirection = (transform.position - collision.contacts[0].point).normalized;
-                    hitDirection.y = 0; // Keep puck on ice
-                    
-                    // Apply a strong impulse force
-                    float forceMagnitude = Mathf.Clamp(impactForce * 2f, 2f, 15f);
-                    rb.AddForce(hitDirection * forceMagnitude, ForceMode.Impulse);
-                    
-                    Debug.Log($"Applied force: {forceMagnitude} in direction: {hitDirection}");
-                }
-                else
-                {
-                    // For gentle touches, just align puck with stick movement
-                    rb.linearVelocity = stickVelocity * 0.8f;
+                    holder = networkObject.transform;
+                    UpdateHolderClientRpc(networkObject.NetworkObjectId);
                 }
             }
+        }
+    }
+
+    [ClientRpc]
+    private void UpdateHolderClientRpc(ulong networkObjectId)
+    {
+        if (!IsServer)
+        {
+            if (networkObjectId == 0)
+            {
+                holder = null;
+            }
+            else
+            {
+                var networkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[networkObjectId];
+                holder = networkObject?.transform;
+            }
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (!IsServer) return;
+
+        if (isPickedUp.Value && holder != null)
+        {
+            Vector3 targetPos = holder.position + holder.forward * forwardOffset;
+            targetPos.y = spawnPoint != null ? spawnPoint.position.y : initialPosition.y;
             
-            // Play sound effects based on collision velocity
-            float collisionForce = collision.relativeVelocity.magnitude;
-            Debug.Log($"Puck collision with force: {collisionForce}");
+            // Use moveSpeed for smoother following
+            Vector3 newPos = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.fixedDeltaTime);
+            transform.position = newPos;
+            rb.MovePosition(newPos);
+            
+            // Match holder rotation
+            Quaternion targetRot = Quaternion.LookRotation(holder.forward);
+            transform.rotation = targetRot;
+            rb.MoveRotation(targetRot);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void PickUpServerRpc(ulong playerId)
+    {
+        Debug.Log($"PickUpServerRpc called by player {playerId}");
+        
+        // Clear velocities before making kinematic
+        if (!rb.isKinematic)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+        
+        // Set pickup state
+        isPickedUp.Value = true;
+        holderClientId.Value = playerId;
+        rb.isKinematic = true;
+
+        // Update position if holder exists
+        if (holder != null)
+        {
+            Vector3 targetPos = holder.position + holder.forward * forwardOffset;
+            targetPos.y = spawnPoint != null ? spawnPoint.position.y : initialPosition.y;
+            transform.position = targetPos;
+            rb.position = targetPos;
+        }
+    }
+
+    public void PickUp(Transform newHolder)
+    {
+        Debug.Log($"PickUp called by {newHolder.name}");
+        if (!NetworkObject.IsSpawned) 
+        {
+            Debug.LogError("Cannot pick up - NetworkObject not spawned");
+            return;
+        }
+
+        NetworkObject holderNetObj = newHolder.GetComponent<NetworkObject>();
+        if (holderNetObj == null)
+        {
+            Debug.LogError("Cannot pick up - No NetworkObject on holder");
+            return;
+        }
+
+        PickUpServerRpc(holderNetObj.OwnerClientId);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ShootServerRpc(Vector3 direction, float force, bool isHighShot)
+    {
+        rb.isKinematic = false;
+        isPickedUp.Value = false;
+        holderClientId.Value = ulong.MaxValue;
+
+        Vector3 shotDirection = direction;
+        if (isHighShot)
+        {
+            // Small lift with forward momentum
+            Vector3 liftVector = Vector3.up * 0.1f + direction * 0.9f;
+            shotDirection = liftVector.normalized;
+            rb.constraints &= ~RigidbodyConstraints.FreezePositionY;
+            rb.useGravity = true; // Enable gravity for natural arc
+        }
+
+        // Apply physics force
+        rb.AddForce(shotDirection * force, ForceMode.Impulse);
+        
+        if (isHighShot)
+        {
+            StartCoroutine(ReturnToGround());
+        }
+    }
+
+    private IEnumerator ReturnToGround()
+    {
+        yield return new WaitForSeconds(0.5f);
+        
+        if (IsServer)
+        {
+            float groundY = spawnPoint != null ? spawnPoint.position.y : initialPosition.y;
+            
+            // Wait until puck is falling
+            while (rb.linearVelocity.y > 0)
+            {
+                yield return null;
+            }
+
+            // When close to ground level, force position and disable gravity
+            while (Mathf.Abs(transform.position.y - groundY) > 0.01f)
+            {
+                Vector3 pos = transform.position;
+                pos.y = Mathf.Lerp(pos.y, groundY, Time.deltaTime * 10f);
+                transform.position = pos;
+                yield return null;
+            }
+
+            rb.useGravity = false;
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
+            rb.constraints |= RigidbodyConstraints.FreezePositionY;
+        }
+    }
+
+    public void Shoot(Vector3 direction, float force, bool isHighShot = false)
+    {
+        if (!NetworkObject.IsSpawned) return;
+        ShootServerRpc(direction, force, isHighShot);
+    }
+
+    public void ResetPosition()
+    {
+        if (!IsServer) return;
+        
+        Vector3 resetPos = spawnPoint != null ? spawnPoint.position : initialPosition;
+        transform.position = resetPos;
+        rb.position = resetPos;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        
+        if (isPickedUp.Value)
+        {
+            isPickedUp.Value = false;
+            holderClientId.Value = ulong.MaxValue;
+            rb.isKinematic = false;
         }
     }
 }

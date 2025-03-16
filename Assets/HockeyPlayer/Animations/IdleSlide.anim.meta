@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cdb34da49a8c81b4e9d019a54a5b3610
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 165485
+  packageName: Untitled
+  packageVersion: 1.0
+  assetPath: Assets/HockeyPlayer/Animations/IdleSlide.anim
+  uploadId: 359766

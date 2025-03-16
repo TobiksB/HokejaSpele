@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 019bb7166bf0f404b93de5dbf85972cd
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 165485
+  packageName: Untitled
+  packageVersion: 1.0
+  assetPath: Assets/HockeyPlayer/Materials/DefaultMaterial_Base_Color.mat
+  uploadId: 359766

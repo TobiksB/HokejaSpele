@@ -1,87 +1,54 @@
+using Unity.Netcode;
 using UnityEngine;
 
-namespace MainGame
+public class GameManager : NetworkBehaviour
 {
-    public class GameManager : MonoBehaviour
+    public static GameManager Instance { get; private set; }
+    [SerializeField] private GameObject puckPrefab;
+    [SerializeField] private Transform puckSpawnPoint;
+    private GameObject currentPuck;
+
+    private void Awake()
     {
-        [Header("Physics Setup")]
-        public bool enableCustomPhysics = true;
-        public float timeScale = 1.0f;
-        public float fixedTimeStep = 0.01f; // Smaller time step for better physics
-        
-        [Header("Default Objects")]
-        public GameObject playerPrefab;
-        public GameObject puckPrefab;
-        
-        private void Awake()
+        if (Instance == null)
         {
-            // Configure physics for hockey
-            if (enableCustomPhysics)
-            {
-                // Set up better physics time step
-                Time.fixedDeltaTime = fixedTimeStep;
-                Physics.defaultContactOffset = 0.001f; // Smaller offset for more accurate collisions
-                Physics.defaultSolverIterations = 12;  // More solver iterations for stable physics
-                Physics.defaultSolverVelocityIterations = 8;
-                
-                // Ensure we have a PhysicsManager
-                if (FindObjectOfType<PhysicsManager>() == null)
-                {
-                    GameObject physicsManagerObj = new GameObject("PhysicsManager");
-                    PhysicsManager physicsManager = physicsManagerObj.AddComponent<PhysicsManager>();
-                    Debug.Log("Created PhysicsManager");
-                }
-            }
-            
-            Debug.Log("GameManager initialized");
+            Instance = this;
         }
-        
-        private void Start()
+        else
         {
-            // Apply physics materials
-            PhysicsManager physicsManager = FindObjectOfType<PhysicsManager>();
-            if (physicsManager != null)
-            {
-                physicsManager.ApplyMaterials();
-                
-                // Apply stick physics to all hockey sticks
-                HockeyStickController[] sticks = FindObjectsOfType<HockeyStickController>();
-                foreach (HockeyStickController stick in sticks)
-                {
-                    physicsManager.ApplyStickPhysics(stick);
-                }
-            }
-            
-            // Make sure the default Physics settings allow the layers to interact
-            SetupPhysicsLayers();
+            Destroy(gameObject);
         }
-        
-        private void SetupPhysicsLayers()
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsServer)
         {
-            // Make sure the ice layer exists
-            int iceLayer = LayerMask.NameToLayer("Ice");
-            int stickLayer = LayerMask.NameToLayer("Player"); // Assuming stick is on player layer
-            int puckLayer = LayerMask.NameToLayer("Puck");
-            
-            // Debug layer setup
-            Debug.Log($"Ice layer: {iceLayer}, Stick layer: {stickLayer}, Puck layer: {puckLayer}");
-            
-            // If any critical layer is missing, warn the user
-            if (iceLayer < 0 || puckLayer < 0)
-            {
-                Debug.LogWarning("Critical layers missing! Please set up your layers according to the documentation.");
-            }
+            SpawnPuck();
         }
-        
-        // Helper method to find or create a layer
-        private int EnsureLayerExists(string layerName)
+    }
+
+    private void SpawnPuck()
+    {
+        if (currentPuck != null)
         {
-            int layer = LayerMask.NameToLayer(layerName);
-            if (layer < 0)
-            {
-                Debug.LogWarning($"Layer '{layerName}' does not exist! Physics interactions may not work correctly.");
-            }
-            return layer;
+            Destroy(currentPuck);
+        }
+
+        Vector3 spawnPos = puckSpawnPoint != null ? puckSpawnPoint.position : Vector3.zero;
+        currentPuck = Instantiate(puckPrefab, spawnPos, Quaternion.identity);
+        
+        // Ensure all components are initialized before spawning
+        var puckComponent = currentPuck.GetComponent<Puck>();
+        if (puckComponent != null)
+        {
+            puckComponent.enabled = true;
+        }
+
+        var networkObject = currentPuck.GetComponent<NetworkObject>();
+        if (networkObject != null)
+        {
+            networkObject.Spawn(true);
         }
     }
 }

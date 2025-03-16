@@ -1,0 +1,206 @@
+fileFormatVersion: 2
+guid: 3b804b67687265948af5b4963cbf0823
+ModelImporter:
+  serializedVersion: 22
+  fileIDToRecycleName:
+    100000: Armature
+    100002: Body_M
+    100004: Chest
+    100006: FingersL
+    100008: FingersL_end
+    100010: FingersR
+    100012: FingersR_end
+    100014: FootL
+    100016: FootL_end
+    100018: FootR
+    100020: FootR_end
+    100022: HandL
+    100024: HandR
+    100026: Head
+    100028: Head_end
+    100030: Hip
+    100032: LowerArmL
+    100034: LowerArmR
+    100036: LowerLegL
+    100038: LowerLegR
+    100040: //RootNode
+    100042: ReferenceMesh
+    100044: ThumbL
+    100046: ThumbL_end
+    100048: ThumbR
+    100050: ThumbR_end
+    100052: UpperArmL
+    100054: UpperArmR
+    100056: UpperLegL
+    100058: UpperLegR
+    100060: Arm.L
+    100062: Arm.R
+    100064: Armature.001
+    100066: Foot.L
+    100068: Foot.L_end
+    100070: Foot.R
+    100072: Foot.R_end
+    100074: ForeArm.L
+    100076: ForeArm.R
+    100078: Hand.L
+    100080: Hand.L_end
+    100082: Hand.R
+    100084: Hand.R_end
+    100086: Leg.L
+    100088: Leg.R
+    100090: Neck
+    100092: Shoulder.L
+    100094: Shoulder.R
+    100096: Spine
+    100098: Thigh.L
+    100100: Thigh.R
+    100102: Male_Feet
+    400000: Armature
+    400002: Body_M
+    400004: Chest
+    400006: FingersL
+    400008: FingersL_end
+    400010: FingersR
+    400012: FingersR_end
+    400014: FootL
+    400016: FootL_end
+    400018: FootR
+    400020: FootR_end
+    400022: HandL
+    400024: HandR
+    400026: Head
+    400028: Head_end
+    400030: Hip
+    400032: LowerArmL
+    400034: LowerArmR
+    400036: LowerLegL
+    400038: LowerLegR
+    400040: //RootNode
+    400042: ReferenceMesh
+    400044: ThumbL
+    400046: ThumbL_end
+    400048: ThumbR
+    400050: ThumbR_end
+    400052: UpperArmL
+    400054: UpperArmR
+    400056: UpperLegL
+    400058: UpperLegR
+    400060: Arm.L
+    400062: Arm.R
+    400064: Armature.001
+    400066: Foot.L
+    400068: Foot.L_end
+    400070: Foot.R
+    400072: Foot.R_end
+    400074: ForeArm.L
+    400076: ForeArm.R
+    400078: Hand.L
+    400080: Hand.L_end
+    400082: Hand.R
+    400084: Hand.R_end
+    400086: Leg.L
+    400088: Leg.R
+    400090: Neck
+    400092: Shoulder.L
+    400094: Shoulder.R
+    400096: Spine
+    400098: Thigh.L
+    400100: Thigh.R
+    400102: Male_Feet
+    2100000: Skin
+    2100002: Skin.001
+    2100004: Skin.004
+    4300000: ReferenceMesh
+    4300002: Body_M
+    4300004: Male_Feet
+    9500000: //RootNode
+    13700000: Body_M
+    13700002: ReferenceMesh
+    13700004: Male_Feet
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 120
+    normalImportMode: 1
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 152642
+  packageName: Ice Hockey Customizable Characters
+  packageVersion: 1.0
+  assetPath: Assets/CustomizableCharacters/Common/Source files/BodyParts/Male_Feet.fbx
+  uploadId: 331840

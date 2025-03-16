@@ -4,9 +4,8 @@
 TagManager:
   serializedVersion: 3
   tags:
+  - PlayerCamera
   - Puck
-  - Wall
-  - Net
   layers:
   - Default
   - TransparentFX
@@ -14,13 +13,13 @@ TagManager:
   - 
   - Water
   - UI
-  - Wall
   - Ground
-  - Ice
   - Puck
-  - Arena
-  - Player
-  - Trigger
+  - 
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 

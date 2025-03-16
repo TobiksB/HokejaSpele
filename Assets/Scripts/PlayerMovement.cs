@@ -1,269 +1,294 @@
+using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
-using MainGame;  // Add this line at the top
+using System.Collections;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
-    [Header("Movement Settings")]
-    [SerializeField] private float maxSpeed = 10f;
-    [SerializeField] private float acceleration = 5f;
-    [SerializeField] private float rotationSpeed = 3f;
-    [SerializeField] private float dragForce = 1f;
-    
-    [Header("Boost Settings")]
-    [SerializeField] private float boostMultiplier = 1.5f;
-    [SerializeField] private float boostCooldown = 2f;
-    [SerializeField] private float boostDuration = 1f;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float rotationSpeed = 100f;
+    [SerializeField] private Transform cameraHolder; // Reference to camera holder
+    [SerializeField] private float shootForce = 20f;
+    [SerializeField] private float highShootForce = 25f;  // Add this field
+    [SerializeField] private float highShotAngle = 30f;   // Add this field
+    [SerializeField] private float skidFactor = 3f; // How much to increase drag when skidding
+    [SerializeField] private float shootAnimationDuration = 0.5f;
+    [SerializeField] private float sprintMultiplier = 1.5f;
+    [SerializeField] private float maxStamina = 100f;
+    [SerializeField] private float staminaDepletionRate = 25f;
+    [SerializeField] private float staminaRegenRate = 15f;
+    [SerializeField] private float maxVelocity = 8f;  // Add this field
+    [SerializeField] private float pickupRadius = 1.5f;  // Add this field
+    [SerializeField] private float shootChargeRate = 1.5f; // Add this field
+    [SerializeField] private float maxShootCharge = 2f; // Add this field
 
-    [Header("Animation")]
-    [SerializeField] private Animator animator;
-    private static readonly int IsSkating = Animator.StringToHash("IsSkating");
-    private static readonly int IsShooting = Animator.StringToHash("IsShooting");
-    private static readonly int IsIdle = Animator.StringToHash("IsIdle");
-    
-    [Header("Collision Settings")]
-    [SerializeField] private float collisionOffset = 0.5f;
-    [SerializeField] private LayerMask wallLayer; // Assign this in inspector
-    private CapsuleCollider playerCollider;
-    private readonly float skinWidth = 0.1f;
-    private readonly float groundOffset = 0.1f;
-
-    private Vector3 currentVelocity;
-    private float boostTimer;
-    private float boostCooldownTimer;
-    private bool isBoosting;
-
-    [Header("Hockey Stick")]
-    [SerializeField] private HockeyStickController stickController;
-
-    [Header("Camera Settings")]
-    [SerializeField] private Camera playerCamera;
-    [SerializeField] private float cameraFollowSpeed = 5f;
-
-    private bool isShooting;
-
-    void Awake()
-    {
-        Debug.Log("PlayerMovement: Initializing player");
-    }
+    private Rigidbody rb;
+    private float moveInput;
+    private float rotationInput;
+    private Puck currentPuck;
+    private Animator animator;
+    private float shootAnimationTimer = 0f;
+    private float currentStamina;
+    private bool canSprint = true;
+    private Camera playerCamera;
+    private NetworkAnimator networkAnimator;
+    private NetworkVariable<bool> isSkating = new NetworkVariable<bool>();
+    private NetworkVariable<bool> isShooting = new NetworkVariable<bool>();
+    private float currentShootCharge = 1f;
 
     void Start()
     {
-        if (animator == null)
-        {
-            animator = GetComponentInChildren<Animator>();
-        }
-        playerCollider = GetComponent<CapsuleCollider>();
-        if (playerCollider == null)
-        {
-            Debug.LogError("Player must have a CapsuleCollider!");
-            enabled = false;
-        }
-
-        // Set up wall layer mask
-        wallLayer = LayerMask.GetMask("Wall");
-        Debug.Log($"Wall layer mask: {wallLayer}"); // Debug to verify layer is set
+        rb = GetComponent<Rigidbody>();
         
-        // Ensure player is slightly above ground
-        Vector3 pos = transform.position;
-        pos.y += groundOffset;
-        transform.position = pos;
+        // Configure rigidbody for ice-like movement
+        rb.linearDamping = 0.2f; // Adjusted for smoother movement
+        rb.angularDamping = 0.5f;
+        rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        rb.interpolation = RigidbodyInterpolation.Interpolate; // Enable interpolation for smoother movement
 
-        if (stickController == null)
-        {
-            stickController = GetComponentInChildren<HockeyStickController>();
-            if (stickController != null)
-            {
-                // Set player transform reference directly
-                stickController.playerTransform = this.transform;
-                
-                // Also try to set player component if available
-                MainGame.HockeyPlayer hockeyPlayer = GetComponent<MainGame.HockeyPlayer>();
-                if (hockeyPlayer != null)
-                {
-                    stickController.player = hockeyPlayer;
-                }
-                else
-                {
-                    Debug.LogWarning("Hockey player component not found!");
-                }
-            }
-            else
-            {
-                Debug.LogError("Hockey stick controller not found! Make sure it's a child of the player.");
-            }
-        }
-
-        // Use the existing camera in the player prefab
-        if (playerCamera == null)
-        {
-            playerCamera = GetComponentInChildren<Camera>();
-        }
-        if (playerCamera == null)
-        {
-            Debug.LogError("Player camera not found!");
-        }
-
-        // Try finding the hockey stick if not assigned
-        if (stickController == null)
-        {
-            // First look for it as a direct child
-            stickController = GetComponentInChildren<HockeyStickController>();
-            
-            // If not found, search through all children recursively
-            if (stickController == null)
-            {
-                HockeyStickController[] sticks = GetComponentsInChildren<HockeyStickController>();
-                if (sticks.Length > 0)
-                {
-                    stickController = sticks[0];
-                }
-            }
-            
-            // If we found the stick controller, set up references
-            if (stickController != null)
-            {
-                stickController.playerTransform = this.transform;
-                
-                // Also try to set player component if available
-                MainGame.HockeyPlayer hockeyPlayer = GetComponent<MainGame.HockeyPlayer>();
-                if (hockeyPlayer != null)
-                {
-                    stickController.player = hockeyPlayer;
-                }
-                else
-                {
-                    Debug.LogWarning("Hockey player component not found! Adding one...");
-                    hockeyPlayer = gameObject.AddComponent<MainGame.HockeyPlayer>();
-                    stickController.player = hockeyPlayer;
-                }
-            }
-            else
-            {
-                Debug.LogError("Hockey stick controller not found! Make sure it's a child of the player.");
-            }
-        }
+        networkAnimator = GetComponent<NetworkAnimator>();
+        animator = GetComponent<Animator>();
+        currentStamina = maxStamina;
     }
 
     void Update()
     {
-        HandleBoost();
+        if (!IsOwner) return;
+
+        // Get input
+        moveInput = Input.GetAxis("Vertical"); // Use GetAxis for smoother input
+        rotationInput = Input.GetAxis("Horizontal"); // Use GetAxis for smoother input
+
+        // Update animations with speed
+        bool isMoving = moveInput != 0 || rotationInput != 0;
+        bool isSprinting = Input.GetKey(KeyCode.LeftShift) && canSprint && currentStamina > 0;
         
-        // Cursor locking for debugging
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (isMoving != isSkating.Value)
         {
-            if (Cursor.lockState == CursorLockMode.Locked)
+            UpdateSkatingServerRpc(isMoving);
+        }
+
+        // Update animation speed
+        if (animator != null)
+        {
+            float animSpeed = isSprinting ? 1.5f : 1f;
+            animator.speed = isMoving ? animSpeed : 1f;
+        }
+
+        // Handle shooting with charge mechanic
+        if (currentPuck != null)
+        {
+            if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
             {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                currentShootCharge = Mathf.Min(currentShootCharge + shootChargeRate * Time.deltaTime, maxShootCharge);
             }
-            else
+            else if (Input.GetMouseButtonUp(0)) // Normal shot
             {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                UpdateShootingServerRpc(true);
+                shootAnimationTimer = shootAnimationDuration;
+                currentPuck.Shoot(transform.forward, shootForce * currentShootCharge, false);
+                currentPuck = null;
+                currentShootCharge = 1f;
+                Debug.Log("Normal shot");
+            }
+            else if (Input.GetMouseButtonUp(1)) // High shot
+            {
+                UpdateShootingServerRpc(true);
+                shootAnimationTimer = shootAnimationDuration;
+                Vector3 highShotDirection = transform.forward;
+                currentPuck.Shoot(highShotDirection, highShootForce * currentShootCharge, true);
+                currentPuck = null;
+                currentShootCharge = 1f;
+                Debug.Log("High shot");
             }
         }
+
+        // Reset shooting animation
+        if (shootAnimationTimer > 0)
+        {
+            shootAnimationTimer -= Time.deltaTime;
+            if (shootAnimationTimer <= 0)
+            {
+                UpdateShootingServerRpc(false);
+            }
+        }
+
+        // Handle skidding with spacebar
+        if (Input.GetKey(KeyCode.Space))
+        {
+            rb.linearDamping = skidFactor;
+        }
+        else
+        {
+            rb.linearDamping = 0.2f; // Return to normal drag
+        }
+
+        // Handle stamina and sprinting
+        if (Input.GetKey(KeyCode.LeftShift) && canSprint && currentStamina > 0)
+        {
+            currentStamina -= staminaDepletionRate * Time.deltaTime;
+            if (currentStamina <= 0)
+            {
+                canSprint = false;
+                currentStamina = 0;
+            }
+        }
+        else if (!Input.GetKey(KeyCode.LeftShift))
+        {
+            currentStamina += staminaRegenRate * Time.deltaTime;
+            if (currentStamina >= maxStamina)
+            {
+                currentStamina = maxStamina;
+                canSprint = true;
+            }
+        }
+
+        // Update UI
+        StaminaBar.Instance?.UpdateStamina(currentStamina / maxStamina);
     }
 
     void FixedUpdate()
     {
-        HandleMovement();
-    }
+        if (!IsOwner || cameraHolder == null) return;
 
-    void HandleRotation()
-    {
-        float mouseX = Input.GetAxis("Mouse X");
-        transform.Rotate(Vector3.up, mouseX * rotationSpeed);
-    }
+        // Get camera's forward and right vectors, but ignore Y component
+        Vector3 cameraForward = cameraHolder.forward;
+        cameraForward.y = 0;
+        cameraForward.Normalize();
 
-    void HandleMovement()
-    {
-        float moveForward = Input.GetAxisRaw("Vertical");
-        float moveSideways = Input.GetAxisRaw("Horizontal");
-        
-        Vector3 moveDirection = (transform.forward * moveForward) + (transform.right * moveSideways);
-        moveDirection.Normalize();
-
-        bool isMoving = Mathf.Abs(moveForward) > 0.1f || Mathf.Abs(moveSideways) > 0.1f;
-        
-        // Update animations
-        if (animator != null && !isShooting)
+        float currentMoveSpeed = moveSpeed;
+        if (Input.GetKey(KeyCode.LeftShift) && canSprint && currentStamina > 0)
         {
-            animator.SetBool(IsSkating, isMoving);
-            animator.SetBool(IsIdle, !isMoving);
+            currentMoveSpeed *= sprintMultiplier;
         }
 
-        // Apply movement
-        if (isMoving)
-        {
-            float currentSpeed = isBoosting ? maxSpeed * boostMultiplier : maxSpeed;
-            currentVelocity += moveDirection * acceleration * Time.fixedDeltaTime;
-            currentVelocity = Vector3.ClampMagnitude(currentVelocity, currentSpeed);
+        // Calculate desired velocity
+        Vector3 targetVelocity = cameraForward * moveInput * currentMoveSpeed;
+        
+        // Smoothly interpolate current velocity to target velocity
+        Vector3 velocityChange = (targetVelocity - rb.linearVelocity);
+        velocityChange.y = 0; // Keep vertical velocity unchanged
+        
+        // Apply force with dampening
+        rb.AddForce(velocityChange, ForceMode.VelocityChange);
 
-            // Try to move
-            Vector3 targetPosition = transform.position + currentVelocity * Time.fixedDeltaTime;
+        // Clamp velocity to prevent excessive speed
+        Vector3 currentVelocity = rb.linearVelocity;
+        if (currentVelocity.magnitude > maxVelocity)
+        {
+            currentVelocity = currentVelocity.normalized * maxVelocity;
+            rb.linearVelocity = currentVelocity;
+        }
+
+        // Rotate player
+        transform.Rotate(Vector3.up * rotationInput * rotationSpeed * Time.fixedDeltaTime);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!IsOwner) return; // Only owner can pick up
+        if (currentPuck != null) return;
+        
+        if (other.TryGetComponent<Puck>(out Puck puck))
+        {
+            Vector3 toPuck = puck.transform.position - transform.position;
+            float angle = Vector3.Angle(transform.forward, toPuck);
             
-            // Check if we can move there
-            if (!Physics.CapsuleCast(
-                GetTopCapsulePoint(),
-                GetBottomCapsulePoint(),
-                playerCollider.radius,
-                currentVelocity.normalized,
-                out RaycastHit hit,
-                currentVelocity.magnitude * Time.fixedDeltaTime + collisionOffset,
-                wallLayer))
+            if (toPuck.magnitude <= pickupRadius && angle <= 90f)
             {
-                transform.position = targetPosition;
-            }
-            else
-            {
-                // Try sliding along the wall
-                Vector3 normal = hit.normal;
-                Vector3 deflected = Vector3.ProjectOnPlane(currentVelocity, normal);
-                if (deflected.magnitude > 0.1f)
-                {
-                    transform.position += deflected.normalized * currentSpeed * Time.fixedDeltaTime;
-                }
+                currentPuck = puck;
+                puck.PickUp(transform);
+                Debug.Log($"Picked up puck: {puck.name}");
             }
         }
-
-        // Apply drag
-        currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, dragForce * Time.fixedDeltaTime);
     }
 
-    private Vector3 GetTopCapsulePoint()
+    private void OnTriggerStay(Collider other)
     {
-        return transform.position + Vector3.up * (playerCollider.height - playerCollider.radius);
-    }
-
-    private Vector3 GetBottomCapsulePoint()
-    {
-        return transform.position + Vector3.up * playerCollider.radius;
-    }
-
-    void HandleBoost()
-    {
-        // Update boost cooldown
-        if (boostCooldownTimer > 0)
+        if (!IsOwner) return;
+        if (currentPuck != null) return;
+        
+        Puck puck = other.GetComponent<Puck>();
+        if (puck != null)
         {
-            boostCooldownTimer -= Time.deltaTime;
-        }
-
-        // Handle boost activation
-        if (Input.GetKey(KeyCode.LeftShift) && boostCooldownTimer <= 0 && !isBoosting)
-        {
-            isBoosting = true;
-            boostTimer = boostDuration;
-        }
-
-        // Handle boost duration
-        if (isBoosting)
-        {
-            boostTimer -= Time.deltaTime;
-            if (boostTimer <= 0)
+            Vector3 toPuck = puck.transform.position - transform.position;
+            float angle = Vector3.Angle(transform.forward, toPuck);
+            
+            if (toPuck.magnitude <= pickupRadius && angle <= 90f)
             {
-                isBoosting = false;
-                boostCooldownTimer = boostCooldown;
+                Debug.Log($"Attempting to pick up puck: {puck.name}");
+                currentPuck = puck;
+                puck.PickUp(transform);
             }
         }
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        if (IsOwner)
+        {
+            Vector3 spawnPosition = NetworkSpawnManager.Instance.GetNextSpawnPoint();
+            transform.position = spawnPosition;
+            
+            // Create dedicated camera for this player
+            GameObject cameraObj = new GameObject($"PlayerCamera_{OwnerClientId}");
+            Camera cam = cameraObj.AddComponent<Camera>();
+            cam.enabled = true;
+            AudioListener audioListener = cameraObj.AddComponent<AudioListener>();
+            audioListener.enabled = true;
+            
+            CameraFollow follow = cameraObj.AddComponent<CameraFollow>();
+            follow.enabled = true;
+            follow.SetTarget(transform);
+            
+            cameraHolder = cameraObj.transform;
+            
+            // Set player color
+            if (TryGetComponent<MeshRenderer>(out var renderer))
+            {
+                renderer.material.color = IsHost ? Color.blue : Color.green;
+            }
+
+            networkAnimator = GetComponent<NetworkAnimator>();
+        }
+        else
+        {
+            if (TryGetComponent<MeshRenderer>(out var renderer))
+            {
+                renderer.material.color = Color.red;
+            }
+        }
+        
+        isSkating.OnValueChanged += OnSkatingChanged;
+        isShooting.OnValueChanged += OnShootingChanged;
+    }
+
+    private void OnSkatingChanged(bool previousValue, bool newValue)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsSkating", newValue);
+        }
+    }
+
+    private void OnShootingChanged(bool previousValue, bool newValue)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsShooting", newValue);
+        }
+    }
+
+    [ServerRpc]
+    private void UpdateSkatingServerRpc(bool skating)
+    {
+        isSkating.Value = skating;
+    }
+
+    [ServerRpc]
+    private void UpdateShootingServerRpc(bool shooting)
+    {
+        isShooting.Value = shooting;
     }
 }

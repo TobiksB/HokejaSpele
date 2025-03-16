@@ -1,90 +1,35 @@
 using UnityEngine;
-using MainGame; // Add this to reference the Puck class
 
 public class GoalTrigger : MonoBehaviour
 {
-    public bool isTeam1Goal = true;
-    private ScoreManager scoreManager;
-    private BoxCollider triggerCollider;
-    private bool goalScored = false;
-    private float goalCooldown = 1f;
-    private float goalTimer = 0f;
-
-    private void Start()
-    {
-        scoreManager = FindObjectOfType<ScoreManager>();
-        triggerCollider = GetComponent<BoxCollider>();
-        
-        if (!triggerCollider)
-        {
-            Debug.LogError("BoxCollider component missing on GoalTrigger!");
-            enabled = false;
-            return;
-        }
-
-        // Ensure the collider is set as trigger
-        triggerCollider.isTrigger = true;
-    }
-
-    private void Update()
-    {
-        if (goalScored)
-        {
-            goalTimer += Time.deltaTime;
-            if (goalTimer >= goalCooldown)
-            {
-                goalScored = false;
-                goalTimer = 0f;
-            }
-        }
-    }
+    [SerializeField] private bool isBlueGoal;
+    private bool canScore = true;
+    private float scoreCooldown = 1f;
 
     private void OnTriggerEnter(Collider other)
     {
-        HandleGoal(other);
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        HandleGoal(collision.collider);
-    }
-
-    private void HandleGoal(Collider other)
-    {
-        if (goalScored) return;
-
-        Puck puck = other.GetComponent<Puck>();
-        if (puck != null)
+        if (!canScore) return;
+        
+        if (other.CompareTag("Puck") || other.TryGetComponent<Puck>(out _))
         {
-            goalScored = true;
-            Debug.Log($"Goal scored! Puck entered {(isTeam1Goal ? "Team 1's" : "Team 2's")} goal");
-            if (scoreManager != null)
+            Debug.Log($"Goal trigger entered by puck in {(isBlueGoal ? "Blue" : "Red")} goal!");
+            
+            if (ScoreManager.Instance != null)
             {
-                if (isTeam1Goal)
-                {
-                    scoreManager.AddScoreTeam2();
-                }
-                else
-                {
-                    scoreManager.AddScoreTeam1();
-                }
-                puck.ResetPosition();
+                ScoreManager.Instance.ScoreGoalServerRpc(!isBlueGoal);
+                StartCoroutine(ScoreCooldown());
             }
             else
             {
-                Debug.LogError("ScoreManager not found!");
+                Debug.LogError("ScoreManager instance not found!");
             }
         }
     }
 
-    // Visualize the trigger zone in the editor
-    private void OnDrawGizmos()
+    private System.Collections.IEnumerator ScoreCooldown()
     {
-        Gizmos.color = isTeam1Goal ? Color.blue : Color.red;
-        if (triggerCollider != null)
-        {
-            Gizmos.matrix = transform.localToWorldMatrix;
-            Gizmos.DrawWireCube(triggerCollider.center, triggerCollider.size);
-        }
+        canScore = false;
+        yield return new WaitForSeconds(scoreCooldown);
+        canScore = true;
     }
 }
