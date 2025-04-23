@@ -11,6 +11,7 @@ public class LobbyManager : MonoBehaviour
     public static LobbyManager Instance { get; private set; }
     private Lobby currentLobby;
     private Dictionary<string, string> playerTeams = new Dictionary<string, string>(); // PlayerID -> Team
+    private Dictionary<string, string> playerNames = new Dictionary<string, string>(); // PlayerID -> PlayerName
     private float lobbyUpdateTimer;
     private const float LOBBY_UPDATE_INTERVAL = 1.5f;
     private GameMode selectedGameMode;
@@ -21,9 +22,11 @@ public class LobbyManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            Debug.Log("LobbyManager initialized successfully.");
         }
         else
         {
+            Debug.LogWarning("Duplicate LobbyManager detected. Destroying this instance.");
             Destroy(gameObject);
         }
     }
@@ -45,21 +48,37 @@ public class LobbyManager : MonoBehaviour
     {
         try
         {
+            Debug.Log("Initializing Unity Services...");
             await InitializeUnityServices();
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
+            Debug.Log("Creating lobby...");
             CreateLobbyOptions options = new CreateLobbyOptions
             {
                 IsPrivate = true,
                 Player = GetPlayer(),
                 Data = new Dictionary<string, DataObject>
                 {
-                    { "GameMode", new DataObject(DataObject.VisibilityOptions.Public, "None") },
+                    { "GameMode", new DataObject(DataObject.VisibilityOptions.Public, selectedGameMode.ToString()) },
                     { "GameStarted", new DataObject(DataObject.VisibilityOptions.Member, "false") }
                 }
             };
 
             currentLobby = await LobbyService.Instance.CreateLobbyAsync("Hockey Game", maxPlayers, options);
+            Debug.Log($"Lobby created successfully with code: {currentLobby.LobbyCode}");
+
+            // Add the host player to the playerNames dictionary
+            string playerId = AuthenticationService.Instance.PlayerId;
+            playerNames[playerId] = "Player1";
+
+            // Update the lobby code in the UI
+            if (LobbyPanelManager.Instance != null)
+            {
+                LobbyPanelManager.Instance.SetLobbyCode(currentLobby.LobbyCode);
+            }
+
+            UpdatePlayerListUI();
+
             return currentLobby.LobbyCode;
         }
         catch (System.Exception e)
@@ -77,10 +96,39 @@ public class LobbyManager : MonoBehaviour
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
             currentLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode);
+
+            // Assign a default name if not already set
+            string playerId = AuthenticationService.Instance.PlayerId;
+            if (!playerNames.ContainsKey(playerId))
+            {
+                int playerNumber = playerNames.Count + 1;
+                playerNames[playerId] = $"Player{playerNumber}";
+            }
+
+            UpdatePlayerListUI();
         }
         catch (System.Exception e)
         {
             Debug.LogError($"Failed to join lobby: {e.Message}");
+        }
+    }
+
+    private void UpdatePlayerListUI()
+    {
+        if (LobbyPanelManager.Instance != null)
+        {
+            var players = new List<LobbyPlayerData>();
+            foreach (var kvp in playerNames)
+            {
+                players.Add(new LobbyPlayerData
+                {
+                    PlayerName = kvp.Value,
+                    IsBlueTeam = playerTeams.ContainsKey(kvp.Key) && playerTeams[kvp.Key] == "Blue",
+                    IsReady = false // Default to not ready
+                });
+            }
+
+            LobbyPanelManager.Instance.UpdatePlayerList(players);
         }
     }
 

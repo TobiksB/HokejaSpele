@@ -7,6 +7,8 @@ using Unity.Netcode; // Ensure this is included
 
 public class LobbyPanelManager : MonoBehaviour
 {
+    public static LobbyPanelManager Instance { get; private set; }
+
     [Header("UI Elements")]
     [SerializeField] private TMP_Text lobbyCodeText;
     [SerializeField] private Transform playerListContent;
@@ -22,6 +24,18 @@ public class LobbyPanelManager : MonoBehaviour
 
     private List<string> chatMessages = new List<string>();
     private const int maxMessages = 50;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     private void Start()
     {
@@ -40,11 +54,21 @@ public class LobbyPanelManager : MonoBehaviour
 
     public void SetLobbyCode(string code)
     {
-        lobbyCodeText.text = $"Lobby Code: {code}";
+        Debug.Log($"Setting lobby code: {code}");
+        if (lobbyCodeText != null)
+        {
+            lobbyCodeText.text = $"Lobby Code: {code}";
+        }
+        else
+        {
+            Debug.LogError("lobbyCodeText is not assigned in the Inspector.");
+        }
     }
 
     public void UpdatePlayerList(List<LobbyPlayerData> players)
     {
+        Debug.Log("Updating player list in the lobby UI...");
+
         // Clear existing player list
         foreach (Transform child in playerListContent)
         {
@@ -54,6 +78,7 @@ public class LobbyPanelManager : MonoBehaviour
         // Add players to the list
         foreach (var player in players)
         {
+            Debug.Log($"Adding player to list: {player.PlayerName}");
             GameObject item = Instantiate(playerListItemPrefab, playerListContent);
             var listItem = item.GetComponent<PlayerListItem>();
             listItem.SetPlayerInfo(player.PlayerName, player.IsBlueTeam, player.IsReady);
