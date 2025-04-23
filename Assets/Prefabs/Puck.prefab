@@ -107,7 +107,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -216,16 +216,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  followSpeed: 10
-  heightOffset: 0.1
+  spawnPoint: {fileID: 0}
   forwardOffset: 1
-  followLerpSpeed: 15
-  shootSmoothness: 0.3
-  groundCheckDistance: 0.1
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  groundForce: 50
+  moveSpeed: 15
 --- !u!114 &8422305024342322183
 MonoBehaviour:
   m_ObjectHideFlags: 0

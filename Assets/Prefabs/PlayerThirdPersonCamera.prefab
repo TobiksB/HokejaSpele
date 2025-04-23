@@ -109,3 +109,6 @@ MonoBehaviour:
   distance: 5
   height: 2
   smoothSpeed: 10
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 8

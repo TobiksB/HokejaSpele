@@ -8,9 +8,8 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float rotationSpeed = 100f;
     [SerializeField] private Transform cameraHolder; // Reference to camera holder
-    [SerializeField] private float shootForce = 20f;
-    [SerializeField] private float highShootForce = 25f;  // Add this field
-    [SerializeField] private float highShotAngle = 30f;   // Add this field
+    [SerializeField] private float shootForce = 85f; // Increased base shoot force
+    [SerializeField] private float powerShotForce = 120f; // Increased power shot force
     [SerializeField] private float skidFactor = 3f; // How much to increase drag when skidding
     [SerializeField] private float shootAnimationDuration = 0.5f;
     [SerializeField] private float sprintMultiplier = 1.5f;
@@ -20,7 +19,7 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private float maxVelocity = 8f;  // Add this field
     [SerializeField] private float pickupRadius = 1.5f;  // Add this field
     [SerializeField] private float shootChargeRate = 1.5f; // Add this field
-    [SerializeField] private float maxShootCharge = 2f; // Add this field
+    [SerializeField] private float maxShootCharge = 2.0f; // Increased max charge multiplier
 
     private Rigidbody rb;
     private float moveInput;
@@ -35,6 +34,11 @@ public class PlayerMovement : NetworkBehaviour
     private NetworkVariable<bool> isSkating = new NetworkVariable<bool>();
     private NetworkVariable<bool> isShooting = new NetworkVariable<bool>();
     private float currentShootCharge = 1f;
+    private float lastShotTime = 0f;
+    private const float SHOT_COOLDOWN = 0.5f;
+    private float lastPickupTime = 0f;
+    private const float PICKUP_COOLDOWN = 0.5f;
+    private const float SHOOT_FORCE_MULTIPLIER = 2.5f; // Increased force multiplier
 
     void Start()
     {
@@ -55,6 +59,31 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner) return;
 
+        // Check for puck pickup automatically
+        if (currentPuck == null)
+        {
+            CheckForPuckPickup();
+        }
+        else // Handle shooting when we have the puck
+        {
+            // Handle shooting
+            if (Time.time - lastShotTime >= SHOT_COOLDOWN)
+            {
+                if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
+                {
+                    currentShootCharge = Mathf.Min(currentShootCharge + shootChargeRate * Time.deltaTime, maxShootCharge);
+                }
+                else if (Input.GetMouseButtonUp(0)) // Normal shot
+                {
+                    Shoot(false);
+                }
+                else if (Input.GetMouseButtonUp(1)) // Power shot
+                {
+                    Shoot(true);
+                }
+            }
+        }
+
         // Get input
         moveInput = Input.GetAxis("Vertical"); // Use GetAxis for smoother input
         rotationInput = Input.GetAxis("Horizontal"); // Use GetAxis for smoother input
@@ -73,34 +102,6 @@ public class PlayerMovement : NetworkBehaviour
         {
             float animSpeed = isSprinting ? 1.5f : 1f;
             animator.speed = isMoving ? animSpeed : 1f;
-        }
-
-        // Handle shooting with charge mechanic
-        if (currentPuck != null)
-        {
-            if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
-            {
-                currentShootCharge = Mathf.Min(currentShootCharge + shootChargeRate * Time.deltaTime, maxShootCharge);
-            }
-            else if (Input.GetMouseButtonUp(0)) // Normal shot
-            {
-                UpdateShootingServerRpc(true);
-                shootAnimationTimer = shootAnimationDuration;
-                currentPuck.Shoot(transform.forward, shootForce * currentShootCharge, false);
-                currentPuck = null;
-                currentShootCharge = 1f;
-                Debug.Log("Normal shot");
-            }
-            else if (Input.GetMouseButtonUp(1)) // High shot
-            {
-                UpdateShootingServerRpc(true);
-                shootAnimationTimer = shootAnimationDuration;
-                Vector3 highShotDirection = transform.forward;
-                currentPuck.Shoot(highShotDirection, highShootForce * currentShootCharge, true);
-                currentPuck = null;
-                currentShootCharge = 1f;
-                Debug.Log("High shot");
-            }
         }
 
         // Reset shooting animation
@@ -184,41 +185,48 @@ public class PlayerMovement : NetworkBehaviour
         transform.Rotate(Vector3.up * rotationInput * rotationSpeed * Time.fixedDeltaTime);
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void Shoot(bool isPowerShot)
     {
-        if (!IsOwner) return; // Only owner can pick up
-        if (currentPuck != null) return;
+        if (currentPuck == null) return;
         
-        if (other.TryGetComponent<Puck>(out Puck puck))
+        lastShotTime = Time.time;
+        UpdateShootingServerRpc(true);
+        shootAnimationTimer = shootAnimationDuration;
+
+        float force = isPowerShot ? powerShotForce : shootForce;
+        float finalForce = force * currentShootCharge * SHOOT_FORCE_MULTIPLIER;
+        
+        currentPuck.Shoot(transform.forward, finalForce, false);
+        currentPuck = null;
+        currentShootCharge = 1f;
+
+        // Force animation update using correct parameter name
+        if (animator != null)
         {
-            Vector3 toPuck = puck.transform.position - transform.position;
-            float angle = Vector3.Angle(transform.forward, toPuck);
-            
-            if (toPuck.magnitude <= pickupRadius && angle <= 90f)
-            {
-                currentPuck = puck;
-                puck.PickUp(transform);
-                Debug.Log($"Picked up puck: {puck.name}");
-            }
+            animator.SetBool("IsShooting", true);
         }
     }
 
-    private void OnTriggerStay(Collider other)
+    private void CheckForPuckPickup()
     {
-        if (!IsOwner) return;
-        if (currentPuck != null) return;
-        
-        Puck puck = other.GetComponent<Puck>();
-        if (puck != null)
+        if (Time.time - lastPickupTime < PICKUP_COOLDOWN) return;
+        if (Time.time - lastShotTime < SHOT_COOLDOWN) return;
+
+        Collider[] colliders = Physics.OverlapSphere(transform.position, pickupRadius);
+        foreach (Collider col in colliders)
         {
-            Vector3 toPuck = puck.transform.position - transform.position;
-            float angle = Vector3.Angle(transform.forward, toPuck);
-            
-            if (toPuck.magnitude <= pickupRadius && angle <= 90f)
+            if (col.TryGetComponent<Puck>(out Puck puck) && !puck.IsHeld())
             {
-                Debug.Log($"Attempting to pick up puck: {puck.name}");
-                currentPuck = puck;
-                puck.PickUp(transform);
+                Vector3 toPuck = puck.transform.position - transform.position;
+                float angle = Vector3.Angle(transform.forward, toPuck);
+                
+                if (angle <= 60f && toPuck.magnitude <= pickupRadius)
+                {
+                    currentPuck = puck;
+                    puck.PickUp(transform);
+                    lastPickupTime = Time.time;
+                    break;
+                }
             }
         }
     }
@@ -231,8 +239,11 @@ public class PlayerMovement : NetworkBehaviour
             Vector3 spawnPosition = NetworkSpawnManager.Instance.GetNextSpawnPoint();
             transform.position = spawnPosition;
             
-            // Create dedicated camera for this player
+            // Create dedicated camera with specific position
             GameObject cameraObj = new GameObject($"PlayerCamera_{OwnerClientId}");
+            cameraObj.transform.position = new Vector3(0f, 3.72f, -12f);
+            cameraObj.transform.LookAt(transform.position);
+            
             Camera cam = cameraObj.AddComponent<Camera>();
             cam.enabled = true;
             AudioListener audioListener = cameraObj.AddComponent<AudioListener>();
@@ -290,5 +301,19 @@ public class PlayerMovement : NetworkBehaviour
     private void UpdateShootingServerRpc(bool shooting)
     {
         isShooting.Value = shooting;
+        UpdateShootingClientRpc(shooting);
+    }
+
+    [ClientRpc]
+    private void UpdateShootingClientRpc(bool shooting)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsShooting", shooting);
+            if (shooting)
+            {
+                animator.SetTrigger("Shoot");
+            }
+        }
     }
 }

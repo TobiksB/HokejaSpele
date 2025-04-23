@@ -39,15 +39,31 @@ public class Puck : NetworkBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
+        
+        // Physics settings
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.useGravity = false;
         rb.isKinematic = false;
-        rb.mass = 0.5f; // Lighter mass for better physics
-        rb.linearDamping = 0.2f; // Low drag for ice-like movement
+        rb.mass = 5f;
+        rb.linearDamping = 0.5f;
         rb.angularDamping = 0.5f;
-        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-        
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezePositionY;
+
+        // Set up puck properties
+        gameObject.tag = "Puck";
+        gameObject.layer = LayerMask.NameToLayer("Puck");
+
+        // Configure sphere collider
+        if (TryGetComponent<SphereCollider>(out var sphereCollider))
+        {
+            var puckMaterial = CreatePuckPhysicsMaterial();
+            sphereCollider.material = puckMaterial;
+            sphereCollider.radius = 0.3f;
+            sphereCollider.contactOffset = 0.05f;
+            sphereCollider.isTrigger = false;
+        }
+
         holderClientId.OnValueChanged += OnHolderChanged;
 
         // Store initial spawn position
@@ -63,6 +79,51 @@ public class Puck : NetworkBehaviour
         if (TryGetComponent<Renderer>(out var renderer))
         {
             renderer.enabled = true;
+        }
+    }
+
+    private PhysicsMaterial CreatePuckPhysicsMaterial()
+    {
+        var material = new PhysicsMaterial("PuckMaterial");
+        material.bounciness = 0.5f;
+        material.staticFriction = 0.6f;
+        material.dynamicFriction = 0.6f;
+        material.frictionCombine = PhysicsMaterialCombine.Maximum;
+        material.bounceCombine = PhysicsMaterialCombine.Average;
+        return material;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (!IsServer) return;
+
+        // Enhanced wall collision handling
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Wall"))
+        {
+            ContactPoint contact = collision.GetContact(0);
+            Vector3 incomingVelocity = rb.linearVelocity;
+            
+            // Complete stop
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            
+            // Push away from wall
+            transform.position = contact.point + (contact.normal * 0.5f);
+            
+            // Calculate and apply bounce with more control
+            Vector3 reflection = Vector3.Reflect(incomingVelocity.normalized, contact.normal);
+            float speed = Mathf.Min(incomingVelocity.magnitude * 0.8f, 25f);
+            rb.AddForce(reflection * speed, ForceMode.Impulse);
+            
+            Debug.Log($"Wall collision handled at speed: {speed}");
+        }
+
+        // Add slight random variation to bounce to prevent perfect loops
+        if (rb.linearVelocity.magnitude > 1f)
+        {
+            Vector3 randomVariation = Random.insideUnitSphere * 0.1f;
+            randomVariation.y = 0f;
+            rb.linearVelocity += randomVariation;
         }
     }
 
@@ -146,6 +207,25 @@ public class Puck : NetworkBehaviour
     {
         if (!IsServer) return;
 
+        if (!isPickedUp.Value)
+        {
+            // Allow higher max velocity for shots
+            if (rb.linearVelocity.magnitude > 35f)
+            {
+                rb.linearVelocity = rb.linearVelocity.normalized * 35f;
+            }
+
+            // Force height correction
+            Vector3 pos = transform.position;
+            float targetY = spawnPoint != null ? spawnPoint.position.y : initialPosition.y;
+            if (Mathf.Abs(pos.y - targetY) > 0.01f)
+            {
+                pos.y = targetY;
+                transform.position = pos;
+                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
+            }
+        }
+
         if (isPickedUp.Value && holder != null)
         {
             Vector3 targetPos = holder.position + holder.forward * forwardOffset;
@@ -212,27 +292,75 @@ public class Puck : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void ShootServerRpc(Vector3 direction, float force, bool isHighShot)
     {
-        rb.isKinematic = false;
+        if (!isPickedUp.Value) return;
+
+        // Release puck
         isPickedUp.Value = false;
         holderClientId.Value = ulong.MaxValue;
+        rb.isKinematic = false;
 
-        Vector3 shotDirection = direction;
-        if (isHighShot)
-        {
-            // Small lift with forward momentum
-            Vector3 liftVector = Vector3.up * 0.1f + direction * 0.9f;
-            shotDirection = liftVector.normalized;
-            rb.constraints &= ~RigidbodyConstraints.FreezePositionY;
-            rb.useGravity = true; // Enable gravity for natural arc
-        }
+        // Reset velocities and apply force
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
 
-        // Apply physics force
-        rb.AddForce(shotDirection * force, ForceMode.Impulse);
+        // Apply stronger shooting force
+        Vector3 shootDirection = direction.normalized;
+        float clampedForce = Mathf.Clamp(force, 30f, 150f);
         
-        if (isHighShot)
+        // Apply initial impulse
+        rb.AddForce(shootDirection * clampedForce, ForceMode.Impulse);
+        
+        // Add extra velocity for more powerful shots
+        rb.linearVelocity += shootDirection * (clampedForce * 0.1f);
+        
+        Debug.Log($"Shot applied with force: {clampedForce}, velocity: {rb.linearVelocity.magnitude}");
+    }
+
+    public void Shoot(Vector3 direction, float force, bool isHighShot = false)
+    {
+        if (!NetworkObject.IsSpawned) return;
+        ShootServerRpc(direction, force, isHighShot);
+    }
+
+    public void ResetPosition()
+    {
+        if (!IsServer) return;
+        
+        Vector3 resetPos = spawnPoint != null ? spawnPoint.position : initialPosition;
+        transform.position = resetPos;
+        rb.position = resetPos;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        
+        if (isPickedUp.Value)
         {
-            StartCoroutine(ReturnToGround());
+            isPickedUp.Value = false;
+            holderClientId.Value = ulong.MaxValue;
+            rb.isKinematic = false;
         }
+    }
+
+    public bool IsHeld()
+    {
+        return isPickedUp.Value;
+    }
+
+    private IEnumerator DelayedShoot(Vector3 direction, float force, bool isHighShot)
+    {
+        yield return new WaitForFixedUpdate();
+
+        // Reset velocities
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        // Apply much stronger force
+        float clampedForce = Mathf.Clamp(force, 20f, 100f); // Increased force range
+        rb.AddForce(direction * clampedForce, ForceMode.Impulse);
+        
+        // Add extra impulse for initial momentum
+        rb.AddForce(direction * 10f, ForceMode.VelocityChange);
+        
+        Debug.Log($"Shot applied - Force: {clampedForce}");
     }
 
     private IEnumerator ReturnToGround()
@@ -261,30 +389,6 @@ public class Puck : NetworkBehaviour
             rb.useGravity = false;
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
             rb.constraints |= RigidbodyConstraints.FreezePositionY;
-        }
-    }
-
-    public void Shoot(Vector3 direction, float force, bool isHighShot = false)
-    {
-        if (!NetworkObject.IsSpawned) return;
-        ShootServerRpc(direction, force, isHighShot);
-    }
-
-    public void ResetPosition()
-    {
-        if (!IsServer) return;
-        
-        Vector3 resetPos = spawnPoint != null ? spawnPoint.position : initialPosition;
-        transform.position = resetPos;
-        rb.position = resetPos;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        
-        if (isPickedUp.Value)
-        {
-            isPickedUp.Value = false;
-            holderClientId.Value = ulong.MaxValue;
-            rb.isKinematic = false;
         }
     }
 }

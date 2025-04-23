@@ -6,17 +6,18 @@ TagManager:
   tags:
   - PlayerCamera
   - Puck
+  - Wall
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Wall
   - Water
   - UI
   - Ground
   - Puck
-  - 
-  - 
+  - Goal
+  - Player
   - 
   - 
   - 

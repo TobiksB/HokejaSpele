@@ -3,33 +3,46 @@ using UnityEngine;
 public class GoalTrigger : MonoBehaviour
 {
     [SerializeField] private bool isBlueGoal;
-    private bool canScore = true;
-    private float scoreCooldown = 1f;
+    private bool goalScored = false;
+    private BoxCollider goalTrigger;
+
+    private void Start()
+    {
+        // Set up goal trigger properly
+        goalTrigger = GetComponent<BoxCollider>();
+        if (goalTrigger != null)
+        {
+            goalTrigger.isTrigger = true;
+            // Make trigger volume larger
+            goalTrigger.size = new Vector3(4f, 3f, 2f);
+            goalTrigger.center = Vector3.zero;
+        }
+
+        // Ensure correct layer setup
+        gameObject.layer = LayerMask.NameToLayer("Goal");
+    }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!canScore) return;
-        
-        if (other.CompareTag("Puck") || other.TryGetComponent<Puck>(out _))
+        if (goalScored) return;
+
+        Debug.Log($"Trigger entered by: {other.gameObject.name} on layer: {other.gameObject.layer}");
+
+        // Use CompareTag for better performance and explicit tag check
+        if (other.CompareTag("Puck"))
         {
-            Debug.Log($"Goal trigger entered by puck in {(isBlueGoal ? "Blue" : "Red")} goal!");
-            
+            Debug.Log($"Goal scored by {(isBlueGoal ? "Blue" : "Red")} team!");
             if (ScoreManager.Instance != null)
             {
+                goalScored = true;
                 ScoreManager.Instance.ScoreGoalServerRpc(!isBlueGoal);
-                StartCoroutine(ScoreCooldown());
-            }
-            else
-            {
-                Debug.LogError("ScoreManager instance not found!");
+                Invoke("ResetGoalState", 2f);
             }
         }
     }
 
-    private System.Collections.IEnumerator ScoreCooldown()
+    private void ResetGoalState()
     {
-        canScore = false;
-        yield return new WaitForSeconds(scoreCooldown);
-        canScore = true;
+        goalScored = false;
     }
 }
