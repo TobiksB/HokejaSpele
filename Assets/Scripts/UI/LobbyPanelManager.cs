@@ -2,28 +2,45 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using Unity.Services.Authentication; // Ensure this is included
-using Unity.Netcode; // Ensure this is included
+using Unity.Services.Authentication;
+using Unity.Netcode;
 
+[DisallowMultipleComponent]
 public class LobbyPanelManager : MonoBehaviour
 {
     public static LobbyPanelManager Instance { get; private set; }
 
-    [Header("UI Elements")]
+    [Header("Panel References")]
+    [SerializeField] private RectTransform mainPanel;
+
+    [Header("Lobby Code")]
     [SerializeField] private TMP_Text lobbyCodeText;
-    [SerializeField] private Transform playerListContent;
-    [SerializeField] private GameObject playerListItemPrefab;
+    [SerializeField] private Button copyCodeButton;
+
+    [Header("Player List")]
+    [SerializeField] private ScrollRect playerListScrollRect;
+    [SerializeField] private RectTransform playerListContent;
+    [SerializeField] private PlayerListItem playerListItemPrefab;
+    [SerializeField] private float playerListSpacing = 5f;
+    [SerializeField] private RectOffset playerListPadding;
+
+    [Header("Team Selection")]
     [SerializeField] private Button blueTeamButton;
     [SerializeField] private Button redTeamButton;
-    [SerializeField] private Button startMatchButton;
+    [SerializeField] private Image blueTeamIndicator;
+    [SerializeField] private Image redTeamIndicator;
 
-    [Header("Chat Elements")]
-    [SerializeField] private TMP_InputField chatInputField;
-    [SerializeField] private TMP_Text chatContent;
+    [Header("Chat")]
+    [SerializeField] private ScrollRect chatScrollRect;
+    [SerializeField] private RectTransform chatContent;
+    [SerializeField] private TMP_InputField chatInput;
     [SerializeField] private Button sendButton;
+    [SerializeField] private TMP_Text chatText;
 
-    private List<string> chatMessages = new List<string>();
-    private const int maxMessages = 50;
+    [Header("Game Control")]
+    [SerializeField] private Button startGameButton;
+    [SerializeField] private Button readyButton;
+    [SerializeField] private Image readyIndicator;
 
     private void Awake()
     {
@@ -31,24 +48,60 @@ public class LobbyPanelManager : MonoBehaviour
         {
             Instance = this;
         }
-        else
+        else if (Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
     }
 
     private void Start()
     {
+        // Initialize RectOffset here
+        playerListPadding = new RectOffset(5, 5, 5, 5);
+        
+        SetupLayouts();
+
         // Set up button listeners
-        blueTeamButton.onClick.AddListener(() => SelectTeam("Blue"));
-        redTeamButton.onClick.AddListener(() => SelectTeam("Red"));
-        startMatchButton.onClick.AddListener(StartMatch);
-        sendButton.onClick.AddListener(SendMessage);
+        if (copyCodeButton) copyCodeButton.onClick.AddListener(CopyLobbyCode);
+        if (blueTeamButton) blueTeamButton.onClick.AddListener(() => SelectTeam("Blue"));
+        if (redTeamButton) redTeamButton.onClick.AddListener(() => SelectTeam("Red"));
+        if (startGameButton) startGameButton.onClick.AddListener(StartMatch);
+        if (sendButton) sendButton.onClick.AddListener(SendMessage);
 
         // Disable Start Match button for non-hosts
         if (!IsHost())
         {
-            startMatchButton.interactable = false;
+            startGameButton.interactable = false;
+        }
+    }
+
+    private void SetupLayouts()
+    {
+        if (playerListContent != null)
+        {
+            var vlg = playerListContent.GetComponent<VerticalLayoutGroup>();
+            if (vlg == null) vlg = playerListContent.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = playerListSpacing;
+            vlg.padding = playerListPadding;
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.childControlHeight = true;
+            vlg.childControlWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.childForceExpandWidth = true;
+        }
+
+        if (chatContent != null)
+        {
+            var vlg = chatContent.GetComponent<VerticalLayoutGroup>();
+            if (vlg == null) vlg = chatContent.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 2f;
+            vlg.padding = new RectOffset(5, 5, 5, 5);
+            vlg.childAlignment = TextAnchor.LowerLeft;
+            vlg.childControlHeight = true;
+            vlg.childControlWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.childForceExpandWidth = true;
         }
     }
 
@@ -65,9 +118,19 @@ public class LobbyPanelManager : MonoBehaviour
         }
     }
 
+    private void CopyLobbyCode()
+    {
+        if (lobbyCodeText != null && !string.IsNullOrEmpty(lobbyCodeText.text))
+        {
+            string code = lobbyCodeText.text.Replace("Lobby Code: ", "").Trim();
+            GUIUtility.systemCopyBuffer = code;
+            Debug.Log($"Copied lobby code: {code}");
+        }
+    }
+
     public void UpdatePlayerList(List<LobbyPlayerData> players)
     {
-        Debug.Log("Updating player list in the lobby UI...");
+        Debug.Log($"Updating player list with {players.Count} players");
 
         // Clear existing player list
         foreach (Transform child in playerListContent)
@@ -79,18 +142,33 @@ public class LobbyPanelManager : MonoBehaviour
         foreach (var player in players)
         {
             Debug.Log($"Adding player to list: {player.PlayerName}");
-            GameObject item = Instantiate(playerListItemPrefab, playerListContent);
-            var listItem = item.GetComponent<PlayerListItem>();
-            listItem.SetPlayerInfo(player.PlayerName, player.IsBlueTeam, player.IsReady);
+            PlayerListItem item = Instantiate(playerListItemPrefab, playerListContent);
+            item.SetPlayerInfo(player.PlayerName, player.IsBlueTeam, player.IsReady);
+        }
+
+        // Force layout refresh
+        LayoutRebuilder.ForceRebuildLayoutImmediate(playerListContent);
+        Canvas.ForceUpdateCanvases();
+        if (playerListScrollRect != null)
+        {
+            playerListScrollRect.normalizedPosition = Vector2.one;
         }
     }
 
     private void SelectTeam(string team)
     {
         // Ensure AuthenticationService is initialized
-        if (AuthenticationService.Instance.IsSignedIn)
+        if (AuthenticationService.Instance != null && AuthenticationService.Instance.IsSignedIn)
         {
-            LobbyManager.Instance.SetPlayerTeam(AuthenticationService.Instance.PlayerId, team);
+            var lobbyManager = FindFirstObjectByType<LobbyManager>();
+            if (lobbyManager != null)
+            {
+                lobbyManager.SetPlayerTeam(AuthenticationService.Instance.PlayerId, team);
+            }
+            else
+            {
+                Debug.LogError("LobbyManager not found in the scene.");
+            }
         }
         else
         {
@@ -100,36 +178,45 @@ public class LobbyPanelManager : MonoBehaviour
 
     private void StartMatch()
     {
-        // Notify the server to start the match
-        LobbyManager.Instance.StartMatch();
+        var lobbyManager = FindFirstObjectByType<LobbyManager>();
+        if (lobbyManager != null)
+        {
+            lobbyManager.StartMatch();
+        }
+        else
+        {
+            Debug.LogError("LobbyManager not found in the scene.");
+        }
     }
 
     private void SendMessage()
     {
-        if (string.IsNullOrWhiteSpace(chatInputField.text)) return;
+        if (string.IsNullOrWhiteSpace(chatInput.text)) return;
 
-        string message = $"[{System.DateTime.Now:HH:mm}] {AuthenticationService.Instance.PlayerId}: {chatInputField.text}";
+        string message = $"[{System.DateTime.Now:HH:mm}] {AuthenticationService.Instance.PlayerId}: {chatInput.text}";
         AddMessage(message);
 
-        chatInputField.text = string.Empty;
-
-        // TODO: Sync chat messages across the network
+        chatInput.text = string.Empty;
+        chatInput.ActivateInputField();
     }
 
     private void AddMessage(string message)
     {
-        chatMessages.Add(message);
-        if (chatMessages.Count > maxMessages)
+        if (chatText != null)
         {
-            chatMessages.RemoveAt(0);
-        }
+            chatText.text += message + "\n";
 
-        chatContent.text = string.Join("\n", chatMessages);
+            // Scroll to bottom
+            Canvas.ForceUpdateCanvases();
+            if (chatScrollRect != null)
+            {
+                chatScrollRect.normalizedPosition = Vector2.zero;
+            }
+        }
     }
 
     private bool IsHost()
     {
-        // Ensure NetworkManager is properly referenced
         return NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
     }
 }

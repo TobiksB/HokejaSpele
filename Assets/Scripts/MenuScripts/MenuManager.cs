@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Threading.Tasks;
+using HockeyGame.Game;
 
 public class MenuManager : MonoBehaviour
 {
@@ -29,14 +30,6 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private Button joinLobbyConfirmButton;
 
     private GameMode selectedGameMode = GameMode.None;
-
-    private enum GameMode
-    {
-        None,
-        Training,
-        Mode2v2,
-        Mode4v4
-    }
 
     private GameObject currentActivePanel;
 
@@ -105,6 +98,7 @@ public class MenuManager : MonoBehaviour
     private void SelectGameMode(GameMode mode)
     {
         selectedGameMode = mode;
+        Debug.Log($"Selected game mode: {mode}");
 
         if (mode == GameMode.Training)
         {
@@ -112,6 +106,10 @@ public class MenuManager : MonoBehaviour
         }
         else
         {
+            if (LobbyManager.Instance != null)
+            {
+                LobbyManager.Instance.SetGameMode(mode);
+            }
             ShowPanel(createOrJoinPanel);
         }
     }

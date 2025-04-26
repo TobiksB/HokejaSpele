@@ -5,6 +5,7 @@ using Unity.Services.Lobbies.Models;
 using Unity.Services.Authentication;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using HockeyGame.Game;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -44,6 +45,12 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    public void SetGameMode(GameMode mode)
+    {
+        selectedGameMode = mode;
+        Debug.Log($"Game mode set to: {mode}");
+    }
+
     public async Task<string> CreateLobby(int maxPlayers)
     {
         try
@@ -52,7 +59,7 @@ public class LobbyManager : MonoBehaviour
             await InitializeUnityServices();
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-            Debug.Log("Creating lobby...");
+            Debug.Log($"Creating lobby for game mode: {selectedGameMode}");
             CreateLobbyOptions options = new CreateLobbyOptions
             {
                 IsPrivate = true,
@@ -70,12 +77,6 @@ public class LobbyManager : MonoBehaviour
             // Add the host player to the playerNames dictionary
             string playerId = AuthenticationService.Instance.PlayerId;
             playerNames[playerId] = "Player1";
-
-            // Update the lobby code in the UI
-            if (LobbyPanelManager.Instance != null)
-            {
-                LobbyPanelManager.Instance.SetLobbyCode(currentLobby.LobbyCode);
-            }
 
             UpdatePlayerListUI();
 
@@ -115,7 +116,8 @@ public class LobbyManager : MonoBehaviour
 
     private void UpdatePlayerListUI()
     {
-        if (LobbyPanelManager.Instance != null)
+        var lobbyPanel = GameObject.FindFirstObjectByType<LobbyPanelManager>();
+        if (lobbyPanel != null)
         {
             var players = new List<LobbyPlayerData>();
             foreach (var kvp in playerNames)
@@ -124,11 +126,11 @@ public class LobbyManager : MonoBehaviour
                 {
                     PlayerName = kvp.Value,
                     IsBlueTeam = playerTeams.ContainsKey(kvp.Key) && playerTeams[kvp.Key] == "Blue",
-                    IsReady = false // Default to not ready
+                    IsReady = false
                 });
             }
 
-            LobbyPanelManager.Instance.UpdatePlayerList(players);
+            lobbyPanel.UpdatePlayerList(players);
         }
     }
 
@@ -249,10 +251,4 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
             Add(keys[i], values[i]);
         }
     }
-}
-
-public enum GameMode
-{
-    Mode2v2,
-    Mode4v4
 }
