@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using Unity.Services.Authentication;
 using Unity.Netcode;
 
-[DisallowMultipleComponent]
 public class LobbyPanelManager : MonoBehaviour
 {
     public static LobbyPanelManager Instance { get; private set; }
@@ -21,8 +20,6 @@ public class LobbyPanelManager : MonoBehaviour
     [SerializeField] private ScrollRect playerListScrollRect;
     [SerializeField] private RectTransform playerListContent;
     [SerializeField] private PlayerListItem playerListItemPrefab;
-    [SerializeField] private float playerListSpacing = 5f;
-    [SerializeField] private RectOffset playerListPadding;
 
     [Header("Team Selection")]
     [SerializeField] private Button blueTeamButton;
@@ -38,7 +35,7 @@ public class LobbyPanelManager : MonoBehaviour
     [SerializeField] private TMP_Text chatText;
 
     [Header("Game Control")]
-    [SerializeField] private Button startGameButton;
+    [SerializeField] private Button startMatchButton;
     [SerializeField] private Button readyButton;
     [SerializeField] private Image readyIndicator;
 
@@ -47,145 +44,194 @@ public class LobbyPanelManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            Debug.Log("LobbyPanelManager initialized with references - " +
+                $"Content: {(playerListContent != null ? "Valid" : "Missing")}, " +
+                $"Prefab: {(playerListItemPrefab != null ? "Valid" : "Missing")}");
         }
         else if (Instance != this)
         {
+            Debug.LogWarning("Multiple LobbyPanelManager instances found. Destroying duplicate.");
             Destroy(gameObject);
-            return;
+        }
+
+        VerifyReferences();
+    }
+
+    private void VerifyReferences()
+    {
+        if (playerListContent == null)
+        {
+            Debug.LogError("playerListContent reference is missing! Please assign in Inspector.");
+            // Try to find it in children if not assigned
+            playerListContent = GetComponentInChildren<ScrollRect>()?.content as RectTransform;
+            if (playerListContent != null)
+                Debug.Log("Found playerListContent in children.");
+        }
+
+        if (playerListItemPrefab == null)
+        {
+            Debug.LogError("playerListItemPrefab reference is missing! Please assign in Inspector.");
+            // Try to load from Resources if available
+            playerListItemPrefab = Resources.Load<PlayerListItem>("Prefabs/UI/PlayerListItem");
+            if (playerListItemPrefab != null)
+                Debug.Log("Loaded playerListItemPrefab from Resources.");
         }
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        // Initialize RectOffset here
-        playerListPadding = new RectOffset(5, 5, 5, 5);
-        
-        SetupLayouts();
+        SetupScrollViews();
+        SetupButtons();
+    }
 
-        // Set up button listeners
+    private void SetupButtons()
+    {
         if (copyCodeButton) copyCodeButton.onClick.AddListener(CopyLobbyCode);
-        if (blueTeamButton) blueTeamButton.onClick.AddListener(() => SelectTeam("Blue"));
-        if (redTeamButton) redTeamButton.onClick.AddListener(() => SelectTeam("Red"));
-        if (startGameButton) startGameButton.onClick.AddListener(StartMatch);
+        if (blueTeamButton) blueTeamButton.onClick.AddListener(() => OnTeamSelect("Blue"));
+        if (redTeamButton) redTeamButton.onClick.AddListener(() => OnTeamSelect("Red"));
+        if (startMatchButton) startMatchButton.onClick.AddListener(OnStartMatch);
+        if (readyButton) readyButton.onClick.AddListener(OnReadySelect);
         if (sendButton) sendButton.onClick.AddListener(SendMessage);
 
-        // Disable Start Match button for non-hosts
-        if (!IsHost())
+        if (startMatchButton && !IsHost())
         {
-            startGameButton.interactable = false;
-        }
-    }
-
-    private void SetupLayouts()
-    {
-        if (playerListContent != null)
-        {
-            var vlg = playerListContent.GetComponent<VerticalLayoutGroup>();
-            if (vlg == null) vlg = playerListContent.gameObject.AddComponent<VerticalLayoutGroup>();
-            vlg.spacing = playerListSpacing;
-            vlg.padding = playerListPadding;
-            vlg.childAlignment = TextAnchor.UpperCenter;
-            vlg.childControlHeight = true;
-            vlg.childControlWidth = true;
-            vlg.childForceExpandHeight = false;
-            vlg.childForceExpandWidth = true;
-        }
-
-        if (chatContent != null)
-        {
-            var vlg = chatContent.GetComponent<VerticalLayoutGroup>();
-            if (vlg == null) vlg = chatContent.gameObject.AddComponent<VerticalLayoutGroup>();
-            vlg.spacing = 2f;
-            vlg.padding = new RectOffset(5, 5, 5, 5);
-            vlg.childAlignment = TextAnchor.LowerLeft;
-            vlg.childControlHeight = true;
-            vlg.childControlWidth = true;
-            vlg.childForceExpandHeight = false;
-            vlg.childForceExpandWidth = true;
+            startMatchButton.interactable = false;
         }
     }
 
     public void SetLobbyCode(string code)
     {
-        Debug.Log($"Setting lobby code: {code}");
         if (lobbyCodeText != null)
         {
             lobbyCodeText.text = $"Lobby Code: {code}";
-        }
-        else
-        {
-            Debug.LogError("lobbyCodeText is not assigned in the Inspector.");
+            Debug.Log($"Set lobby code to: {code}");
         }
     }
 
-    private void CopyLobbyCode()
+    private void OnTeamSelect(string team)
     {
-        if (lobbyCodeText != null && !string.IsNullOrEmpty(lobbyCodeText.text))
+        if (AuthenticationService.Instance != null && AuthenticationService.Instance.IsSignedIn)
         {
-            string code = lobbyCodeText.text.Replace("Lobby Code: ", "").Trim();
-            GUIUtility.systemCopyBuffer = code;
-            Debug.Log($"Copied lobby code: {code}");
+            if (LobbyManager.Instance != null)
+            {
+                string playerId = AuthenticationService.Instance.PlayerId;
+                LobbyManager.Instance.SetPlayerTeam(playerId, team);
+
+                // Update visual indicators
+                if (blueTeamIndicator != null && redTeamIndicator != null)
+                {
+                    blueTeamIndicator.gameObject.SetActive(team == "Blue");
+                    redTeamIndicator.gameObject.SetActive(team == "Red");
+                }
+
+                // Force UI refresh
+                LobbyManager.Instance.RefreshPlayerList();
+                
+                Debug.Log($"Selected team: {team}");
+            }
+            else
+            {
+                Debug.LogError("LobbyManager instance is null!");
+            }
+        }
+    }
+
+    private void OnStartMatch()
+    {
+        if (LobbyManager.Instance != null)
+        {
+            LobbyManager.Instance.StartMatch();
+            Debug.Log("Starting match...");
+        }
+        else
+        {
+            Debug.LogError("LobbyManager instance is null!");
+        }
+    }
+
+    private void SetupScrollViews()
+    {
+        // Setup player list scroll view
+        if (playerListContent)
+        {
+            // Set RectTransform anchors and sizing
+            RectTransform rt = playerListContent.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0, 0);
+            rt.anchorMax = new Vector2(1, 1);
+            rt.sizeDelta = Vector2.zero;
+            rt.anchoredPosition = Vector2.zero;
+
+            var vlg = playerListContent.GetComponent<VerticalLayoutGroup>();
+            if (!vlg) vlg = playerListContent.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 5f;
+            vlg.padding = new RectOffset(10, 10, 10, 10); // Increased padding
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+
+            var csf = playerListContent.GetComponent<ContentSizeFitter>();
+            if (!csf) csf = playerListContent.gameObject.AddComponent<ContentSizeFitter>();
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        }
+
+        // Setup chat content
+        if (chatContent)
+        {
+            var vlg = chatContent.GetComponent<VerticalLayoutGroup>();
+            if (!vlg) vlg = chatContent.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 2f;
+            vlg.padding = new RectOffset(5, 5, 5, 5);
+            vlg.childAlignment = TextAnchor.LowerLeft;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+
+            var csf = chatContent.GetComponent<ContentSizeFitter>();
+            if (!csf) csf = chatContent.gameObject.AddComponent<ContentSizeFitter>();
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         }
     }
 
     public void UpdatePlayerList(List<LobbyPlayerData> players)
     {
-        Debug.Log($"Updating player list with {players.Count} players");
+        if (!playerListContent || !playerListItemPrefab)
+        {
+            Debug.LogError($"Cannot update player list - missing references");
+            return;
+        }
 
-        // Clear existing player list
+        // Clear existing items
         foreach (Transform child in playerListContent)
         {
             Destroy(child.gameObject);
         }
 
-        // Add players to the list
+        // Add player items
         foreach (var player in players)
         {
-            Debug.Log($"Adding player to list: {player.PlayerName}");
-            PlayerListItem item = Instantiate(playerListItemPrefab, playerListContent);
-            item.SetPlayerInfo(player.PlayerName, player.IsBlueTeam, player.IsReady);
+            var item = Instantiate(playerListItemPrefab, playerListContent);
+            if (item)
+            {
+                // Set RectTransform settings for the item
+                RectTransform itemRT = item.GetComponent<RectTransform>();
+                itemRT.anchorMin = new Vector2(0, 0);
+                itemRT.anchorMax = new Vector2(1, 0);
+                itemRT.sizeDelta = new Vector2(0, 50); // Fixed height
+                
+                Debug.Log($"Creating player item: {player.PlayerName}");
+                item.SetPlayerInfo(player.PlayerName, player.IsBlueTeam, player.IsReady);
+            }
         }
 
-        // Force layout refresh
-        LayoutRebuilder.ForceRebuildLayoutImmediate(playerListContent);
+        // Force layout update
         Canvas.ForceUpdateCanvases();
-        if (playerListScrollRect != null)
+        LayoutRebuilder.ForceRebuildLayoutImmediate(playerListContent);
+
+        if (playerListScrollRect)
         {
             playerListScrollRect.normalizedPosition = Vector2.one;
-        }
-    }
-
-    private void SelectTeam(string team)
-    {
-        // Ensure AuthenticationService is initialized
-        if (AuthenticationService.Instance != null && AuthenticationService.Instance.IsSignedIn)
-        {
-            var lobbyManager = FindFirstObjectByType<LobbyManager>();
-            if (lobbyManager != null)
-            {
-                lobbyManager.SetPlayerTeam(AuthenticationService.Instance.PlayerId, team);
-            }
-            else
-            {
-                Debug.LogError("LobbyManager not found in the scene.");
-            }
-        }
-        else
-        {
-            Debug.LogError("AuthenticationService is not signed in.");
-        }
-    }
-
-    private void StartMatch()
-    {
-        var lobbyManager = FindFirstObjectByType<LobbyManager>();
-        if (lobbyManager != null)
-        {
-            lobbyManager.StartMatch();
-        }
-        else
-        {
-            Debug.LogError("LobbyManager not found in the scene.");
         }
     }
 
@@ -193,24 +239,49 @@ public class LobbyPanelManager : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(chatInput.text)) return;
 
-        string message = $"[{System.DateTime.Now:HH:mm}] {AuthenticationService.Instance.PlayerId}: {chatInput.text}";
-        AddMessage(message);
+        string playerName = SettingsManager.Instance != null ? 
+            SettingsManager.Instance.PlayerName : 
+            "Player";
 
+        bool isBlueTeam = false;
+        if (AuthenticationService.Instance != null && LobbyManager.Instance != null)
+        {
+            string playerId = AuthenticationService.Instance.PlayerId;
+            isBlueTeam = LobbyManager.Instance.IsPlayerBlueTeam(playerId);
+        }
+
+        string coloredName = isBlueTeam ? 
+            $"<color=#4080FF>{playerName}</color>" : 
+            $"<color=#FF4040>{playerName}</color>";
+            
+        string message = $"{coloredName}: {chatInput.text}";
+        
+        // Send message through LobbyManager instead of adding directly
+        LobbyManager.Instance.SendChatMessage(message);
+        
         chatInput.text = string.Empty;
         chatInput.ActivateInputField();
     }
 
-    private void AddMessage(string message)
+    public void ClearChat()
     {
         if (chatText != null)
         {
-            chatText.text += message + "\n";
+            chatText.text = string.Empty;
+        }
+    }
 
-            // Scroll to bottom
+    public void AddChatMessage(string message)
+    {
+        if (chatText && !string.IsNullOrEmpty(message))
+        {
+            chatText.text += $"{message}\n";
+            
             Canvas.ForceUpdateCanvases();
-            if (chatScrollRect != null)
+            if (chatScrollRect)
             {
-                chatScrollRect.normalizedPosition = Vector2.zero;
+                chatScrollRect.verticalNormalizedPosition = 0f;
+                LayoutRebuilder.ForceRebuildLayoutImmediate(chatContent as RectTransform);
             }
         }
     }
@@ -218,5 +289,50 @@ public class LobbyPanelManager : MonoBehaviour
     private bool IsHost()
     {
         return NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
+    }
+
+    private void CopyLobbyCode()
+    {
+        if (lobbyCodeText != null)
+        {
+            string code = lobbyCodeText.text.Replace("Lobby Code: ", "").Trim();
+            GUIUtility.systemCopyBuffer = code;
+            Debug.Log($"Copied lobby code: {code} to clipboard");
+        }
+        else
+        {
+            Debug.LogError("Lobby code text component is missing!");
+        }
+    }
+
+    private void OnReadySelect()
+    {
+        if (AuthenticationService.Instance != null && AuthenticationService.Instance.IsSignedIn)
+        {
+            if (LobbyManager.Instance != null)
+            {
+                string playerId = AuthenticationService.Instance.PlayerId;
+                LobbyManager.Instance.SetPlayerReady(playerId);
+                
+                // Update ready indicator
+                if (readyIndicator != null)
+                {
+                    bool isReady = LobbyManager.Instance.IsPlayerReady(playerId);
+                    readyIndicator.color = isReady ? Color.green : Color.gray;
+                }
+            }
+        }
+    }
+
+    public void UpdateStartButton(bool canStart)
+    {
+        if (startMatchButton != null)
+        {
+            startMatchButton.interactable = IsHost() && canStart;
+            Color buttonColor = canStart ? Color.green : Color.gray;
+            ColorBlock colors = startMatchButton.colors;
+            colors.normalColor = buttonColor;
+            startMatchButton.colors = colors;
+        }
     }
 }

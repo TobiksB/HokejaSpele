@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Threading.Tasks;
+using System.Collections;
 using HockeyGame.Game;
 
 public class MenuManager : MonoBehaviour
@@ -121,35 +122,52 @@ public class MenuManager : MonoBehaviour
 
     private async void OpenCreateLobby()
     {
-        if (LobbyManager.Instance == null)
-        {
-            Debug.LogError("LobbyManager.Instance is null. Ensure the LobbyManager script is in the scene.");
-            return;
-        }
-
-        if (selectedGameMode == GameMode.None)
-        {
-            Debug.LogError("selectedGameMode is not set. Ensure a game mode is selected before creating a lobby.");
-            return;
-        }
-
         try
         {
+            // Show lobby panel first to ensure LobbyPanelManager is initialized
+            ShowPanel(lobbyPanel);
+            
+            // Wait a frame to ensure panel is active and initialized
+            await Task.Yield();
+
+            if (LobbyManager.Instance == null)
+            {
+                Debug.LogError("LobbyManager.Instance is null. Ensure the LobbyManager script is in the scene.");
+                return;
+            }
+
+            if (selectedGameMode == GameMode.None)
+            {
+                Debug.LogError("selectedGameMode is not set. Ensure a game mode is selected before creating a lobby.");
+                return;
+            }
+
+            Debug.Log("Creating lobby...");
             int maxPlayers = selectedGameMode == GameMode.Mode4v4 ? 8 : 4;
             string lobbyCode = await LobbyManager.Instance.CreateLobby(maxPlayers);
 
             if (!string.IsNullOrEmpty(lobbyCode))
             {
-                ShowLobbyPanel(lobbyCode);
+                Debug.Log($"Lobby created with code: {lobbyCode}");
+                if (LobbyPanelManager.Instance != null)
+                {
+                    LobbyPanelManager.Instance.SetLobbyCode(lobbyCode);
+                }
+                else
+                {
+                    Debug.LogError("LobbyPanelManager.Instance is still null after showing panel!");
+                }
             }
             else
             {
-                Debug.LogError("Failed to create lobby.");
+                Debug.LogError("Failed to create lobby - received null or empty lobby code.");
+                ShowPanel(mainMenuPanel); // Return to main menu on failure
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"An error occurred while creating the lobby: {e.Message}");
+            Debug.LogError($"Error in OpenCreateLobby: {e.Message}");
+            ShowPanel(mainMenuPanel); // Return to main menu on error
         }
     }
 
@@ -175,10 +193,20 @@ public class MenuManager : MonoBehaviour
     private void ShowLobbyPanel(string lobbyCode)
     {
         ShowPanel(lobbyPanel);
-        LobbyPanelManager lobbyPanelManager = lobbyPanel.GetComponent<LobbyPanelManager>();
-        if (lobbyPanelManager != null)
+        StartCoroutine(InitializeLobbyPanel(lobbyCode));
+    }
+
+    private IEnumerator InitializeLobbyPanel(string lobbyCode)
+    {
+        yield return null; // Wait one frame
+
+        if (LobbyPanelManager.Instance != null)
         {
-            lobbyPanelManager.SetLobbyCode(lobbyCode);
+            LobbyPanelManager.Instance.SetLobbyCode(lobbyCode);
+        }
+        else
+        {
+            Debug.LogError("LobbyPanelManager.Instance is null after showing panel!");
         }
     }
 }

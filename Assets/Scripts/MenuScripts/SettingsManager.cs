@@ -7,6 +7,8 @@ public class SettingsManager : MonoBehaviour
     // Settings properties
     public float MouseSensitivity { get; set; } = 1f;
     public float Volume { get; set; } = 1f;
+    public string PlayerName { get; private set; } = "Player";
+    private const string PLAYER_NAME_KEY = "PlayerName";
 
     private const string MOUSE_SENS_KEY = "MouseSensitivity";
     private const string VOLUME_KEY = "Volume";
@@ -29,7 +31,8 @@ public class SettingsManager : MonoBehaviour
     {
         MouseSensitivity = PlayerPrefs.GetFloat(MOUSE_SENS_KEY, 1f);
         Volume = PlayerPrefs.GetFloat(VOLUME_KEY, 1f);
-        
+        PlayerName = PlayerPrefs.GetString(PLAYER_NAME_KEY, "Player");
+
         // Apply loaded settings
         AudioListener.volume = Volume;
     }
@@ -38,10 +41,17 @@ public class SettingsManager : MonoBehaviour
     {
         PlayerPrefs.SetFloat(MOUSE_SENS_KEY, MouseSensitivity);
         PlayerPrefs.SetFloat(VOLUME_KEY, Volume);
+        PlayerPrefs.SetString(PLAYER_NAME_KEY, PlayerName);
         PlayerPrefs.Save();
+    }
 
-        // Apply settings
-        AudioListener.volume = Volume;
+    public void SetPlayerName(string name)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            PlayerName = name;
+            SaveSettings();
+        }
     }
 
     public void ResetToDefaults()
@@ -49,6 +59,7 @@ public class SettingsManager : MonoBehaviour
         MouseSensitivity = 1f;
         Volume = 1f;
         Screen.fullScreen = true;
+        PlayerName = "Player";
         SaveSettings();
     }
 }
