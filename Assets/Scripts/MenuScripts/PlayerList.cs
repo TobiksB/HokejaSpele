@@ -31,11 +31,3 @@ public class PlayerList : MonoBehaviour
         activeItems.Clear();
     }
 }
-
-// Data structure for player info
-public class LobbyPlayerData
-{
-    public string PlayerName { get; set; }
-    public bool IsBlueTeam { get; set; }
-    public bool IsReady { get; set; }
-}

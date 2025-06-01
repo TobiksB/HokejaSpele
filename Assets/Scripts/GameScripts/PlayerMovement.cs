@@ -1,278 +1,371 @@
-using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
+using Unity.Netcode;
 using System.Collections;
+using HockeyGame.Game;
 
 public class PlayerMovement : NetworkBehaviour
 {
-    [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float rotationSpeed = 100f;
-    [SerializeField] private Transform cameraHolder; // Reference to camera holder
-    [SerializeField] private float shootForce = 85f; // Increased base shoot force
-    [SerializeField] private float powerShotForce = 120f; // Increased power shot force
-    [SerializeField] private float skidFactor = 3f; // How much to increase drag when skidding
-    [SerializeField] private float shootAnimationDuration = 0.5f;
-    [SerializeField] private float sprintMultiplier = 1.5f;
-    [SerializeField] private float maxStamina = 100f;
-    [SerializeField] private float staminaDepletionRate = 25f;
-    [SerializeField] private float staminaRegenRate = 15f;
-    [SerializeField] private float maxVelocity = 8f;  // Add this field
-    [SerializeField] private float pickupRadius = 1.5f;  // Add this field
-    [SerializeField] private float shootChargeRate = 1.5f; // Add this field
-    [SerializeField] private float maxShootCharge = 2.0f; // Increased max charge multiplier
+    public enum Team : byte { Red = 0, Blue = 1 }
 
-    private Rigidbody rb;
-    private float moveInput;
-    private float rotationInput;
-    private Puck currentPuck;
-    private Animator animator;
-    private float shootAnimationTimer = 0f;
-    private float currentStamina;
-    private bool canSprint = true;
+    [Header("Movement Settings")]
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float sprintSpeed = 8f;
+    [SerializeField] private float rotationSpeed = 1f; // Reduced from 80f to 40f for slower rotation
+    [SerializeField] private float iceFriction = 0.95f;
+
+    [Header("Stamina Settings")]
+    [SerializeField] private float maxStamina = 100f;
+    [SerializeField] private float staminaRegenRate = 10f;
+    [SerializeField] private float staminaDrainRate = 20f;
+
+    [Header("Camera")]
+    [SerializeField] private GameObject playerCameraPrefab;
+    [SerializeField] private Transform cameraHolder;
+    private CameraFollow cameraFollow;
     private Camera playerCamera;
-    private NetworkAnimator networkAnimator;
+
+    [Header("Interaction")]
+    [SerializeField] private float pickupRange = 1.5f;
+    [SerializeField] private SphereCollider pickupTrigger;
+    [SerializeField] private SphereCollider pickupCollider;
+
     private NetworkVariable<bool> isSkating = new NetworkVariable<bool>();
     private NetworkVariable<bool> isShooting = new NetworkVariable<bool>();
-    private float currentShootCharge = 1f;
-    private float lastShotTime = 0f;
-    private const float SHOT_COOLDOWN = 0.5f;
-    private float lastPickupTime = 0f;
-    private const float PICKUP_COOLDOWN = 0.5f;
-    private const float SHOOT_FORCE_MULTIPLIER = 2.5f; // Increased force multiplier
+    // FIXED: Re-add the missing network variables that were accidentally removed
+    private NetworkVariable<Vector3> networkPosition = new NetworkVariable<Vector3>();
+    private NetworkVariable<Vector3> networkVelocity = new NetworkVariable<Vector3>();
+    private NetworkVariable<Team> networkTeam = new NetworkVariable<Team>(Team.Red, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    void Start()
-    {
-        rb = GetComponent<Rigidbody>();
-        
-        // Configure rigidbody for ice-like movement
-        rb.linearDamping = 0.2f; // Adjusted for smoother movement
-        rb.angularDamping = 0.5f;
-        rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-        rb.interpolation = RigidbodyInterpolation.Interpolate; // Enable interpolation for smoother movement
+    private float currentStamina;
+    private bool canSprint;
+    private float currentShootCharge;
+    private Rigidbody rb;
+    public Animator animator;
+    private Vector3 currentVelocity;
+    private Vector3 moveDirection;
+    private bool currentSprintState;
+    private bool canMove = true;
+    private bool isMovementEnabled = true;
 
-        networkAnimator = GetComponent<NetworkAnimator>();
-        animator = GetComponent<Animator>();
-        currentStamina = maxStamina;
-    }
+    // FIXED: Add missing variable declarations
+    private bool isMyPlayer = false;
+    private ulong localClientId = 0;
+    private PlayerTeam teamComponent;
+    private PlayerTeamVisuals visuals;
+    private bool hasLoggedOwnership = false;
 
-    void Update()
-    {
-        if (!IsOwner) return;
+    // Animation hash IDs for performance
+    private int isSkatingHash;
+    private int isShootingHash;
+    private int shootTriggerHash;
+    private int speedHash;
 
-        // Check for puck pickup automatically
-        if (currentPuck == null)
-        {
-            CheckForPuckPickup();
-        }
-        else // Handle shooting when we have the puck
-        {
-            // Handle shooting
-            if (Time.time - lastShotTime >= SHOT_COOLDOWN)
-            {
-                if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
-                {
-                    currentShootCharge = Mathf.Min(currentShootCharge + shootChargeRate * Time.deltaTime, maxShootCharge);
-                }
-                else if (Input.GetMouseButtonUp(0)) // Normal shot
-                {
-                    Shoot(false);
-                }
-                else if (Input.GetMouseButtonUp(1)) // Power shot
-                {
-                    Shoot(true);
-                }
-            }
-        }
-
-        // Get input
-        moveInput = Input.GetAxis("Vertical"); // Use GetAxis for smoother input
-        rotationInput = Input.GetAxis("Horizontal"); // Use GetAxis for smoother input
-
-        // Update animations with speed
-        bool isMoving = moveInput != 0 || rotationInput != 0;
-        bool isSprinting = Input.GetKey(KeyCode.LeftShift) && canSprint && currentStamina > 0;
-        
-        if (isMoving != isSkating.Value)
-        {
-            UpdateSkatingServerRpc(isMoving);
-        }
-
-        // Update animation speed
-        if (animator != null)
-        {
-            float animSpeed = isSprinting ? 1.5f : 1f;
-            animator.speed = isMoving ? animSpeed : 1f;
-        }
-
-        // Reset shooting animation
-        if (shootAnimationTimer > 0)
-        {
-            shootAnimationTimer -= Time.deltaTime;
-            if (shootAnimationTimer <= 0)
-            {
-                UpdateShootingServerRpc(false);
-            }
-        }
-
-        // Handle skidding with spacebar
-        if (Input.GetKey(KeyCode.Space))
-        {
-            rb.linearDamping = skidFactor;
-        }
-        else
-        {
-            rb.linearDamping = 0.2f; // Return to normal drag
-        }
-
-        // Handle stamina and sprinting
-        if (Input.GetKey(KeyCode.LeftShift) && canSprint && currentStamina > 0)
-        {
-            currentStamina -= staminaDepletionRate * Time.deltaTime;
-            if (currentStamina <= 0)
-            {
-                canSprint = false;
-                currentStamina = 0;
-            }
-        }
-        else if (!Input.GetKey(KeyCode.LeftShift))
-        {
-            currentStamina += staminaRegenRate * Time.deltaTime;
-            if (currentStamina >= maxStamina)
-            {
-                currentStamina = maxStamina;
-                canSprint = true;
-            }
-        }
-
-        // Update UI
-        StaminaBar.Instance?.UpdateStamina(currentStamina / maxStamina);
-    }
-
-    void FixedUpdate()
-    {
-        if (!IsOwner || cameraHolder == null) return;
-
-        // Get camera's forward and right vectors, but ignore Y component
-        Vector3 cameraForward = cameraHolder.forward;
-        cameraForward.y = 0;
-        cameraForward.Normalize();
-
-        float currentMoveSpeed = moveSpeed;
-        if (Input.GetKey(KeyCode.LeftShift) && canSprint && currentStamina > 0)
-        {
-            currentMoveSpeed *= sprintMultiplier;
-        }
-
-        // Calculate desired velocity
-        Vector3 targetVelocity = cameraForward * moveInput * currentMoveSpeed;
-        
-        // Smoothly interpolate current velocity to target velocity
-        Vector3 velocityChange = (targetVelocity - rb.linearVelocity);
-        velocityChange.y = 0; // Keep vertical velocity unchanged
-        
-        // Apply force with dampening
-        rb.AddForce(velocityChange, ForceMode.VelocityChange);
-
-        // Clamp velocity to prevent excessive speed
-        Vector3 currentVelocity = rb.linearVelocity;
-        if (currentVelocity.magnitude > maxVelocity)
-        {
-            currentVelocity = currentVelocity.normalized * maxVelocity;
-            rb.linearVelocity = currentVelocity;
-        }
-
-        // Rotate player
-        transform.Rotate(Vector3.up * rotationInput * rotationSpeed * Time.fixedDeltaTime);
-    }
-
-    private void Shoot(bool isPowerShot)
-    {
-        if (currentPuck == null) return;
-        
-        lastShotTime = Time.time;
-        UpdateShootingServerRpc(true);
-        shootAnimationTimer = shootAnimationDuration;
-
-        float force = isPowerShot ? powerShotForce : shootForce;
-        float finalForce = force * currentShootCharge * SHOOT_FORCE_MULTIPLIER;
-        
-        currentPuck.Shoot(transform.forward, finalForce, false);
-        currentPuck = null;
-        currentShootCharge = 1f;
-
-        // Force animation update using correct parameter name
-        if (animator != null)
-        {
-            animator.SetBool("IsShooting", true);
-        }
-    }
-
-    private void CheckForPuckPickup()
-    {
-        if (Time.time - lastPickupTime < PICKUP_COOLDOWN) return;
-        if (Time.time - lastShotTime < SHOT_COOLDOWN) return;
-
-        Collider[] colliders = Physics.OverlapSphere(transform.position, pickupRadius);
-        foreach (Collider col in colliders)
-        {
-            if (col.TryGetComponent<Puck>(out Puck puck) && !puck.IsHeld())
-            {
-                Vector3 toPuck = puck.transform.position - transform.position;
-                float angle = Vector3.Angle(transform.forward, toPuck);
-                
-                if (angle <= 60f && toPuck.magnitude <= pickupRadius)
-                {
-                    currentPuck = puck;
-                    puck.PickUp(transform);
-                    lastPickupTime = Time.time;
-                    break;
-                }
-            }
-        }
-    }
+    // Movement tracking for ServerRpc optimization
+    private float lastSentHorizontal = 0f;
+    private float lastSentVertical = 0f;
+    private bool lastSentSprint = false;
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        
+        var netObj = GetComponent<NetworkObject>();
+        if (netObj == null || !netObj.enabled)
+        {
+            Debug.LogError("NetworkObject is missing or disabled on player prefab!");
+            return;
+        }
+        
+        Debug.Log($"Player spawned with NetworkObject enabled. IsOwner: {IsOwner}, NetworkObjectId: {NetworkObjectId}");
+
+        InitializeComponents();
+
         if (IsOwner)
         {
-            Vector3 spawnPosition = NetworkSpawnManager.Instance.GetNextSpawnPoint();
-            transform.position = spawnPosition;
-            
-            // Create dedicated camera with specific position
-            GameObject cameraObj = new GameObject($"PlayerCamera_{OwnerClientId}");
-            cameraObj.transform.position = new Vector3(0f, 3.72f, -12f);
-            cameraObj.transform.LookAt(transform.position);
-            
-            Camera cam = cameraObj.AddComponent<Camera>();
-            cam.enabled = true;
-            AudioListener audioListener = cameraObj.AddComponent<AudioListener>();
-            audioListener.enabled = true;
-            
-            CameraFollow follow = cameraObj.AddComponent<CameraFollow>();
-            follow.enabled = true;
-            follow.SetTarget(transform);
-            
-            cameraHolder = cameraObj.transform;
-            
-            // Set player color
-            if (TryGetComponent<MeshRenderer>(out var renderer))
-            {
-                renderer.material.color = IsHost ? Color.blue : Color.green;
-            }
+            Debug.Log($"Player spawned. IsOwner: {IsOwner}, ClientId: {OwnerClientId}");
+            SetupCamera();
+            SetupPickupTrigger();
+        }
 
-            networkAnimator = GetComponent<NetworkAnimator>();
+        isSkating.OnValueChanged += OnSkatingChanged;
+        isShooting.OnValueChanged += OnShootingChanged;
+
+        // Listen for team changes
+        networkTeam.OnValueChanged += (oldTeam, newTeam) => { ApplyTeamColor(newTeam); };
+
+        // Apply color immediately on spawn
+        ApplyTeamColor(networkTeam.Value);
+    }
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = gameObject.AddComponent<Rigidbody>();
+        }
+
+        // Configure Rigidbody for hockey movement
+        rb.useGravity = false;
+        // Freeze ALL rotations to prevent falling over
+        rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
+        rb.mass = 80f; // Hockey player mass
+        rb.linearDamping = 1f;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+
+        // Force initial Y position
+        Vector3 pos = transform.position;
+        pos.y = 0.71f;
+        transform.position = pos;
+
+        Debug.Log($"PlayerMovement Rigidbody configured - Mass: {rb.mass}, Damping: {rb.linearDamping}");
+    }
+
+    private void InitializeComponents()
+    {
+        animator = GetComponent<Animator>();
+        teamComponent = GetComponent<PlayerTeam>();
+        visuals = GetComponent<PlayerTeamVisuals>();
+        
+        var puckPickup = GetComponent<PuckPickup>();
+        if (puckPickup == null)
+        {
+            gameObject.AddComponent<PuckPickup>();
+        }
+        
+        currentStamina = maxStamina;
+        canSprint = true;
+
+        if (animator != null)
+        {
+            isSkatingHash = Animator.StringToHash("IsSkating");
+            isShootingHash = Animator.StringToHash("IsShooting");
+            shootTriggerHash = Animator.StringToHash("Shoot");
+            speedHash = Animator.StringToHash("Speed");
+        }
+    }
+
+    private void SetupCamera()
+    {
+        if (playerCameraPrefab == null)
+        {
+            Debug.LogWarning("Player camera prefab not assigned! Creating basic camera...");
+            CreateBasicCamera();
+            return;
+        }
+
+        Vector3 offset = new Vector3(0f, 6f, -10f);
+        Vector3 cameraPos = transform.position + offset;
+        GameObject cameraObj = Instantiate(playerCameraPrefab, cameraPos, Quaternion.identity);
+
+        cameraFollow = cameraObj.GetComponent<CameraFollow>();
+        playerCamera = cameraObj.GetComponent<Camera>();
+
+        if (cameraFollow != null && playerCamera != null)
+        {
+            cameraFollow.SetTarget(transform);
+            Debug.Log($"Camera setup complete for player {OwnerClientId}");
         }
         else
         {
-            if (TryGetComponent<MeshRenderer>(out var renderer))
+            Debug.LogError("Required camera components missing!");
+            Destroy(cameraObj);
+            CreateBasicCamera();
+        }
+    }
+
+    private void CreateBasicCamera()
+    {
+        GameObject cameraObj = new GameObject("Player Camera");
+        playerCamera = cameraObj.AddComponent<Camera>();
+        cameraObj.AddComponent<AudioListener>();
+        
+        cameraFollow = cameraObj.AddComponent<CameraFollow>();
+        cameraFollow.SetTarget(transform);
+        cameraFollow.SetOffset(new Vector3(0f, 6f, -10f));
+        
+        Debug.Log($"Basic camera created for player {OwnerClientId}");
+    }
+
+    private void SetupPickupTrigger()
+    {
+        GameObject triggerObj = new GameObject("PickupTrigger");
+        triggerObj.transform.parent = transform;
+        triggerObj.transform.localPosition = Vector3.zero;
+        pickupTrigger = triggerObj.AddComponent<SphereCollider>();
+        pickupTrigger.radius = pickupRange;
+        pickupTrigger.isTrigger = true;
+
+        var physicsCollider = gameObject.GetComponent<CapsuleCollider>();
+        if (physicsCollider == null)
+        {
+            physicsCollider = gameObject.AddComponent<CapsuleCollider>();
+            physicsCollider.height = 2f;
+            physicsCollider.radius = 0.5f;
+            physicsCollider.isTrigger = false;
+        }
+    }
+
+    private void Update()
+    {
+        // Only process input for the owner
+        if (!IsOwner && NetworkManager.Singleton != null) return;
+
+        HandleMovementInput();
+
+        // REMOVED: All puck pickup logic - PuckPickup component handles this
+    }
+
+    private void HandleMovementInput()
+    {
+        float horizontal = Input.GetAxis("Horizontal"); // A/D for rotation
+        float vertical = Input.GetAxis("Vertical");     // W/S for movement
+        bool sprint = Input.GetKey(KeyCode.LeftShift);
+
+        // Store for physics update
+        moveDirection = transform.forward * vertical;
+        currentSprintState = sprint;
+
+        // Apply rotation with A/D keys
+        if (Mathf.Abs(horizontal) > 0.01f)
+        {
+            transform.Rotate(0f, horizontal * rotationSpeed * Time.deltaTime, 0f);
+        }
+
+        // Send movement to server if changed
+        bool inputChanged = horizontal != lastSentHorizontal || vertical != lastSentVertical || sprint != lastSentSprint;
+        
+        if (inputChanged)
+        {
+            if (NetworkManager.Singleton != null && IsSpawned)
             {
-                renderer.material.color = Color.red;
+                MoveServerRpc(horizontal, vertical, sprint);
+            }
+            
+            lastSentHorizontal = horizontal;
+            lastSentVertical = vertical;
+            lastSentSprint = sprint;
+        }
+
+        // Update animations locally for responsiveness
+        if (animator != null)
+        {
+            bool isMoving = Mathf.Abs(vertical) > 0.1f;
+            animator.SetBool("IsSkating", isMoving);
+            animator.speed = sprint ? 1.2f : 1.0f;
+        }
+    }
+
+    [ServerRpc]
+    private void MoveServerRpc(float horizontal, float vertical, bool sprint)
+    {
+        if (rb == null) return;
+
+        // Apply rotation on server
+        if (Mathf.Abs(horizontal) > 0.01f)
+        {
+            transform.Rotate(0f, horizontal * rotationSpeed * Time.fixedDeltaTime, 0f);
+        }
+
+        // Apply movement on server
+        Vector3 inputVector = transform.forward * vertical;
+        float currentSpeed = sprint ? sprintSpeed : moveSpeed;
+        
+        moveDirection = inputVector;
+        currentSprintState = sprint;
+
+        if (inputVector.magnitude > 0.1f)
+        {
+            Vector3 targetVelocity = inputVector * currentSpeed;
+            rb.linearVelocity = new Vector3(targetVelocity.x, rb.linearVelocity.y, targetVelocity.z);
+        }
+        else
+        {
+            ApplyIceFriction();
+        }
+
+        // Lock Y position
+        Vector3 pos = transform.position;
+        if (Mathf.Abs(pos.y - 0.71f) > 0.001f)
+        {
+            pos.y = 0.71f;
+            transform.position = pos;
+            rb.position = pos;
+        }
+
+        // Update network variables
+        networkPosition.Value = transform.position;
+        networkVelocity.Value = rb.linearVelocity;
+        isSkating.Value = inputVector.magnitude > 0.1f;
+
+        // Update all clients
+        UpdateMovementClientRpc(transform.position, rb.linearVelocity, transform.rotation, sprint);
+    }
+
+    [ClientRpc]
+    private void UpdateMovementClientRpc(Vector3 position, Vector3 velocity, Quaternion rotation, bool sprint)
+    {
+        // Only apply to non-owners (remote players)
+        if (!IsOwner)
+        {
+            // Smooth interpolation to server position
+            transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * 10f);
+            transform.rotation = Quaternion.Lerp(transform.rotation, rotation, Time.deltaTime * 10f);
+            
+            if (rb != null)
+            {
+                rb.linearVelocity = velocity;
+            }
+
+            // Update animations
+            if (animator != null)
+            {
+                bool isMoving = velocity.magnitude > 0.1f;
+                animator.SetBool("IsSkating", isMoving);
+                animator.speed = sprint ? 1.2f : 1.0f;
             }
         }
+    }
+
+    private void FixedUpdate()
+    {
+        // SERVER: Update network variables
+        if (IsServer)
+        {
+            networkPosition.Value = transform.position;
+            networkVelocity.Value = rb.linearVelocity;
+        }
         
-        isSkating.OnValueChanged += OnSkatingChanged;
-        isShooting.OnValueChanged += OnShootingChanged;
+        // ALL: Ensure Y position stays locked
+        if (IsOwner || IsServer)
+        {
+            Vector3 pos = transform.position;
+            if (Mathf.Abs(pos.y - 0.71f) > 0.01f)
+            {
+                pos.y = 0.71f;
+                transform.position = pos;
+                if (rb != null)
+                {
+                    rb.position = pos;
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+                }
+            }
+        }
+    }
+
+    private void ApplyIceFriction()
+    {
+        if (rb == null) return;
+
+        Vector3 currentVel = rb.linearVelocity;
+        rb.linearVelocity = new Vector3(currentVel.x * iceFriction, currentVel.y, currentVel.z * iceFriction);
+        
+        // Stop completely when velocity is very low
+        if (rb.linearVelocity.magnitude < 0.1f)
+        {
+            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+        }
     }
 
     private void OnSkatingChanged(bool previousValue, bool newValue)
@@ -291,29 +384,53 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    // Call this from GameNetworkManager after spawning the player object:
     [ServerRpc]
-    private void UpdateSkatingServerRpc(bool skating)
+    public void SetTeamServerRpc(Team team)
     {
-        isSkating.Value = skating;
+        if (IsServer)
+            networkTeam.Value = team;
     }
 
-    [ServerRpc]
-    private void UpdateShootingServerRpc(bool shooting)
+    // Public method to ensure the player camera is set up (called by GameNetworkManager)
+    public void EnsurePlayerCamera()
     {
-        isShooting.Value = shooting;
-        UpdateShootingClientRpc(shooting);
+        if (IsOwner && playerCamera == null)
+        {
+            SetupCamera();
+        }
     }
 
-    [ClientRpc]
-    private void UpdateShootingClientRpc(bool shooting)
+    // This method applies the color to the player object
+    private void ApplyTeamColor(Team team)
+    {
+        Color teamColor = team == Team.Blue ? new Color(0f, 0.5f, 1f, 1f) : new Color(1f, 0.2f, 0.2f, 1f);
+        var renderers = GetComponentsInChildren<Renderer>(true);
+        foreach (var renderer in renderers)
+        {
+            if (renderer == null) continue;
+            var mats = renderer.materials;
+            for (int i = 0; i < mats.Length; i++)
+            {
+                if (mats[i] == null) continue;
+                mats[i].color = teamColor;
+                if (mats[i].HasProperty("_Color")) mats[i].SetColor("_Color", teamColor);
+                if (mats[i].HasProperty("_BaseColor")) mats[i].SetColor("_BaseColor", teamColor);
+            }
+            renderer.materials = mats;
+        }
+    }
+
+    // Add this method to allow PlayerShooting to trigger the shoot animation
+    public void TriggerShootAnimation()
     {
         if (animator != null)
         {
-            animator.SetBool("IsShooting", shooting);
-            if (shooting)
-            {
-                animator.SetTrigger("Shoot");
-            }
+            animator.SetBool("IsShooting", true);
+            animator.SetTrigger("Shoot");
+            // Optionally, you can start a coroutine to reset the animation if needed
         }
     }
 }
+
+

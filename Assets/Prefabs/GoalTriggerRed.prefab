@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7694888970178265700}
   - component: {fileID: 43141701479518759}
+  - component: {fileID: 2490028877154403933}
   - component: {fileID: 4087642466986001275}
   m_Layer: 0
   m_Name: GoalTriggerRed
@@ -54,6 +55,31 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.16249084, y: 1.4567679, z: 2.7614343}
   m_Center: {x: -0.29481125, y: 0.22838402, z: -0.2351557}
+--- !u!114 &2490028877154403933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2209982623386087474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 2012243569
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &4087642466986001275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -66,4 +92,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4296af702201744d9e0a5836b90cfdc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isBlueGoal: 0
+  ShowTopMostFoldoutHeaderGroup: 1
+  isBlueTeamGoal: 0

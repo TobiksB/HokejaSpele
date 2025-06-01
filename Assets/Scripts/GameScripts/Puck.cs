@@ -1,394 +1,345 @@
-using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
-using System.Collections;
+using Unity.Netcode;
+using HockeyGame.Game; // FIXED: Add namespace for GoalTrigger
 
-[RequireComponent(typeof(NetworkObject))]
-[RequireComponent(typeof(NetworkTransform))]
 public class Puck : NetworkBehaviour
 {
-    [SerializeField] private Transform spawnPoint;
-    [SerializeField] private float forwardOffset = 1f;
-    [SerializeField] private float moveSpeed = 15f; // Renamed from followLerpSpeed
-
-    private NetworkVariable<bool> isPickedUp = new NetworkVariable<bool>();
-    private NetworkVariable<ulong> holderClientId = new NetworkVariable<ulong>();
-    private Transform holder;
-    private Rigidbody rb;
-    private NetworkTransform networkTransform;
-    private Vector3 initialPosition;
-
+    [Header("Puck Settings")]
+    [SerializeField] private float friction = 0.95f;
+    [SerializeField] private float minVelocity = 0.1f;
+    [SerializeField] private bool enableDebugLogs = true;
+    
+    private Rigidbody puckRigidbody;
+    private PuckPickup currentHolder;
+    private bool isHeld = false;
+    
+    // Network variable to sync held state
+    private NetworkVariable<bool> networkIsHeld = new NetworkVariable<bool>(false);
+    
     private void Awake()
     {
-        initialPosition = transform.position;
+        puckRigidbody = GetComponent<Rigidbody>();
+        if (puckRigidbody == null)
+        {
+            puckRigidbody = gameObject.AddComponent<Rigidbody>();
+        }
         
-        networkTransform = GetComponent<NetworkTransform>();
-        if (networkTransform != null)
-        {
-            networkTransform.InLocalSpace = false;
-            networkTransform.Interpolate = true;
-        }
-
-        // Force enable renderer
-        if (TryGetComponent<MeshRenderer>(out var renderer))
-        {
-            renderer.enabled = true;
-        }
-    }
-
-    private void Start()
-    {
-        rb = GetComponent<Rigidbody>();
+        // Ensure proper puck physics
+        puckRigidbody.mass = 0.16f; // Standard hockey puck mass
+        puckRigidbody.linearDamping = 0.5f;
+        puckRigidbody.angularDamping = 0.5f;
         
-        // Physics settings
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
-        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        rb.useGravity = false;
-        rb.isKinematic = false;
-        rb.mass = 5f;
-        rb.linearDamping = 0.5f;
-        rb.angularDamping = 0.5f;
-        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezePositionY;
-
-        // Set up puck properties
-        gameObject.tag = "Puck";
-        gameObject.layer = LayerMask.NameToLayer("Puck");
-
-        // Configure sphere collider
-        if (TryGetComponent<SphereCollider>(out var sphereCollider))
+        // Ensure proper tag and layer
+        if (!CompareTag("Puck"))
         {
-            var puckMaterial = CreatePuckPhysicsMaterial();
-            sphereCollider.material = puckMaterial;
-            sphereCollider.radius = 0.3f;
-            sphereCollider.contactOffset = 0.05f;
-            sphereCollider.isTrigger = false;
+            tag = "Puck";
         }
-
-        holderClientId.OnValueChanged += OnHolderChanged;
-
-        // Store initial spawn position
-        if (spawnPoint != null)
-        {
-            initialPosition = spawnPoint.position;
-            // Set initial position before network spawn
-            transform.position = initialPosition;
-            rb.position = initialPosition;
-        }
-
-        // Make sure the object is visible
-        if (TryGetComponent<Renderer>(out var renderer))
-        {
-            renderer.enabled = true;
-        }
-    }
-
-    private PhysicsMaterial CreatePuckPhysicsMaterial()
-    {
-        var material = new PhysicsMaterial("PuckMaterial");
-        material.bounciness = 0.5f;
-        material.staticFriction = 0.6f;
-        material.dynamicFriction = 0.6f;
-        material.frictionCombine = PhysicsMaterialCombine.Maximum;
-        material.bounceCombine = PhysicsMaterialCombine.Average;
-        return material;
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (!IsServer) return;
-
-        // Enhanced wall collision handling
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Wall"))
-        {
-            ContactPoint contact = collision.GetContact(0);
-            Vector3 incomingVelocity = rb.linearVelocity;
-            
-            // Complete stop
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            
-            // Push away from wall
-            transform.position = contact.point + (contact.normal * 0.5f);
-            
-            // Calculate and apply bounce with more control
-            Vector3 reflection = Vector3.Reflect(incomingVelocity.normalized, contact.normal);
-            float speed = Mathf.Min(incomingVelocity.magnitude * 0.8f, 25f);
-            rb.AddForce(reflection * speed, ForceMode.Impulse);
-            
-            Debug.Log($"Wall collision handled at speed: {speed}");
-        }
-
-        // Add slight random variation to bounce to prevent perfect loops
-        if (rb.linearVelocity.magnitude > 1f)
-        {
-            Vector3 randomVariation = Random.insideUnitSphere * 0.1f;
-            randomVariation.y = 0f;
-            rb.linearVelocity += randomVariation;
-        }
-    }
-
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
         
-        // Initialize Rigidbody if not already done
-        if (rb == null)
+        if (gameObject.layer != 7) // Layer 7 for pucks
         {
-            rb = GetComponent<Rigidbody>();
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            rb.useGravity = false;
-            rb.isKinematic = false;
-            rb.mass = 1f;
+            gameObject.layer = 7;
         }
-
-        // Ensure visibility
-        gameObject.SetActive(true);
-        if (TryGetComponent<MeshRenderer>(out var renderer))
+        
+        if (enableDebugLogs)
         {
-            renderer.enabled = true;
-        }
-
-        if (IsServer)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            Debug.Log($"Puck: Initialized with mass {puckRigidbody.mass}kg on layer {gameObject.layer}");
         }
     }
-
-    private void OnEnable()
+    
+    private void Update()
     {
-        // Ensure visibility whenever the object is enabled
-        if (TryGetComponent<Renderer>(out var renderer))
+        // Sync local state with network state
+        bool networkState = networkIsHeld.Value;
+        if (isHeld != networkState)
         {
-            renderer.enabled = true;
-        }
-    }
-
-    private void OnHolderChanged(ulong previousValue, ulong newValue)
-    {
-        if (IsServer)
-        {
-            if (newValue == ulong.MaxValue)
+            isHeld = networkState;
+            if (enableDebugLogs)
             {
-                holder = null;
-                UpdateHolderClientRpc(0);
-            }
-            else
-            {
-                var networkObject = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(newValue);
-                if (networkObject != null)
-                {
-                    holder = networkObject.transform;
-                    UpdateHolderClientRpc(networkObject.NetworkObjectId);
-                }
+                Debug.Log($"Puck: Synced held state to network: {isHeld}");
             }
         }
     }
-
-    [ClientRpc]
-    private void UpdateHolderClientRpc(ulong networkObjectId)
-    {
-        if (!IsServer)
-        {
-            if (networkObjectId == 0)
-            {
-                holder = null;
-            }
-            else
-            {
-                var networkObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[networkObjectId];
-                holder = networkObject?.transform;
-            }
-        }
-    }
-
+    
     private void FixedUpdate()
     {
-        if (!IsServer) return;
-
-        if (!isPickedUp.Value)
+        // FIXED: Only apply physics when NOT kinematic and NOT held
+        if (puckRigidbody == null || puckRigidbody.isKinematic || isHeld)
         {
-            // Allow higher max velocity for shots
-            if (rb.linearVelocity.magnitude > 35f)
-            {
-                rb.linearVelocity = rb.linearVelocity.normalized * 35f;
-            }
-
-            // Force height correction
-            Vector3 pos = transform.position;
-            float targetY = spawnPoint != null ? spawnPoint.position.y : initialPosition.y;
-            if (Mathf.Abs(pos.y - targetY) > 0.01f)
-            {
-                pos.y = targetY;
-                transform.position = pos;
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
-            }
-        }
-
-        if (isPickedUp.Value && holder != null)
-        {
-            Vector3 targetPos = holder.position + holder.forward * forwardOffset;
-            targetPos.y = spawnPoint != null ? spawnPoint.position.y : initialPosition.y;
-            
-            // Use moveSpeed for smoother following
-            Vector3 newPos = Vector3.Lerp(transform.position, targetPos, moveSpeed * Time.fixedDeltaTime);
-            transform.position = newPos;
-            rb.MovePosition(newPos);
-            
-            // Match holder rotation
-            Quaternion targetRot = Quaternion.LookRotation(holder.forward);
-            transform.rotation = targetRot;
-            rb.MoveRotation(targetRot);
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void PickUpServerRpc(ulong playerId)
-    {
-        Debug.Log($"PickUpServerRpc called by player {playerId}");
-        
-        // Clear velocities before making kinematic
-        if (!rb.isKinematic)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-        
-        // Set pickup state
-        isPickedUp.Value = true;
-        holderClientId.Value = playerId;
-        rb.isKinematic = true;
-
-        // Update position if holder exists
-        if (holder != null)
-        {
-            Vector3 targetPos = holder.position + holder.forward * forwardOffset;
-            targetPos.y = spawnPoint != null ? spawnPoint.position.y : initialPosition.y;
-            transform.position = targetPos;
-            rb.position = targetPos;
-        }
-    }
-
-    public void PickUp(Transform newHolder)
-    {
-        Debug.Log($"PickUp called by {newHolder.name}");
-        if (!NetworkObject.IsSpawned) 
-        {
-            Debug.LogError("Cannot pick up - NetworkObject not spawned");
             return;
         }
-
-        NetworkObject holderNetObj = newHolder.GetComponent<NetworkObject>();
-        if (holderNetObj == null)
+        
+        // Apply friction to slow down the puck over time
+        if (puckRigidbody.linearVelocity.magnitude > minVelocity)
         {
-            Debug.LogError("Cannot pick up - No NetworkObject on holder");
-            return;
+            puckRigidbody.linearVelocity *= friction;
         }
-
-        PickUpServerRpc(holderNetObj.OwnerClientId);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void ShootServerRpc(Vector3 direction, float force, bool isHighShot)
-    {
-        if (!isPickedUp.Value) return;
-
-        // Release puck
-        isPickedUp.Value = false;
-        holderClientId.Value = ulong.MaxValue;
-        rb.isKinematic = false;
-
-        // Reset velocities and apply force
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-
-        // Apply stronger shooting force
-        Vector3 shootDirection = direction.normalized;
-        float clampedForce = Mathf.Clamp(force, 30f, 150f);
-        
-        // Apply initial impulse
-        rb.AddForce(shootDirection * clampedForce, ForceMode.Impulse);
-        
-        // Add extra velocity for more powerful shots
-        rb.linearVelocity += shootDirection * (clampedForce * 0.1f);
-        
-        Debug.Log($"Shot applied with force: {clampedForce}, velocity: {rb.linearVelocity.magnitude}");
-    }
-
-    public void Shoot(Vector3 direction, float force, bool isHighShot = false)
-    {
-        if (!NetworkObject.IsSpawned) return;
-        ShootServerRpc(direction, force, isHighShot);
-    }
-
-    public void ResetPosition()
-    {
-        if (!IsServer) return;
-        
-        Vector3 resetPos = spawnPoint != null ? spawnPoint.position : initialPosition;
-        transform.position = resetPos;
-        rb.position = resetPos;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        
-        if (isPickedUp.Value)
+        else
         {
-            isPickedUp.Value = false;
-            holderClientId.Value = ulong.MaxValue;
-            rb.isKinematic = false;
+            // Stop very slow movement
+            puckRigidbody.linearVelocity = Vector3.zero;
+        }
+        
+        // Apply angular friction
+        if (puckRigidbody.angularVelocity.magnitude > 0.1f)
+        {
+            puckRigidbody.angularVelocity *= friction;
+        }
+        else
+        {
+            puckRigidbody.angularVelocity = Vector3.zero;
+        }
+        
+        // Keep puck on ice level
+        Vector3 pos = transform.position;
+        if (pos.y != 0.71f)
+        {
+            pos.y = 0.71f;
+            transform.position = pos;
         }
     }
-
+    
     public bool IsHeld()
     {
-        return isPickedUp.Value;
+        return isHeld;
     }
-
-    private IEnumerator DelayedShoot(Vector3 direction, float force, bool isHighShot)
+    
+    public void PickupByPlayer(PuckPickup pickup)
     {
-        yield return new WaitForFixedUpdate();
-
-        // Reset velocities
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-
-        // Apply much stronger force
-        float clampedForce = Mathf.Clamp(force, 20f, 100f); // Increased force range
-        rb.AddForce(direction * clampedForce, ForceMode.Impulse);
+        if (enableDebugLogs)
+        {
+            Debug.Log($"Puck: PickupByPlayer called by {pickup.name}");
+        }
         
-        // Add extra impulse for initial momentum
-        rb.AddForce(direction * 10f, ForceMode.VelocityChange);
+        currentHolder = pickup;
+        isHeld = true;
         
-        Debug.Log($"Shot applied - Force: {clampedForce}");
-    }
-
-    private IEnumerator ReturnToGround()
-    {
-        yield return new WaitForSeconds(0.5f);
-        
+        // Update network state if we're the server
         if (IsServer)
         {
-            float groundY = spawnPoint != null ? spawnPoint.position.y : initialPosition.y;
+            networkIsHeld.Value = true;
+        }
+        
+        // FIXED: Position puck in front of player immediately
+        Vector3 holdWorldPosition = pickup.transform.position + pickup.transform.forward * 1.5f + Vector3.up * 0.5f;
+        transform.position = holdWorldPosition;
+        transform.rotation = pickup.transform.rotation;
+        
+        // FIXED: Parent to hold position with world position maintenance
+        Transform holdPosition = pickup.GetPuckHoldPosition();
+        if (holdPosition != null)
+        {
+            // Parent with world position stays to maintain current position
+            transform.SetParent(holdPosition, true);
             
-            // Wait until puck is falling
-            while (rb.linearVelocity.y > 0)
+            if (enableDebugLogs)
             {
-                yield return null;
+                Debug.Log($"Puck: Parented to hold position at world pos: {transform.position}");
             }
-
-            // When close to ground level, force position and disable gravity
-            while (Mathf.Abs(transform.position.y - groundY) > 0.01f)
+        }
+        else
+        {
+            // Fallback: parent directly to player
+            transform.SetParent(pickup.transform, true);
+            
+            if (enableDebugLogs)
             {
-                Vector3 pos = transform.position;
-                pos.y = Mathf.Lerp(pos.y, groundY, Time.deltaTime * 10f);
-                transform.position = pos;
-                yield return null;
+                Debug.Log($"Puck: Parented directly to player at world pos: {transform.position}");
             }
+        }
+        
+        // Configure for pickup
+        if (puckRigidbody != null)
+        {
+            puckRigidbody.isKinematic = true;
+            puckRigidbody.useGravity = false;
+        }
+        
+        var collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.enabled = false;
+        }
+        
+        if (enableDebugLogs)
+        {
+            Debug.Log($"Puck: Successfully picked up at final position {transform.position}");
+        }
+    }
 
-            rb.useGravity = false;
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
-            rb.constraints |= RigidbodyConstraints.FreezePositionY;
+    public void ReleaseFromPlayer(Vector3 position, Vector3 velocity)
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log($"Puck: ReleaseFromPlayer called at {position} with velocity {velocity}");
+        }
+        
+        currentHolder = null;
+        isHeld = false;
+        
+        // Update network state if we're the server
+        if (IsServer)
+        {
+            networkIsHeld.Value = false;
+        }
+        
+        // FIXED: Unparent first, then set position
+        transform.SetParent(null);
+        
+        // FIXED: Ensure proper release position (in front of player, not at (0,0,0))
+        if (position == Vector3.zero)
+        {
+            // Emergency fallback if position is zero
+            position = new Vector3(0f, 0.71f, 0f);
+            Debug.LogWarning("Puck: Release position was zero, using center as fallback");
+        }
+        
+        transform.position = position;
+        transform.rotation = Quaternion.identity;
+        
+        // Configure for release
+        var collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.enabled = true;
+        }
+        
+        if (puckRigidbody != null)
+        {
+            puckRigidbody.isKinematic = false;
+            puckRigidbody.useGravity = true;
+            puckRigidbody.linearVelocity = velocity;
+            puckRigidbody.angularVelocity = Vector3.zero;
+        }
+        
+        if (enableDebugLogs)
+        {
+            Debug.Log($"Puck: Successfully released at position {transform.position} with velocity {velocity}");
+        }
+    }
+    
+    // ADDED: Method to force clear held state (for shooting system)
+    public void SetHeld(bool held)
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log($"Puck: SetHeld called with value: {held}");
+        }
+        
+        isHeld = held;
+        
+        // Update network state if we're the server
+        if (IsServer)
+        {
+            networkIsHeld.Value = held;
+        }
+        
+        if (!held)
+        {
+            currentHolder = null;
+            
+            // Only enable physics if we're not kinematic for other reasons
+            if (puckRigidbody != null && puckRigidbody.isKinematic)
+            {
+                puckRigidbody.isKinematic = false;
+                puckRigidbody.useGravity = true;
+            }
+            
+            var collider = GetComponent<Collider>();
+            if (collider != null && !collider.enabled)
+            {
+                collider.enabled = true;
+            }
+            
+            // Only unparent if we're actually parented to a hold position
+            if (transform.parent != null && 
+                (transform.parent.name.Contains("Hold") || transform.parent.name.Contains("Puck")))
+            {
+                transform.SetParent(null);
+            }
+        }
+    }
+    
+    // ADDED: Method to apply shooting force properly
+    public void ApplyShootForce(Vector3 force)
+    {
+        if (puckRigidbody == null || puckRigidbody.isKinematic)
+        {
+            if (enableDebugLogs)
+            {
+                Debug.LogWarning($"Puck: Cannot apply shoot force - rigidbody is null or kinematic");
+            }
+            return;
+        }
+        
+        puckRigidbody.AddForce(force, ForceMode.VelocityChange);
+        
+        if (enableDebugLogs)
+        {
+            Debug.Log($"Puck: Applied shoot force {force}, resulting velocity: {puckRigidbody.linearVelocity}");
+        }
+    }
+    
+    // ADDED: Reset puck to center (for goals)
+    public void ResetToCenter()
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log("Puck: Resetting to center");
+        }
+        
+        // Clear held state
+        SetHeld(false);
+        
+        // Position at center
+        Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
+        transform.position = centerPos;
+        transform.rotation = Quaternion.identity;
+        
+        // Stop all movement
+        if (puckRigidbody != null)
+        {
+            puckRigidbody.linearVelocity = Vector3.zero;
+            puckRigidbody.angularVelocity = Vector3.zero;
+        }
+    }
+    
+    private void OnCollisionEnter(Collision collision)
+    {
+        // Handle collisions with walls, players, etc.
+        if (enableDebugLogs && !isHeld)
+        {
+            Debug.Log($"Puck: Collided with {collision.gameObject.name}");
+        }
+    }
+    
+    private void OnTriggerEnter(Collider other)
+    {
+        // Handle goal detection
+        if (other.CompareTag("Goal"))
+        {
+            if (enableDebugLogs)
+            {
+                Debug.Log($"Puck: Entered goal trigger {other.name}");
+            }
+            
+            // FIXED: Remove reference to non-existent Goal class
+            // Only use GoalTrigger which exists in HockeyGame.Game namespace
+            var goalTrigger = other.GetComponent<GoalTrigger>();
+            if (goalTrigger != null)
+            {
+                // GoalTrigger will handle the goal logic automatically
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"Puck: Found GoalTrigger component on {other.name}");
+                }
+            }
+            else
+            {
+                if (enableDebugLogs)
+                {
+                    Debug.LogWarning($"Puck: Goal object {other.name} has Goal tag but no GoalTrigger component!");
+                }
+            }
         }
     }
 }

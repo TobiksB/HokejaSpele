@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 7923590774385983101}
   - component: {fileID: 6110013018593300510}
   - component: {fileID: 437020813289127924}
+  - component: {fileID: -9011281211707063503}
+  - component: {fileID: 2415111834102987764}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -87,7 +89,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6960e84d07fb87f47956e7a81d71c4e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ProtocolType: 0
+  m_ProtocolType: 1
   m_UseWebSockets: 0
   m_UseEncryption: 0
   m_MaxPacketQueueSize: 128
@@ -104,3 +106,36 @@ MonoBehaviour:
     PacketDelayMS: 0
     PacketJitterMS: 0
     PacketDropRate: 0
+--- !u!114 &-9011281211707063503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4653074706278871899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5c9b42126325604cb5977c3dd0a6d1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2415111834102987764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4653074706278871899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acec9e836ca29c04385874808aa41190, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerPrefabReference: {fileID: 884565506170877979, guid: 2f23b6bcd9d83134cadb1c65f1b19f21, type: 3}
+  sceneLoadTimeout: 30
+  hostStartDelay: 1
+  redTeamSpawns:
+  - {fileID: 481860622586406839, guid: 60bdb5bae49f08f4db86b3126ecb0814, type: 3}
+  - {fileID: 7250972613819152831, guid: 561a8e3cccd4af247a46cdc315879152, type: 3}
+  blueTeamSpawns:
+  - {fileID: 2404495274475876514, guid: 29dee4184f2245b488b117717a4ae2c0, type: 3}
+  - {fileID: 2202172956278530601, guid: 5bb3c740ebcd295439e00be2946001a1, type: 3}

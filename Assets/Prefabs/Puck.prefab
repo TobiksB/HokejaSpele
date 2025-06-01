@@ -17,9 +17,9 @@ GameObject:
   - component: {fileID: 2714160412145585898}
   - component: {fileID: 8352680966343996288}
   - component: {fileID: 8422305024342322183}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Puck
-  m_TagString: Untagged
+  m_TagString: Puck
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -181,6 +181,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
@@ -216,9 +226,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  spawnPoint: {fileID: 0}
-  forwardOffset: 1
-  moveSpeed: 15
+  mass: 0.16
+  bounciness: 0.4
+  minVelocityThreshold: 0.05
+  iceFrictionCoefficient: 0.02
+  airResistance: 0.98
+  maxVelocity: 25
 --- !u!114 &8422305024342322183
 MonoBehaviour:
   m_ObjectHideFlags: 0

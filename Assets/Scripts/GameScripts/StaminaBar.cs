@@ -1,80 +1,115 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class StaminaBar : MonoBehaviour
 {
-    public static StaminaBar Instance { get; private set; }
-    
-    [Header("UI Elements")]
-    [SerializeField] private Image backgroundImage;
+    [Header("UI References")]
     [SerializeField] private Image staminaFillImage;
+    [SerializeField] private Gradient staminaGradient = new Gradient();
+    [SerializeField] private Canvas staminaCanvas;
+    [SerializeField] private Text staminaText;
+    [SerializeField] private Text staminaPercentText;
     
-    [Header("UI Settings")]
-    [SerializeField] private Color staminaColor = Color.green;
-    [SerializeField] private Vector2 barSize = new Vector2(200f, 20f);
-    [SerializeField] private Vector2 screenPosition = new Vector2(20f, 20f);
+    [Header("Animation")]
+    [SerializeField] private float smoothFillSpeed = 5f;
+    
+    private float currentDisplayedStamina = 1f;
+    private PlayerStamina playerStamina;
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            SetupStaminaBar();
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void SetupStaminaBar()
-    {
-        // Setup background
-        if (backgroundImage == null)
-        {
-            GameObject bgGo = new GameObject("StaminaBackground");
-            bgGo.transform.SetParent(transform);
-            backgroundImage = bgGo.AddComponent<Image>();
-            backgroundImage.color = Color.black;
-        }
-
-        // Setup fill
+        // Create default components if not assigned
         if (staminaFillImage == null)
         {
-            GameObject fillGo = new GameObject("StaminaFill");
-            fillGo.transform.SetParent(backgroundImage.transform);
-            staminaFillImage = fillGo.AddComponent<Image>();
-            staminaFillImage.color = staminaColor;
+            CreateStaminaBar();
         }
-
-        // Position and size the bar
-        RectTransform canvasRect = GetComponent<RectTransform>();
-        RectTransform bgRect = backgroundImage.rectTransform;
-        RectTransform fillRect = staminaFillImage.rectTransform;
-
-        // Set canvas to stretch
-        canvasRect.anchorMin = Vector2.zero;
-        canvasRect.anchorMax = Vector2.one;
-        canvasRect.sizeDelta = Vector2.zero;
-
-        // Position background
-        bgRect.anchorMin = new Vector2(0, 0);
-        bgRect.anchorMax = new Vector2(0, 0);
-        bgRect.sizeDelta = barSize;
-        bgRect.anchoredPosition = screenPosition;
-
-        // Set up fill image
-        fillRect.anchorMin = new Vector2(0, 0);
-        fillRect.anchorMax = new Vector2(1, 1);
-        fillRect.sizeDelta = Vector2.zero;
-        fillRect.anchoredPosition = Vector2.zero;
+        
+        if (staminaGradient.colorKeys.Length == 0)
+        {
+            // Create a default gradient
+            var colorKeys = new GradientColorKey[3];
+            colorKeys[0] = new GradientColorKey(Color.red, 0f);
+            colorKeys[1] = new GradientColorKey(Color.yellow, 0.5f);
+            colorKeys[2] = new GradientColorKey(Color.green, 1f);
+            
+            var alphaKeys = new GradientAlphaKey[2];
+            alphaKeys[0] = new GradientAlphaKey(1f, 0f);
+            alphaKeys[1] = new GradientAlphaKey(1f, 1f);
+            
+            staminaGradient.SetKeys(colorKeys, alphaKeys);
+        }
     }
 
-    public void UpdateStamina(float fillAmount)
+    private void Start()
+    {
+        // Find player stamina if not assigned
+        if (playerStamina == null)
+        {
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                playerStamina = player.GetComponent<PlayerStamina>();
+            }
+        }
+    }
+
+    private void Update()
+    {
+        if (playerStamina != null)
+        {
+            // Smooth transition to target value
+            float targetFill = playerStamina.GetStaminaPercentage();
+            currentDisplayedStamina = Mathf.Lerp(currentDisplayedStamina, targetFill, Time.deltaTime * smoothFillSpeed);
+            
+            // Update fill amount
+            if (staminaFillImage != null)
+            {
+                staminaFillImage.fillAmount = currentDisplayedStamina;
+                staminaFillImage.color = staminaGradient.Evaluate(currentDisplayedStamina);
+            }
+            
+            // Update text if available
+            if (staminaText != null)
+            {
+                staminaText.text = $"{Mathf.CeilToInt(playerStamina.GetCurrentStamina())} / {Mathf.CeilToInt(playerStamina.GetMaxStamina())}";
+            }
+            
+            if (staminaPercentText != null)
+            {
+                staminaPercentText.text = $"{Mathf.RoundToInt(currentDisplayedStamina * 100)}%";
+            }
+        }
+    }
+
+    private void CreateStaminaBar()
+    {
+        // Create UI components if they don't exist
+        GameObject fillArea = new GameObject("StaminaFill");
+        fillArea.transform.SetParent(transform);
+        
+        staminaFillImage = fillArea.AddComponent<Image>();
+        staminaFillImage.color = Color.green;
+        staminaFillImage.type = Image.Type.Filled;
+        staminaFillImage.fillMethod = Image.FillMethod.Horizontal;
+        staminaFillImage.fillOrigin = 0;
+        staminaFillImage.fillAmount = 1f;
+        
+        RectTransform fillRect = staminaFillImage.GetComponent<RectTransform>();
+        fillRect.anchorMin = new Vector2(0, 0);
+        fillRect.anchorMax = new Vector2(1, 1);
+        fillRect.offsetMin = Vector2.zero;
+        fillRect.offsetMax = Vector2.zero;
+    }
+
+    // Public method for updating from PlayerStamina
+    public void UpdateStamina(PlayerStamina stamina)
     {
         if (staminaFillImage != null)
         {
-            staminaFillImage.transform.localScale = new Vector3(fillAmount, 1, 1);
+            float percentage = stamina.GetStaminaPercentage();
+            staminaFillImage.fillAmount = percentage;
+            staminaFillImage.color = staminaGradient.Evaluate(percentage);
         }
     }
 }

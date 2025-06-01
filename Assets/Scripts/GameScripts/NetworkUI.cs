@@ -3,6 +3,7 @@ using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using HockeyGame.Network;  // Add this line to use RelayManager
 
 public class NetworkUI : MonoBehaviour
 {
@@ -51,7 +52,6 @@ public class NetworkUI : MonoBehaviour
 
     private void Start()
     {
-        // Find NetworkManager in case it wasn't available in Awake
         if (NetworkManager.Singleton == null)
         {
             NetworkManager[] managers = Object.FindObjectsByType<NetworkManager>(FindObjectsSortMode.None);
@@ -60,8 +60,31 @@ public class NetworkUI : MonoBehaviour
 
         if (NetworkManager.Singleton == null) return;
 
-        hostButton.onClick.AddListener(async () => {
-            string joinCode = await RelayManager.Instance.CreateRelay();
+        hostButton.onClick.AddListener(() => {
+            StartHostAsync();
+        });
+
+        clientButton.onClick.AddListener(() => {
+            StartClientAsync();
+        });
+
+        NetworkManager.Singleton.OnClientConnectedCallback += (id) =>
+        {
+            UpdateStatus($"Connected as {(NetworkManager.Singleton.IsHost ? "Host" : "Client")}");
+        };
+
+        NetworkManager.Singleton.OnClientDisconnectCallback += (id) =>
+        {
+            UpdateStatus("Disconnected");
+            ShowButtons();
+        };
+    }
+
+    private async void StartHostAsync()
+    {
+        try
+        {
+            string joinCode = await RelayManager.Instance.CreateRelay(4, 4);
             if (string.IsNullOrEmpty(joinCode))
             {
                 UpdateStatus("Failed to create relay");
@@ -74,10 +97,19 @@ public class NetworkUI : MonoBehaviour
                 HideButtons();
                 ShowJoinCode(joinCode);
             }
-        });
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to start host: {e.Message}");
+            UpdateStatus("Failed to start host");
+        }
+    }
 
-        clientButton.onClick.AddListener(async () => {
-            string joinCode = joinCodeInput.text.ToUpper();
+    private async void StartClientAsync()
+    {
+        try
+        {
+            string joinCode = joinCodeInput.text.Trim();
             if (string.IsNullOrEmpty(joinCode))
             {
                 UpdateStatus("Please enter a join code");
@@ -96,18 +128,12 @@ public class NetworkUI : MonoBehaviour
                 UpdateStatus("Joined as client");
                 HideButtons();
             }
-        });
-
-        NetworkManager.Singleton.OnClientConnectedCallback += (id) =>
+        }
+        catch (System.Exception e)
         {
-            UpdateStatus($"Connected as {(NetworkManager.Singleton.IsHost ? "Host" : "Client")}");
-        };
-
-        NetworkManager.Singleton.OnClientDisconnectCallback += (id) =>
-        {
-            UpdateStatus("Disconnected");
-            ShowButtons();
-        };
+            Debug.LogError($"Failed to join: {e.Message}");
+            UpdateStatus("Failed to join game");
+        }
     }
 
     private void HideButtons()
