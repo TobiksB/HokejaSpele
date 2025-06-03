@@ -53,3 +53,4 @@ public class SettingsPanel : MonoBehaviour
         LoadCurrentSettings();
     }
 }
+// No changes needed here for quarter display. See below for a new script suggestion.

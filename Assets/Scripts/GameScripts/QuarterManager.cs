@@ -8,7 +8,7 @@ namespace HockeyGame.Game
         public static QuarterManager Instance { get; private set; }
         
         [Header("Game Settings")]
-        [SerializeField] private float quarterDuration = 300f; // 5 minutes
+        [SerializeField] private float quarterDuration = 100f; // 5 minutes
         [SerializeField] private int totalQuarters = 3;
         
         [Header("UI References")]
@@ -18,6 +18,8 @@ namespace HockeyGame.Game
         private NetworkVariable<int> currentQuarter = new NetworkVariable<int>(1);
         private NetworkVariable<float> timeRemaining = new NetworkVariable<float>(300f);
         private bool isGameActive = true;
+
+        private QuarterDisplayUI quarterDisplayUI; // Add this field
 
         private void Awake()
         {
@@ -69,6 +71,18 @@ namespace HockeyGame.Game
                     }
                 }
                 
+                // Find QuarterDisplayUI in scene
+                if (quarterDisplayUI == null)
+                {
+                    quarterDisplayUI = FindFirstObjectByType<QuarterDisplayUI>();
+                }
+
+                // --- Show Q1 at start ---
+                if (quarterDisplayUI != null)
+                {
+                    quarterDisplayUI.SetQuarter(1);
+                }
+
                 // CRITICAL: Start the timer immediately
                 Debug.Log("QuarterManager: Starting game timer automatically");
                 isGameActive = true;
@@ -126,11 +140,17 @@ namespace HockeyGame.Game
         private void StartQuarter()
         {
             if (!IsServer) return;
-            
+
             Debug.Log($"Starting Quarter {currentQuarter.Value}");
             isGameActive = true;
             timeRemaining.Value = quarterDuration;
-            
+
+            // --- Ensure quarter display is updated at the start of each quarter ---
+            if (quarterDisplayUI != null)
+            {
+                quarterDisplayUI.SetQuarter(currentQuarter.Value);
+            }
+
             // Update UI
             UpdateTimerUI();
         }
@@ -138,10 +158,13 @@ namespace HockeyGame.Game
         private void EndQuarter()
         {
             if (!IsServer) return;
-            
+
             Debug.Log($"Quarter {currentQuarter.Value} ended");
             isGameActive = false;
-            
+
+            // --- NEW: Reset all players to spawn points at end of quarter ---
+            ResetAllPlayersToSpawnPoints();
+
             if (currentQuarter.Value >= totalQuarters)
             {
                 EndGame();
@@ -150,6 +173,68 @@ namespace HockeyGame.Game
             {
                 StartCoroutine(TransitionToNextQuarter());
             }
+        }
+
+        // --- NEW: Reset all players to their spawn points (same as after a goal) ---
+        private void ResetAllPlayersToSpawnPoints()
+        {
+            var gameNetMgr = FindFirstObjectByType<GameNetworkManager>();
+            if (gameNetMgr == null)
+            {
+                Debug.LogWarning("QuarterManager: GameNetworkManager not found, cannot reset player positions.");
+                return;
+            }
+
+            var players = FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None);
+            foreach (var player in players)
+            {
+                ulong clientId = player.GetComponent<NetworkObject>()?.OwnerClientId ?? 0;
+                // Try to get team as string
+                string team = "Red";
+                if (player.GetType().GetProperty("Team") != null)
+                {
+                    team = player.GetType().GetProperty("Team").GetValue(player).ToString();
+                }
+                else if (player.GetType().GetField("team") != null)
+                {
+                    team = player.GetType().GetField("team").GetValue(player).ToString();
+                }
+                else if (player.GetType().GetField("networkTeam", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null)
+                {
+                    var networkTeamVar = player.GetType().GetField("networkTeam", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(player);
+                    if (networkTeamVar != null)
+                    {
+                        var valueProp = networkTeamVar.GetType().GetProperty("Value");
+                        if (valueProp != null)
+                        {
+                            var enumValue = valueProp.GetValue(networkTeamVar);
+                            team = enumValue.ToString();
+                        }
+                    }
+                }
+
+                // Get spawn position from GameNetworkManager
+                Vector3 spawnPos = gameNetMgr.GetType().GetMethod("GetSpawnPositionFromInspector", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    .Invoke(gameNetMgr, new object[] { clientId, team }) as Vector3? ?? player.transform.position;
+
+                Quaternion spawnRot = team == "Blue"
+                    ? Quaternion.Euler(0, 90, 0)
+                    : Quaternion.Euler(0, -90, 0);
+
+                // Teleport player to spawn
+                player.transform.position = spawnPos;
+                player.transform.rotation = spawnRot;
+                var rb = player.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.position = spawnPos;
+                    rb.rotation = spawnRot;
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+            }
+
+            Debug.Log("QuarterManager: All players reset to their spawn points at end of quarter.");
         }
 
         private System.Collections.IEnumerator TransitionToNextQuarter()
@@ -180,12 +265,65 @@ namespace HockeyGame.Game
         {
             Debug.Log("Game ended - all quarters completed");
             isGameActive = false;
-            
-            // Notify game manager
-            var gameManager = FindFirstObjectByType<GameManager>();
-            if (gameManager != null)
+
+            // --- NEW: Show end game panel and winner ---
+            ShowEndGamePanel();
+
+            // --- NEW: Start coroutine to return to main menu and shutdown networking ---
+            StartCoroutine(EndGameSequence());
+        }
+
+        // --- NEW: Show end game panel and winner ---
+        private void ShowEndGamePanel()
+        {
+            int redScore = 0, blueScore = 0;
+            var scoreManager = ScoreManager.Instance;
+            if (scoreManager != null)
             {
-                gameManager.OnGameEnd();
+                redScore = scoreManager.GetRedScore();
+                blueScore = scoreManager.GetBlueScore();
+            }
+
+            string winner = "Draw!";
+            if (redScore > blueScore) winner = "Red Team Wins!";
+            else if (blueScore > redScore) winner = "Blue Team Wins!";
+
+            // Try to find a GameOverPanel or similar UI
+            var gameOverPanel = FindFirstObjectByType<GameOverPanel>();
+            if (gameOverPanel != null)
+            {
+                // Show only winner text and buttons
+                gameOverPanel.ShowWinner(winner);
+            }
+            else
+            {
+                // Fallback: log to console
+                Debug.Log($"GAME OVER! {winner}");
+            }
+        }
+
+        // --- NEW: Coroutine to return to main menu and shutdown networking ---
+        private System.Collections.IEnumerator EndGameSequence()
+        {
+            // Wait 5 seconds to show the panel
+            yield return new WaitForSeconds(5f);
+
+            // Shutdown host/client and return to main menu
+            if (Unity.Netcode.NetworkManager.Singleton != null)
+            {
+                Unity.Netcode.NetworkManager.Singleton.Shutdown();
+            }
+
+            // Wait a moment to ensure shutdown before loading scene
+            yield return new WaitForSeconds(0.5f);
+
+            // --- FIX: Always load MainMenu for both host and client ---
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+
+            // --- Optional: If you want to be extra sure, force shutdown again after scene load ---
+            if (Unity.Netcode.NetworkManager.Singleton != null)
+            {
+                Unity.Netcode.NetworkManager.Singleton.Shutdown();
             }
         }
 
@@ -219,6 +357,10 @@ namespace HockeyGame.Game
         {
             // Update quarter display in UI
             Debug.Log($"Current Quarter: {currentQuarter.Value}/{totalQuarters}");
+            if (quarterDisplayUI != null)
+            {
+                quarterDisplayUI.SetQuarter(currentQuarter.Value);
+            }
         }
 
         // Public methods for external access

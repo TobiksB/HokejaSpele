@@ -47,10 +47,20 @@ public class CameraFollow : MonoBehaviour
             isFreeLook = true;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            // Initialize yaw/pitch from current rotation
-            Vector3 angles = transform.eulerAngles;
-            yaw = angles.y;
-            pitch = angles.x;
+            // Initialize yaw/pitch from current rotation RELATIVE TO TARGET
+            if (target != null)
+            {
+                Vector3 camDir = (transform.position - target.position).normalized;
+                // Calculate yaw and pitch from camera's direction relative to target
+                yaw = Mathf.Atan2(camDir.x, camDir.z) * Mathf.Rad2Deg;
+                pitch = Mathf.Asin(camDir.y) * Mathf.Rad2Deg;
+            }
+            else
+            {
+                Vector3 angles = transform.eulerAngles;
+                yaw = angles.y;
+                pitch = angles.x;
+            }
         }
         else if (Input.GetKeyUp(freeLookKey))
         {
@@ -76,9 +86,11 @@ public class CameraFollow : MonoBehaviour
         Vector3 desiredPosition;
         if (isFreeLook)
         {
-            // Free look: orbit camera around the player at the offset distance
+            // Free look: orbit camera around the player at the offset distance, but keep offset length
+            float offsetDistance = offset.magnitude;
             Quaternion freeLookRot = Quaternion.Euler(pitch, yaw, 0f);
-            desiredPosition = target.position + freeLookRot * offset;
+            Vector3 camOffset = freeLookRot * (Vector3.back * offsetDistance);
+            desiredPosition = target.position + camOffset + Vector3.up * offset.y;
 
             if (smoothFollow)
             {
@@ -89,7 +101,7 @@ public class CameraFollow : MonoBehaviour
                 transform.position = desiredPosition;
             }
 
-            transform.rotation = freeLookRot;
+            transform.rotation = Quaternion.LookRotation(target.position + lookOffset - transform.position, Vector3.up);
         }
         else
         {
