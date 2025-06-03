@@ -8,6 +8,7 @@ public class LobbyPlayerData
     public bool IsReady;
     public bool IsLocalPlayer;
     
+    // Add the missing IsBlueTeam property
     public bool IsBlueTeam => Team == "Blue";
     
     public LobbyPlayerData()

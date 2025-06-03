@@ -10,7 +10,7 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float sprintSpeed = 8f;
-    [SerializeField] private float rotationSpeed = 1f; // Reduced from 80f to 40f for slower rotation
+    [SerializeField] private float rotationSpeed = 0.2f; // Reduced from 1f to 0.5f for less sensitive turning
     [SerializeField] private float iceFriction = 0.95f;
 
     [Header("Stamina Settings")]
@@ -31,6 +31,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private NetworkVariable<bool> isSkating = new NetworkVariable<bool>();
     private NetworkVariable<bool> isShooting = new NetworkVariable<bool>();
+    // FIXED: Re-add the missing network variables that were accidentally removed
     private NetworkVariable<Vector3> networkPosition = new NetworkVariable<Vector3>();
     private NetworkVariable<Vector3> networkVelocity = new NetworkVariable<Vector3>();
     private NetworkVariable<Team> networkTeam = new NetworkVariable<Team>(Team.Red, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -46,6 +47,7 @@ public class PlayerMovement : NetworkBehaviour
     private bool canMove = true;
     private bool isMovementEnabled = true;
 
+    // FIXED: Add missing variable declarations
     private bool isMyPlayer = false;
     private ulong localClientId = 0;
     private PlayerTeam teamComponent;
@@ -212,6 +214,7 @@ public class PlayerMovement : NetworkBehaviour
 
         HandleMovementInput();
 
+        // REMOVED: All puck pickup logic - PuckPickup component handles this
     }
 
     private void HandleMovementInput()
@@ -327,14 +330,14 @@ public class PlayerMovement : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        // atjauno kustibu poziciju un ātrumu serverim
+        // SERVER: Update network variables
         if (IsServer)
         {
             networkPosition.Value = transform.position;
             networkVelocity.Value = rb.linearVelocity;
         }
         
-        // parbauda ka y paliek nemainigs
+        // ALL: Ensure Y position stays locked
         if (IsOwner || IsServer)
         {
             Vector3 pos = transform.position;
@@ -381,6 +384,7 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    // Call this from GameNetworkManager after spawning the player object:
     [ServerRpc]
     public void SetTeamServerRpc(Team team)
     {
@@ -388,6 +392,7 @@ public class PlayerMovement : NetworkBehaviour
             networkTeam.Value = team;
     }
 
+    // Public method to ensure the player camera is set up (called by GameNetworkManager)
     public void EnsurePlayerCamera()
     {
         if (IsOwner && playerCamera == null)
@@ -396,6 +401,7 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    // This method applies the color to the player object
     private void ApplyTeamColor(Team team)
     {
         Color teamColor = team == Team.Blue ? new Color(0f, 0.5f, 1f, 1f) : new Color(1f, 0.2f, 0.2f, 1f);
@@ -415,12 +421,14 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    // Add this method to allow PlayerShooting to trigger the shoot animation
     public void TriggerShootAnimation()
     {
         if (animator != null)
         {
             animator.SetBool("IsShooting", true);
             animator.SetTrigger("Shoot");
+            // Optionally, you can start a coroutine to reset the animation if needed
         }
     }
 }

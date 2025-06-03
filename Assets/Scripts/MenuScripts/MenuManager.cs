@@ -56,31 +56,31 @@ public class MenuManager : MonoBehaviour
 
     private void Start()
     {
-        // SVARĪGI: Pārbauda, vai atrodamies MainMenu ainā un iznīcina šo objektu, ja nē
+        // CRITICAL: Verify we're in MainMenu scene and destroy any cameras
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (currentScene != "MainMenu")
         {
-            Debug.LogWarning($"MenuManager: Neatrodas MainMenu ainā ({currentScene}), iznīcina objektu");
+            Debug.LogWarning($"MenuManager: Not in MainMenu scene ({currentScene}), destroying");
             Destroy(gameObject);
             return;
         }
         
-        // SVARĪGI: Atspējo jebkuras spēles kameras, kurām nevajadzētu būt MainMenu ainā
+        // CRITICAL: Disable any game-related cameras that shouldn't be in MainMenu
         Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
         foreach (var cam in allCameras)
         {
             if (cam.name.Contains("Player") || cam.name.Contains("Game") || cam.name.Contains("Local"))
             {
-                Debug.LogError($"IZNĪCINA spēles kameru {cam.name}, kas atrasta MainMenu ainā!");
+                Debug.LogError($"DESTROYING game camera {cam.name} found in MainMenu scene!");
                 Destroy(cam.gameObject);
             }
         }
         
-        // Inicializē faila žurnālu (loggeri) priekš atkļūdošanas
-        FileLogger.LogToFile("=== HOKEJA SPĒLE SĀKTA MAINMENU ===");
-        FileLogger.LogToFile("MenuManager: Inicializē spēli");
+        // Initialize file logger first for debugging
+        FileLogger.LogToFile("=== HOCKEY GAME STARTED IN MAINMENU ===");
+        FileLogger.LogToFile("MenuManager: Initializing game");
         
-        // Iestatām sākotnējās paneļus un pārliecināmies, ka tie eksistē ainā
+        // Set up initial panels and ensure they exist in scene
         foreach (var panel in new[] { mainMenuPanel, gamemodePanel, settingsPanel, lobbyPanel, createOrJoinPanel })
         {
             if (panel != null)
@@ -89,7 +89,7 @@ public class MenuManager : MonoBehaviour
             }
         }
 
-        // Iestatām pogu klausītājus
+        // Set up button listeners
         if (playButton) playButton.onClick.AddListener(OpenGamemodePanel);
         if (settingsButton) settingsButton.onClick.AddListener(OpenSettingsPanel);
         if (exitButton) exitButton.onClick.AddListener(ExitGame);
@@ -237,6 +237,7 @@ public class MenuManager : MonoBehaviour
                 await Unity.Services.Authentication.AuthenticationService.Instance.SignInAnonymouslyAsync();
             }
 
+            // CRITICAL: Show panel FIRST and ensure it's fully initialized
             FileLogger.LogToFile("Showing lobby panel...");
             ShowPanel(lobbyPanel);
             await Task.Delay(200); // Longer wait for panel activation
@@ -250,6 +251,7 @@ public class MenuManager : MonoBehaviour
                 lobbyPanelManagerUI.ForceInitialize();
                 await Task.Delay(200); // Wait for full initialization
 
+                // CRITICAL: Now create the lobby AFTER UI is ready
                 Debug.Log("UI ready, now creating lobby...");
                 
                 string lobbyCode = null;
@@ -271,6 +273,7 @@ public class MenuManager : MonoBehaviour
                     lobbyPanelManagerUI.SetLobbyCode(lobbyCode);
                     Debug.Log($"Successfully created 2v2 lobby with code: {lobbyCode}");
                     
+                    // FINAL: Force one more UI update after everything is set up
                     await Task.Delay(100);
                     if (LobbyManager.Instance != null)
                     {
@@ -315,8 +318,10 @@ public class MenuManager : MonoBehaviour
         {
             Debug.Log($"CLIENT: ============ STARTING LOBBY JOIN PROCESS ============");
             
+            // DISABLE the join button to prevent multiple clicks
             if (joinLobbyConfirmButton) joinLobbyConfirmButton.interactable = false;
             
+            // CRITICAL: First verify lobby panel exists
             if (lobbyPanel == null)
             {
                 Debug.LogError("CLIENT: ✗ LOBBY PANEL REFERENCE IS NULL!");
@@ -335,6 +340,7 @@ public class MenuManager : MonoBehaviour
             catch (System.Exception e)
             {
                 Debug.LogError($"CLIENT: ⚠ Lobby join had issues but continuing: {e.Message}");
+                // Continue anyway - the lobby join might have partially succeeded
             }
             
             // Step 2: IMMEDIATELY show lobby panel regardless of relay status
@@ -353,6 +359,7 @@ public class MenuManager : MonoBehaviour
             lobbyPanel.SetActive(true);
             currentActivePanel = lobbyPanel;
             
+            // CRITICAL: Force immediate Canvas update
             Canvas.ForceUpdateCanvases();
             
             // Verify transition worked
@@ -475,6 +482,7 @@ public class MenuManager : MonoBehaviour
 
     private void DisableAllPlayerCameras()
     {
+        // FIXED: Remove PlayerCamera references and use direct Camera component access
         var allCameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
         foreach (var camera in allCameras)
         {

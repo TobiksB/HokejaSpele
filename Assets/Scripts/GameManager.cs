@@ -5,7 +5,7 @@ using System.Collections;
 
 namespace HockeyGame.Game
 {
-
+    // Renamed to RootGameManager to avoid conflict with GameScripts.GameManager
     public class RootGameManager : NetworkBehaviour
     {
         public static RootGameManager Instance { get; private set; }
@@ -16,7 +16,8 @@ namespace HockeyGame.Game
         [SerializeField] private GameTimer gameTimer;
         [SerializeField] private GameOverPanel gameOverPanel;
         [SerializeField] private PauseMenuManager pauseMenuManager;
-  
+        
+        // FIXED: Add ScoreManager UI reference
         [Header("Score UI")]
         [SerializeField] private UnityEngine.UI.Text scoreDisplayText;
         [SerializeField] private TMPro.TextMeshProUGUI scoreDisplayTMP;
@@ -76,7 +77,7 @@ namespace HockeyGame.Game
                     var scoreManager = FindFirstObjectByType<ScoreManager>();
                     if (scoreManager != null)
                     {
-                 
+                        // FIXED: Call UpdateScoreDisplay without parameters instead of with int
                         scoreManager.UpdateScoreDisplay();
                         gameOverPanel.ShowGameOver(scoreManager.GetRedScore(), scoreManager.GetBlueScore());
                     }

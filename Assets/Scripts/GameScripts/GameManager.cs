@@ -174,6 +174,7 @@ namespace HockeyGame.Game
                 }
             }
             
+            // FALLBACK: Try regular UI Text only if TMP not found
             if (!foundRedTMP || !foundBlueTMP)
             {
                 var allTexts = FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None);
@@ -198,6 +199,7 @@ namespace HockeyGame.Game
         public void OnGameEnd()
         {
             Debug.Log("GameManager: Game ended");
+            // Handle game end logic here
         }
     }
 }

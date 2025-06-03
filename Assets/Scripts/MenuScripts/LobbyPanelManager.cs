@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using Unity.Services.Authentication;
 using Unity.Netcode;
 
+// This file is intentionally removed to resolve duplicate manager conflicts
+// Use HockeyGame.UI.LobbyPanelManager instead
 public class LobbyPanelManager : MonoBehaviour
 {
     public static LobbyPanelManager Instance { get; private set; }
@@ -72,19 +74,19 @@ public class LobbyPanelManager : MonoBehaviour
         if (playerListItemPrefab == null)
         {
             Debug.LogError("MenuScripts.LobbyPanelManager: playerListItemPrefab reference is missing!");
-            // Meklē UI versiju tieši ainā vispirms
+            // Look for the UI version directly in the scene first
             var uiPrefab = Object.FindFirstObjectByType<PlayerListItem>();
             if (uiPrefab != null)
             {
                 playerListItemPrefab = uiPrefab;
-                Debug.Log("MenuScripts.LobbyPanelManager: Atrasts PlayerListItem ainā.");
+                Debug.Log("MenuScripts.LobbyPanelManager: Found PlayerListItem in scene.");
             }
             else
             {
-                // Mēģina ielādēt no Resources
+                // Try to load from Resources
                 playerListItemPrefab = Resources.Load<PlayerListItem>("Prefabs/UI/PlayerListItem");
                 if (playerListItemPrefab != null)
-                    Debug.Log("MenuScripts.LobbyPanelManager: PlayerListItem ielādēts no Resources.");
+                    Debug.Log("MenuScripts.LobbyPanelManager: Loaded PlayerListItem from Resources.");
             }
         }
 

@@ -18,59 +18,45 @@ using Unity.Services.Lobbies.Models;
 
 public class LobbyManager : MonoBehaviour
 {
-    // Singleton instance, lai piekļūtu LobbyManager no citām klasēm
     public static LobbyManager Instance { get; private set; }
-    // Pašreizējais lobby objekts
     private Lobby currentLobby;
-    // Spēlētāju komandu vārdnīca (playerId -> komanda)
     private Dictionary<string, string> playerTeams = new Dictionary<string, string>();
-    // Spēlētāju vārdu vārdnīca (playerId -> vārds)
     private Dictionary<string, string> playerNames = new Dictionary<string, string>();
-    // Spēlētāju gatavības stāvokļi (playerId -> vai gatavs)
     private Dictionary<string, bool> playerReadyStates = new Dictionary<string, bool>();
-    // Sirds sitiena taimeris lobby uzturēšanai
     private float heartbeatTimer;
-    // Taimeris lobby atjaunošanai
     private float lobbyPollTimer;
-    // Cik bieži atjaunot lobby (sekundēs)
-    private const float LOBBY_POLL_INTERVAL = 5.0f; // vai pat 10.0f
-    // Atpakaļatdošanas laiks pēc kļūdas (piemēram, rate limit)
-    private float lobbyPollBackoff = 0f; // Papildu lauks atpakaļatdošanai
-    // Rate limit atpakaļatdošanas ilgums
-    private const float LOBBY_POLL_BACKOFF_ON_429 = 10.0f; // 10s gaidīšana pie rate limit
-    // Izvēlētais spēles režīms
+    private const float LOBBY_POLL_INTERVAL = 5.0f; // or even 10.0f
+    private float lobbyPollBackoff = 0f; // Add this field for backoff
+    private const float LOBBY_POLL_BACKOFF_ON_429 = 10.0f; // Wait 10s on rate limit
     private GameMode selectedGameMode;
-    // Čata ziņu saraksts
     private List<string> chatMessages = new List<string>();
-    // Maksimālais čata ziņu skaits
     private const int MAX_CHAT_MESSAGES = 50;
-    // Pēdējā lobby atjaunošanas laika zīmogs
     private float lastLobbyUpdateTime = 0f;
-    // Minimālais intervāls starp atjauninājumiem
     private const float MIN_UPDATE_INTERVAL = 1.0f;
-    // NetworkManager instance
     private NetworkManager networkManager;
-    // Pašreizējais relay kods
     private string relayJoinCode;
-    // Vai notiek relay izveide
+    
+    // FIXED: Add flag to prevent multiple relay creations
     private bool relayCreationInProgress = false;
-    // Vai hosts jau ir izveidojis relay
     private bool hostRelayCreated = false;
 
+    // FIXED: Simple prefab-based NetworkManager management
     [Header("Network Configuration")]
-    [SerializeField] private GameObject networkManagerPrefab; // Prefabs priekš NetworkManager
+    [SerializeField] private GameObject networkManagerPrefab; // Assign your NetworkManager prefab here
 
+    // Remove all the complex preservation code and replace with simple prefab instantiation
     private void Awake()
     {
-        // Inicializē singletonu un nodrošina, ka objekts netiek iznīcināts starp scenām
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
             Debug.Log("LobbyManager initialized successfully.");
 
+            // Set default game mode to 2v2 to ensure CanStartMatch works as expected
             selectedGameMode = GameMode.Mode2v2;
 
+            // FIXED: Simple NetworkManager setup
             EnsureNetworkManagerExists();
         }
         else
@@ -80,9 +66,10 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // FIXED: Simple and reliable NetworkManager setup using prefab
     private void EnsureNetworkManagerExists()
     {
-        // Pārbauda, vai jau eksistē NetworkManager, ja nē - izveido jaunu
+        // FIXED: Use FindObjectsByType instead of obsolete FindObjectsOfType
         var allManagers = FindObjectsByType<NetworkManager>(FindObjectsSortMode.None);
         bool found = false;
         foreach (var nm in allManagers)
@@ -105,6 +92,7 @@ public class LobbyManager : MonoBehaviour
             return;
         }
 
+        // If no NetworkManager exists, create one from prefab
         if (networkManagerPrefab != null)
         {
             Debug.Log("LobbyManager: Creating NetworkManager from prefab...");
@@ -112,7 +100,7 @@ public class LobbyManager : MonoBehaviour
             networkManagerGO.name = "NetworkManager (From Prefab)";
             DontDestroyOnLoad(networkManagerGO);
 
-            // Brīdina, ja prefabam ir NetworkObject (tam tāda nevajadzētu būt!)
+            // Warn if prefab has a NetworkObject (should not!)
             var netObj = networkManagerGO.GetComponent<Unity.Netcode.NetworkObject>();
             if (netObj != null)
             {
@@ -123,14 +111,19 @@ public class LobbyManager : MonoBehaviour
             networkManager = networkManagerGO.GetComponent<NetworkManager>();
             if (networkManager != null)
             {
+                // Remove NetworkManager from NetworkPrefabs if present
                 RemoveInvalidNetworkPrefabs(networkManager);
 
+                // --- CRITICAL: Ensure PlayerPrefab is assigned on NetworkManager.NetworkConfig ---
                 if (networkManager.NetworkConfig != null && networkManager.NetworkConfig.PlayerPrefab == null)
                 {
+                    // Try to assign the Player prefab from Resources or inspector
                     GameObject playerPrefab = null;
+                    // Try inspector reference from GameNetworkManager if available
                     var gnm = FindFirstObjectByType<GameNetworkManager>();
                     if (gnm != null)
                     {
+                        // FIXED: Use reflection to get playerPrefabReference field since it's private
                         var prefabField = typeof(GameNetworkManager).GetField("playerPrefabReference", 
                             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                         if (prefabField != null)
@@ -142,6 +135,7 @@ public class LobbyManager : MonoBehaviour
                             }
                         }
                     }
+                    // Try Resources
                     if (playerPrefab == null)
                     {
                         playerPrefab = Resources.Load<GameObject>("Prefabs/Player");
@@ -150,6 +144,7 @@ public class LobbyManager : MonoBehaviour
                             Debug.Log("[LobbyManager] Assigned PlayerPrefab from Resources/Prefabs/Player.");
                         }
                     }
+                    // Try NetworkPrefabs list
                     if (playerPrefab == null && networkManager.NetworkConfig.Prefabs != null)
                     {
                         foreach (var np in networkManager.NetworkConfig.Prefabs.Prefabs)
@@ -187,13 +182,14 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogError("LobbyManager: No NetworkManager prefab assigned! Please assign your NetworkManager prefab in the inspector.");
             
+            // Fallback: create basic NetworkManager
             CreateBasicNetworkManager();
         }
     }
 
+    // Helper to remove NetworkManager from NetworkPrefabs
     private void RemoveInvalidNetworkPrefabs(NetworkManager nm)
     {
-        // Izņem no NetworkPrefabs saraksta visus prefabus, kuri satur NetworkManager komponenti
         if (nm.NetworkConfig?.Prefabs == null) return;
         var toRemove = new List<GameObject>();
         foreach (var np in nm.NetworkConfig.Prefabs.Prefabs)
@@ -210,9 +206,9 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // FIXED: Simplified fallback NetworkManager creation
     private void CreateBasicNetworkManager()
     {
-        // Izveido pamata NetworkManager gadījumā, ja nav pieejams prefabs
         Debug.Log("LobbyManager: Creating basic NetworkManager as fallback...");
         var networkManagerGO = new GameObject("NetworkManager (Fallback)");
         networkManager = networkManagerGO.AddComponent<NetworkManager>();
@@ -221,6 +217,8 @@ public class LobbyManager : MonoBehaviour
         networkManager.NetworkConfig.ConnectionApproval = false;
         networkManager.NetworkConfig.Prefabs = new Unity.Netcode.NetworkPrefabs();
 
+        // Do NOT add NetworkObject to NetworkManager!
+        // ...existing code...
         var transport = networkManagerGO.AddComponent<UnityTransport>();
         networkManager.NetworkConfig.NetworkTransport = transport;
         networkManagerGO.AddComponent<GameNetworkManager>();
@@ -231,10 +229,11 @@ public class LobbyManager : MonoBehaviour
 
     private void Update()
     {
-        // Update metode, kas tiek izsaukta katru kadru
+        // CRITICAL: Only handle lobby operations in MainMenu scene
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (currentScene != "MainMenu")
         {
+            // Stop all lobby operations when not in MainMenu
             return;
         }
         
@@ -244,7 +243,6 @@ public class LobbyManager : MonoBehaviour
 
     private void HandleLobbyHeartbeat()
     {
-        // Sūta heartbeat ping, lai lobby netiktu izmests
         if (currentLobby != null && IsLobbyHost())
         {
             heartbeatTimer -= Time.deltaTime;
@@ -258,9 +256,11 @@ public class LobbyManager : MonoBehaviour
 
     private float clientRelayWaitTime = 0f;
     private const float CLIENT_RELAY_TIMEOUT = 10f;
+
+    // Add this field to prevent multiple scene starts
     private bool clientStartedGame = false;
 
-    // Palīgmetode ar atkārtotu mēģinājumu un backoff pie rate limit
+    // Add this helper for robust lobby API calls with exponential backoff
     private async Task<T> LobbyApiWithBackoff<T>(Func<Task<T>> apiCall, string context = "")
     {
         int retries = 0;
@@ -308,7 +308,7 @@ public class LobbyManager : MonoBehaviour
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (currentScene == "TrainingMode" || currentScene == "GameScene2v2" || currentScene == "GameScene4v4")
         {
-
+            // Reset flag if client returns to MainMenu
             if (!IsLobbyHost())
                 clientStartedGame = false;
             return;
@@ -320,7 +320,7 @@ public class LobbyManager : MonoBehaviour
             lobbyPollTimer = LOBBY_POLL_INTERVAL;
             try
             {
-
+                // --- Use robust helper with backoff ---
                 Lobby lobby = await LobbyApiWithBackoff(() => LobbyService.Instance.GetLobbyAsync(currentLobby.Id), "PollLobbyForUpdates");
                 if (lobby != null)
                 {
@@ -362,7 +362,8 @@ public class LobbyManager : MonoBehaviour
                         }
                     }
 
-
+                    // --- Client relay joining logic ---
+                    // --- CHANGE: Only start client if RelayCode is present AND GameStarted is "true" ---
                     bool gameStarted = currentLobby.Data != null && currentLobby.Data.ContainsKey("GameStarted") && currentLobby.Data["GameStarted"].Value == "true";
                     if (!IsLobbyHost() && currentLobby.Data != null && currentLobby.Data.ContainsKey("RelayCode"))
                     {
@@ -370,12 +371,12 @@ public class LobbyManager : MonoBehaviour
                         Debug.Log($"[LobbyManager] CLIENT: My PlayerId: {AuthenticationService.Instance.PlayerId}");
                         Debug.Log($"[LobbyManager] CLIENT: Relay code received: '{relayCode}'");
 
-                        // Parbauda vai relay kods ir mainījies
+                        // FIXED: Check if relay code has changed and reset client state if so
                         if (!string.IsNullOrEmpty(relayCode) && relayCode != relayJoinCode)
                         {
                             Debug.LogWarning($"[LobbyManager] CLIENT: Relay code changed from '{relayJoinCode}' to '{relayCode}' - resetting client relay state");
                             relayConfiguredForClient = false;
-                            relayJoinCode = relayCode; // Update relay kodam
+                            relayJoinCode = relayCode; // Update stored relay code
                         }
 
                         if (!string.IsNullOrEmpty(relayCode) && !relayConfiguredForClient)
@@ -418,7 +419,7 @@ public class LobbyManager : MonoBehaviour
                             }
                         }
 
-                        // Iesak speli tikai tad kad relay ir konfigurēts un spēle ir sākusies
+                        // --- Only start client game once, after relay is configured, GameStarted is true, and in MainMenu ---
                         if (relayConfiguredForClient && !clientStartedGame && gameStarted)
                         {
                             var transport = NetworkManager.Singleton?.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>();
@@ -436,10 +437,11 @@ public class LobbyManager : MonoBehaviour
                             else
                             {
                                 Debug.LogWarning("[LobbyManager] CLIENT: Relay not yet fully configured on transport, waiting before starting client.");
+                                // Reset the flag if transport is not ready
                                 relayConfiguredForClient = false;
                             }
                         }
-                        // ja spele sakusies un klientam nav uzsākta spēle, bet relay ir konfigurēts
+                        // --- FORCE START fallback: if relay is configured and game started, but clientStartedGame is still false, force it ---
                         else if (relayConfiguredForClient && gameStarted && !clientStartedGame)
                         {
                             var transport = NetworkManager.Singleton?.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>();
@@ -506,18 +508,18 @@ public class LobbyManager : MonoBehaviour
                 await InitializeUnityServices();
             }
 
-            // initialize speletaja ID un vārdu
+            // CRITICAL: Initialize local player data IMMEDIATELY and PROPERLY
             string playerId = AuthenticationService.Instance.PlayerId;
             string playerName = SettingsManager.Instance != null ? 
                 SettingsManager.Instance.PlayerName : 
                 $"Player{UnityEngine.Random.Range(1000, 9999)}";
             
-            // nenonem datus ja tadi eksiste
+            // FIXED: IMMEDIATE initialization - don't clear existing data if it exists
             if (playerNames == null) playerNames = new Dictionary<string, string>();
             if (playerTeams == null) playerTeams = new Dictionary<string, string>();
             if (playerReadyStates == null) playerReadyStates = new Dictionary<string, bool>();
             
-            // pieskir player data vertibas
+            // CRITICAL: Set player data IMMEDIATELY
             playerNames[playerId] = playerName;
             playerTeams[playerId] = "Red";
             playerReadyStates[playerId] = false;
@@ -525,6 +527,7 @@ public class LobbyManager : MonoBehaviour
             Debug.Log($"IMMEDIATE INIT: Player data set - ID: {playerId}, Name: {playerName}, Team: Red, Ready: false");
             Debug.Log($"IMMEDIATE INIT: Dictionary counts - Names: {playerNames.Count}, Teams: {playerTeams.Count}, Ready: {playerReadyStates.Count}");
 
+            // CRITICAL: Force immediate UI update right after setting data
             Debug.Log($"IMMEDIATE UI UPDATE: Forcing UI update with {playerNames.Count} players");
             UpdatePlayerListUI();
 
@@ -546,13 +549,15 @@ public class LobbyManager : MonoBehaviour
             Debug.Log($"✓ 2v2 Lobby created successfully");
             Debug.Log($"  Lobby Code: {currentLobby.LobbyCode}");
             
-            // Nesakt speli tikai gaidit lidz konfigurēts relay
+            // FIXED: DO NOT START HOST YET - only configure relay transport
+            // Host will start when the game actually begins via StartMatch()
             Debug.Log("LobbyManager: Lobby created, relay configured. Host will start when game begins.");
             
-            // Pedeja parbaude pirms uzsaksanas
+            // CRITICAL: Final validation and UI update
             Debug.Log($"FINAL VALIDATION: Names: {playerNames.Count}, Teams: {playerTeams.Count}, Ready: {playerReadyStates.Count}");
             UpdatePlayerListUI();
             
+            // CRITICAL: Set the lobby code in UI
             if (HockeyGame.UI.LobbyPanelManager.Instance != null)
             {
                 HockeyGame.UI.LobbyPanelManager.Instance.SetLobbyCode(currentLobby.LobbyCode);
@@ -572,7 +577,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // metode lai parbauditu vai relay ir konfigurēts
+    // FIXED: Add method to validate relay configuration
     public bool IsRelayConfigured()
     {
         var networkManager = FindOrCreateNetworkManager();
@@ -598,12 +603,13 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // metode lai iegutu pašreizējo relay join kodu
+    // FIXED: Add method to get current relay join code
     public string GetCurrentRelayJoinCode()
     {
         return relayJoinCode;
     }
 
+    // FIXED: Completely rewrite CreateRelay with proper timing and validation
     public async Task<string> CreateRelay()
     {
         if (!IsLobbyHost())
@@ -612,7 +618,7 @@ public class LobbyManager : MonoBehaviour
             return null;
         }
 
-        // neatlauj vairaku relay uzsaksanu vienlaicigi
+        // FIXED: Prevent multiple relay creations
         if (relayCreationInProgress)
         {
             Debug.LogWarning("[LobbyManager] Relay creation already in progress, waiting...");
@@ -633,7 +639,7 @@ public class LobbyManager : MonoBehaviour
             }
         }
 
-        // kad relay izveidots atgriezt kodu
+        // FIXED: If relay already created, return existing code
         if (hostRelayCreated && !string.IsNullOrEmpty(relayJoinCode))
         {
             Debug.Log($"[LobbyManager] Relay already created, returning existing code: {relayJoinCode}");
@@ -646,7 +652,7 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.Log("LobbyManager: Starting relay creation process...");
             
-            // parbaudit servisus 
+            // Ensure services are initialized
             if (!UnityServices.State.Equals(ServicesInitializationState.Initialized))
             {
                 Debug.Log("Initializing Unity Services...");
@@ -661,7 +667,7 @@ public class LobbyManager : MonoBehaviour
                 await Task.Delay(500);
             }
 
-            // izveidot relay alokāciju
+            // STEP 1: Create relay allocation
             Debug.Log("Creating relay allocation for 4 players (3 connections)...");
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(3);
             
@@ -670,7 +676,7 @@ public class LobbyManager : MonoBehaviour
                 throw new System.Exception("Relay allocation returned null");
             }
             
-            // iegut relay kodu
+            // STEP 2: Get join code
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
             
             if (string.IsNullOrEmpty(joinCode))
@@ -683,7 +689,7 @@ public class LobbyManager : MonoBehaviour
             Debug.Log($"  Server: {allocation.RelayServer.IpV4}:{allocation.RelayServer.Port}");
             Debug.Log($"  Allocation ID: {allocation.AllocationId}");
 
-            // konfigurēt transportu
+            // STEP 3: Configure transport
             var networkManager = FindOrCreateNetworkManager();
             var transport = networkManager?.GetComponent<UnityTransport>();
             
@@ -694,7 +700,7 @@ public class LobbyManager : MonoBehaviour
                 networkManager.NetworkConfig.NetworkTransport = transport;
             }
 
-            // parbaudit kad networmanager ir apstajies pirms uzsak
+            // Ensure NetworkManager is stopped before configuring relay
             if (networkManager.IsHost || networkManager.IsServer || networkManager.IsClient)
             {
                 Debug.LogWarning("NetworkManager is running - shutting down before configuring relay");
@@ -709,7 +715,7 @@ public class LobbyManager : MonoBehaviour
                 }
             }
 
-            // konfigure transportu prieks host 
+            // Configure transport for host
             Debug.Log("Configuring transport for relay host...");
             
             // Validate allocation data
@@ -723,7 +729,7 @@ public class LobbyManager : MonoBehaviour
                 throw new System.Exception("Relay allocation data is incomplete");
             }
 
-            // relay dati
+            // Configure relay data
             transport.SetHostRelayData(
                 allocation.RelayServer.IpV4,
                 (ushort)allocation.RelayServer.Port,
@@ -732,7 +738,7 @@ public class LobbyManager : MonoBehaviour
                 allocation.ConnectionData
             );
 
-            // salabots relay konfiguracijas bug kurs atgriez nepareizo aresi
+            // STEP 4: FIXED - Work around Unity Transport address bug
             await Task.Delay(500);
             
             var connectionData = transport.ConnectionData;
@@ -741,7 +747,7 @@ public class LobbyManager : MonoBehaviour
             Debug.Log($"  Port: {connectionData.Port}");
             Debug.Log($"  Protocol: {transport.Protocol}");
 
-            // pienemt relay konfiguraciju
+            // FIXED: Accept relay configuration if protocol is RelayUnityTransport
             bool isRelayConfigured = false;
             
             if (transport.Protocol == Unity.Netcode.Transports.UTP.UnityTransport.ProtocolType.RelayUnityTransport)
@@ -995,6 +1001,7 @@ public class LobbyManager : MonoBehaviour
         Debug.Log("Lobby join process completed");
     }
 
+    // FIXED: Update and fix UpdateLocalPlayerDataFromLobby method
     private void UpdateLocalPlayerDataFromLobby()
     {
         if (currentLobby == null) return;
@@ -1198,6 +1205,7 @@ public class LobbyManager : MonoBehaviour
             return;
         }
         
+        // CRITICAL: Store actual team selections from lobby with validation
         var allClientIds = new List<string>();
         foreach (var kvp in playerNames)
         {
@@ -1213,6 +1221,7 @@ public class LobbyManager : MonoBehaviour
             string authId = allClientIds[i];
             string playerName = playerNames.ContainsKey(authId) ? playerNames[authId] : $"Player_{authId.Substring(0, Mathf.Min(4, authId.Length))}";
             
+            // ENHANCED: Use actual team selection from lobby with validation
             string team = "Red"; // Default fallback
             if (playerTeams.ContainsKey(authId))
             {
@@ -1221,10 +1230,12 @@ public class LobbyManager : MonoBehaviour
             }
             else
             {
+                // FIXED: Only use alternating assignment as fallback if no team selection exists
                 team = (i % 2 == 0) ? "Red" : "Blue";
                 Debug.LogWarning($"LobbyManager: Player {i}: {playerName} (ID: {authId}) has NO team selection, using fallback: {team}");
             }
             
+            // ADDED: Validate team is valid
             if (team != "Red" && team != "Blue")
             {
                 Debug.LogWarning($"LobbyManager: Invalid team '{team}' for player {playerName}, defaulting to Red");
@@ -1238,6 +1249,7 @@ public class LobbyManager : MonoBehaviour
         PlayerPrefs.SetString("AllPlayerTeams", serializedData);
         Debug.Log($"LobbyManager: Stored combined team data: {serializedData}");
         
+        // ADDED: Validate stored data
         string validationData = PlayerPrefs.GetString("AllPlayerTeams", "");
         if (validationData == serializedData)
         {
@@ -1269,6 +1281,7 @@ public class LobbyManager : MonoBehaviour
             }
             else
             {
+                // FIXED: Don't assume team by host status - use Red as default
                 string myTeam = "Red";
                 PlayerPrefs.SetString("MySelectedTeam", myTeam);
                 Debug.LogWarning($"LobbyManager: No team selection found for local player, using default: {myTeam}");
@@ -1327,6 +1340,7 @@ public class LobbyManager : MonoBehaviour
                     allocation.HostConnectionData
                 );
                 
+                // FIXED: Wait a moment for transport to process the relay data
                 await Task.Delay(500);
                 
                 // Validate the configuration took effect
@@ -1369,10 +1383,10 @@ public class LobbyManager : MonoBehaviour
             SettingsManager.Instance.PlayerName :
             $"Player{UnityEngine.Random.Range(1000, 9999)}";
             
-        // nelauj izmantot dublikatu vardus
+        // FIXED: Handle duplicate names by making them unique
         playerName = EnsureUniquePlayerName(playerName, playerId);
         
-        // parbauda vai dati ir jau eksistejosi pirms izveido lobby
+        // FIXED: ALWAYS ensure player data exists when creating lobby player
         if (playerNames == null) playerNames = new Dictionary<string, string>();
         if (playerTeams == null) playerTeams = new Dictionary<string, string>();
         if (playerReadyStates == null) playerReadyStates = new Dictionary<string, bool>();
@@ -1430,6 +1444,7 @@ public class LobbyManager : MonoBehaviour
         return currentLobby;
     }
 
+    // --- PUBLIC API for other scripts ---
 
     public bool IsLobbyHost()
     {
@@ -1452,6 +1467,8 @@ public class LobbyManager : MonoBehaviour
         UpdateLobbyData();
         UpdateStartButtonState();
         RefreshPlayerList();
+
+        // FIXED: Only auto-start if we have minimum 2 players and both are ready
         if (IsLobbyHost() && playerId == AuthenticationService.Instance.PlayerId && playerReadyStates[playerId])
         {
             // Check if we have at least 2 players
@@ -1515,7 +1532,9 @@ public class LobbyManager : MonoBehaviour
 
     private async Task StartMatchInternal()
     {
-
+        // Call the existing StartMatch logic (if you have async logic, move it here)
+        // ...existing StartMatch logic...
+        // For now, just call ForceStartMatch for compatibility
         ForceStartMatch();
     }
 
@@ -1524,6 +1543,7 @@ public class LobbyManager : MonoBehaviour
         if (chatMessages.Count >= MAX_CHAT_MESSAGES)
             chatMessages.RemoveAt(0);
         chatMessages.Add(message);
+        // Optionally update UI here
     }
 
     public void SetGameMode(GameMode mode)
@@ -1540,7 +1560,9 @@ public class LobbyManager : MonoBehaviour
 
     public NetworkManager FindOrCreateNetworkManager()
     {
-
+        // ...existing FindOrCreateNetworkManager logic...
+        // (If already present, just make it public)
+        // ...existing code...
         Debug.Log("FindOrCreateNetworkManager: Starting search...");
         if (networkManager != null)
         {
@@ -1571,6 +1593,7 @@ public class LobbyManager : MonoBehaviour
         // Build the player list for the UI
         var players = new List<LobbyPlayerData>();
         
+        // FIXED: Ensure we have valid data before building the list
         if (playerNames == null || playerTeams == null || playerReadyStates == null)
         {
             Debug.LogWarning("LobbyManager: Player data dictionaries are null, initializing...");
@@ -1586,6 +1609,7 @@ public class LobbyManager : MonoBehaviour
             string team = playerTeams.ContainsKey(playerId) ? playerTeams[playerId] : "Red";
             bool isReady = playerReadyStates.ContainsKey(playerId) ? playerReadyStates[playerId] : false;
             
+            // FIXED: Create LobbyPlayerData with proper structure
             var playerData = new LobbyPlayerData();
             playerData.PlayerId = playerId;
             playerData.PlayerName = playerName;
@@ -1598,6 +1622,7 @@ public class LobbyManager : MonoBehaviour
 
         Debug.Log($"LobbyManager: Built player list with {players.Count} players");
         
+        // FIXED: Add null check for LobbyPanelManager
         if (HockeyGame.UI.LobbyPanelManager.Instance != null)
         {
             try
@@ -1615,7 +1640,8 @@ public class LobbyManager : MonoBehaviour
             Debug.LogWarning("LobbyManager: LobbyPanelManager.Instance is null, cannot update player list UI.");
         }
 
-  
+        // REMOVED: Auto-start game logic from here - only start via SetPlayerReady
+        // This prevents premature game starts
     }
 
     // Property for UI: true if host can force start (enables start button)
@@ -1655,7 +1681,10 @@ public class LobbyManager : MonoBehaviour
 
     public void UpdateStartButtonState()
     {
-     
+        // --- UI: Enable/disable the start button here ---
+        // Example: If you have a reference to your button, set its interactable property:
+        // startButton.interactable = CanForceStart;
+        // Or call your own UI manager method here.
     }
 
     // Call this from your UI start button
@@ -1684,3 +1713,5 @@ public class LobbyManager : MonoBehaviour
     }
 }
 
+// FIXED: Ensure LobbyPlayerData is defined only once in its own file (remove any duplicate definitions from this file)
+// Remove any LobbyPlayerData definition from this file if present. Make sure only one definition exists in your project, ideally in a separate file like LobbyPlayerData.cs.

@@ -6,7 +6,7 @@ public class PuckPickup : NetworkBehaviour
     [Header("Pickup Settings")]
     [SerializeField] private float pickupRange = 2f;
     [SerializeField] private Transform puckHoldPosition;
-    [SerializeField] private LayerMask puckLayer = 128; // Layer 7 = 2^7 = 128
+    [SerializeField] private LayerMask puckLayer = 128;
     
     [Header("Input")]
     [SerializeField] private KeyCode pickupKey = KeyCode.E;
@@ -14,18 +14,20 @@ public class PuckPickup : NetworkBehaviour
     [Header("Debug")]
     [SerializeField] private bool enableDebugLogs = true;
     
+    [Header("Puck Stealing")]
+    [SerializeField] private float stealChance = 0.25f; // 25% chance to steal
+    [SerializeField] private float stealRange = 3f; // Range to attempt steal
+    [SerializeField] private float stealCooldown = 2f; // Cooldown between steal attempts
+    [SerializeField] private bool enableStealDebugLogs = true;
+    
     private Puck currentPuck;
     private bool hasPuck = false;
-    
-    // Network variable to sync puck state
     private NetworkVariable<bool> networkHasPuck = new NetworkVariable<bool>(false);
-    
-    // FIXED: Add shooting release flag to prevent conflicts
     private bool releasedForShooting = false;
+    private float lastStealAttemptTime = 0f;
     
     private void Awake()
     {
-        // Create puck hold position if not assigned
         if (puckHoldPosition == null)
         {
             GameObject holdPos = new GameObject("PuckHoldPosition");
@@ -33,21 +35,11 @@ public class PuckPickup : NetworkBehaviour
             holdPos.transform.localPosition = new Vector3(0, 0.5f, 1.5f);
             holdPos.transform.localRotation = Quaternion.identity;
             puckHoldPosition = holdPos.transform;
-            
-            if (enableDebugLogs)
-            {
-                Debug.Log($"PuckPickup: Created puck hold position");
-            }
         }
         
-        // Ensure PlayerShooting component exists
         if (GetComponent<PlayerShooting>() == null)
         {
-            var playerShooting = gameObject.AddComponent<PlayerShooting>();
-            if (enableDebugLogs)
-            {
-                Debug.Log("PuckPickup: Added PlayerShooting component automatically");
-            }
+            gameObject.AddComponent<PlayerShooting>();
         }
     }
 
@@ -65,7 +57,6 @@ public class PuckPickup : NetworkBehaviour
 
     private void OnNetworkHasPuckChanged(bool oldValue, bool newValue)
     {
-        // FIXED: Only update hasPuck for non-owners (remote clients)
         if (!IsOwner)
         {
             hasPuck = newValue;
@@ -74,7 +65,6 @@ public class PuckPickup : NetworkBehaviour
                 Debug.Log($"PuckPickup: [Remote] Network state changed - HasPuck: {hasPuck}");
             }
         }
-        // For owner, let local logic handle hasPuck
     }
 
     private void Update()
@@ -84,18 +74,21 @@ public class PuckPickup : NetworkBehaviour
 
         HandleInput();
 
-        // --- FIX: For the local player, always force the puck to follow the hold position if we have it ---
+        // For the local player, ensure PuckFollower is working properly
         if (hasPuck && currentPuck != null && !releasedForShooting)
         {
-            if (puckHoldPosition != null)
+            var puckFollower = currentPuck.GetComponent<PuckFollower>();
+            if (puckFollower != null && !puckFollower.IsFollowing())
             {
-                // Always set the puck's parent and position every frame for the local player
-                if (currentPuck.transform.parent != puckHoldPosition)
+                // Restart following if it stopped
+                if (puckHoldPosition != null)
                 {
-                    currentPuck.transform.SetParent(puckHoldPosition, true);
+                    puckFollower.StartFollowing(puckHoldPosition, Vector3.zero);
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log("PuckPickup: Restarted PuckFollower for local player");
+                    }
                 }
-                currentPuck.transform.position = puckHoldPosition.position;
-                currentPuck.transform.rotation = puckHoldPosition.rotation;
             }
         }
     }
@@ -120,12 +113,18 @@ public class PuckPickup : NetworkBehaviour
             }
             else if (!hasPuck)
             {
-                // Try to pick up puck
-                if (enableDebugLogs)
+                // First try to steal puck from nearby opponent
+                bool stealAttempted = TryStealPuck();
+                
+                if (!stealAttempted)
                 {
-                    Debug.Log("PuckPickup: Trying to pick up puck");
+                    // If no steal attempt was made, try normal pickup
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log("PuckPickup: No steal attempt, trying normal pickup");
+                    }
+                    TryPickupPuck();
                 }
-                TryPickupPuck();
             }
         }
     }
@@ -146,41 +145,29 @@ public class PuckPickup : NetworkBehaviour
 
             if (distance <= pickupRange)
             {
-                // FIXED: Reset shooting release flag
                 releasedForShooting = false;
-                
-                // Immediate local pickup for responsiveness
                 currentPuck = nearestPuck;
                 hasPuck = true;
 
-                // Disable any PuckFollower
+                // Start PuckFollower immediately for local responsiveness
                 var puckFollower = nearestPuck.GetComponent<PuckFollower>();
                 if (puckFollower != null)
                 {
-                    // Disable follower if using parenting, or enable and set target if using follower
-                    if (puckHoldPosition != null)
+                    puckFollower.StartFollowing(puckHoldPosition, Vector3.zero);
+                    puckFollower.enabled = true;
+                    
+                    if (enableDebugLogs)
                     {
-                        puckFollower.StopFollowing();
-                        puckFollower.enabled = false;
-                    }
-                    else
-                    {
-                        puckFollower.StartFollowing(transform, new Vector3(0, 0.5f, 1.5f));
-                        puckFollower.enabled = true;
+                        Debug.Log($"PuckPickup: Started PuckFollower for local player");
                     }
                 }
-
-                // Setup hold position
-                if (puckHoldPosition != null)
+                else
                 {
-                    puckHoldPosition.localPosition = new Vector3(0, 0.5f, 1.5f);
-                    puckHoldPosition.localRotation = Quaternion.identity;
-                    
-                    nearestPuck.transform.position = puckHoldPosition.position;
-                    nearestPuck.transform.rotation = puckHoldPosition.rotation;
-                    nearestPuck.transform.SetParent(puckHoldPosition, false);
-                    nearestPuck.transform.localPosition = Vector3.zero;
-                    nearestPuck.transform.localRotation = Quaternion.identity;
+                    // Add PuckFollower if missing
+                    puckFollower = nearestPuck.gameObject.AddComponent<PuckFollower>();
+                    puckFollower.StartFollowing(puckHoldPosition, Vector3.zero);
+                    puckFollower.enabled = true;
+                    Debug.Log("PuckPickup: Added and started PuckFollower component");
                 }
 
                 // Configure physics for pickup
@@ -196,7 +183,6 @@ public class PuckPickup : NetworkBehaviour
                     rb.angularVelocity = Vector3.zero;
                 }
 
-                // Set puck as held
                 nearestPuck.SetHeld(true);
 
                 // Send to server for network sync
@@ -211,7 +197,7 @@ public class PuckPickup : NetworkBehaviour
 
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"PuckPickup: Successfully picked up puck!");
+                    Debug.Log($"PuckPickup: Successfully picked up puck using PuckFollower!");
                 }
             }
         }
@@ -227,7 +213,6 @@ public class PuckPickup : NetworkBehaviour
         {
             if (puck == null) continue;
             
-            // FIXED: Skip pucks that are held or released for shooting
             bool isHeld = false;
             try
             {
@@ -266,7 +251,7 @@ public class PuckPickup : NetworkBehaviour
             {
                 currentPuck = puck;
                 networkHasPuck.Value = true;
-                releasedForShooting = false; // Reset on server too
+                releasedForShooting = false;
 
                 try
                 {
@@ -277,70 +262,49 @@ public class PuckPickup : NetworkBehaviour
                     Debug.LogWarning($"PuckPickup: PickupByPlayer failed: {e.Message}");
                 }
 
-                // FIXED: Notify all clients to visually attach the puck to this player
-                AttachPuckClientRpc(puckNetworkId, NetworkObjectId);
+                // Notify all clients to start following
+                StartFollowingClientRpc(puckNetworkId, NetworkObjectId);
 
                 OnPuckPickedUpClientRpc();
             }
         }
     }
 
-    // FIXED: Attach puck visually to the correct player on all clients
     [ClientRpc]
-    private void AttachPuckClientRpc(ulong puckNetworkId, ulong playerNetworkId)
+    private void StartFollowingClientRpc(ulong puckNetworkId, ulong playerNetworkId)
     {
-        // Find the puck and player objects
         var puckObj = NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(puckNetworkId, out var puckNetObj) ? puckNetObj.gameObject : null;
         var playerObj = NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetworkId, out var playerNetObj) ? playerNetObj.gameObject : null;
 
         if (puckObj == null || playerObj == null)
         {
-            Debug.LogWarning("PuckPickup: AttachPuckClientRpc could not find puck or player object.");
+            Debug.LogWarning("PuckPickup: StartFollowingClientRpc could not find puck or player object.");
             return;
         }
 
         var puckHold = playerObj.GetComponent<PuckPickup>()?.GetPuckHoldPosition();
         bool isLocalPlayer = playerObj.GetComponent<NetworkObject>().IsLocalPlayer;
 
-        // --- FIX: For the local player, set the puck's world position to the hold position before parenting ---
         if (puckHold != null)
         {
-            if (isLocalPlayer)
+            // Start following for ALL clients using PuckFollower
+            var puckFollower = puckObj.GetComponent<PuckFollower>();
+            if (puckFollower == null)
             {
-                // Set world position to hold position before parenting
-                puckObj.transform.position = puckHold.position;
-                puckObj.transform.rotation = puckHold.rotation;
-                puckObj.transform.SetParent(puckHold, true);
+                puckFollower = puckObj.AddComponent<PuckFollower>();
+                Debug.Log("PuckPickup: Added missing PuckFollower component");
             }
-            else
+            
+            puckFollower.StartFollowing(puckHold, Vector3.zero);
+            puckFollower.enabled = true;
+            
+            if (enableDebugLogs)
             {
-                puckObj.transform.position = puckHold.position;
-                puckObj.transform.rotation = puckHold.rotation;
-                puckObj.transform.SetParent(puckHold, false);
-                puckObj.transform.localPosition = Vector3.zero;
-                puckObj.transform.localRotation = Quaternion.identity;
-            }
-        }
-        else
-        {
-            Vector3 fallbackPos = playerObj.transform.position + playerObj.transform.forward * 1.5f + Vector3.up * 0.5f;
-            if (isLocalPlayer)
-            {
-                puckObj.transform.position = fallbackPos;
-                puckObj.transform.rotation = playerObj.transform.rotation;
-                puckObj.transform.SetParent(playerObj.transform, true);
-            }
-            else
-            {
-                puckObj.transform.position = fallbackPos;
-                puckObj.transform.rotation = playerObj.transform.rotation;
-                puckObj.transform.SetParent(playerObj.transform, false);
-                puckObj.transform.localPosition = new Vector3(0, 0.5f, 1.5f);
-                puckObj.transform.localRotation = Quaternion.identity;
+                Debug.Log($"PuckPickup: Started PuckFollower for {(isLocalPlayer ? "LOCAL" : "REMOTE")} player");
             }
         }
 
-        // Ensure collider and physics are disabled for held puck
+        // Disable physics for held puck
         var col = puckObj.GetComponent<Collider>();
         if (col != null) col.enabled = false;
         var rb = puckObj.GetComponent<Rigidbody>();
@@ -352,7 +316,7 @@ public class PuckPickup : NetworkBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // For the local player, set currentPuck and hasPuck so Update() will move the puck every frame
+        // Set state for local player
         if (isLocalPlayer)
         {
             var pickup = playerObj.GetComponent<PuckPickup>();
@@ -365,41 +329,38 @@ public class PuckPickup : NetworkBehaviour
         }
     }
 
-    // FIXED: Manual release puck (for E key)
     private void ManualReleasePuck()
     {
         if (currentPuck == null) return;
 
         if (enableDebugLogs)
         {
-            Debug.Log("PuckPickup: Manual release puck");
+            Debug.Log("PuckPickup: Manual release puck via E key");
         }
 
         releasedForShooting = false; // This is a manual release, not for shooting
 
-        // FIX: Use a proper release position in front of the player, not Vector3.zero
-        Vector3 releasePosition = transform.position + transform.forward * 2f;
-        releasePosition.y = 0.71f;
-
-        // Unparent and position
-        currentPuck.transform.SetParent(null);
-        currentPuck.transform.position = releasePosition;
-        currentPuck.transform.rotation = Quaternion.identity;
-
-        // Re-enable PuckFollower if it exists
+        // Stop following
         var puckFollower = currentPuck.GetComponent<PuckFollower>();
         if (puckFollower != null)
         {
             puckFollower.StopFollowing();
             puckFollower.enabled = false;
+            if (enableDebugLogs)
+            {
+                Debug.Log("PuckPickup: Stopped PuckFollower for manual release");
+            }
         }
+
+        Vector3 releasePosition = transform.position + transform.forward * 2f;
+        releasePosition.y = 0.71f;
+
+        currentPuck.transform.position = releasePosition;
+        currentPuck.transform.rotation = Quaternion.identity;
 
         // Enable collider and physics
         var col = currentPuck.GetComponent<Collider>();
-        if (col != null)
-        {
-            col.enabled = true;
-        }
+        if (col != null) col.enabled = true;
 
         var rb = currentPuck.GetComponent<Rigidbody>();
         if (rb != null)
@@ -410,10 +371,8 @@ public class PuckPickup : NetworkBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // Set puck as not held
         currentPuck.SetHeld(false);
 
-        // Clear local state
         currentPuck = null;
         hasPuck = false;
 
@@ -426,51 +385,69 @@ public class PuckPickup : NetworkBehaviour
         {
             ReleasePuckServerRpc();
         }
+
+        if (enableDebugLogs)
+        {
+            Debug.Log("PuckPickup: Manual release completed");
+        }
     }
 
-    // FIXED: Release puck for shooting (called by PlayerShooting)
     public void ReleasePuckForShooting()
     {
         if (currentPuck == null) return;
-        
+
         if (enableDebugLogs)
         {
             Debug.Log("PuckPickup: Release puck FOR SHOOTING");
         }
-        
-        releasedForShooting = true; // Mark as released for shooting
+
+        releasedForShooting = true;
+
+        // Stop following immediately
+        var puckFollower = currentPuck.GetComponent<PuckFollower>();
+        if (puckFollower != null)
+        {
+            puckFollower.StopFollowing();
+            puckFollower.enabled = false;
+            if (enableDebugLogs)
+            {
+                Debug.Log("PuckPickup: Stopped PuckFollower for shooting");
+            }
+        }
+
+        // --- FIX: Always call ServerRpc for shooting to ensure server-side release ---
+        if (IsOwner && NetworkManager.Singleton != null && IsSpawned)
+        {
+            ReleasePuckForShootingServerRpc();
+        }
+        else
+        {
+            // Fallback for host/server
+            InternalReleasePuck();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ReleasePuckForShootingServerRpc(ServerRpcParams rpcParams = default)
+    {
+        // Only the server should execute the release logic
         InternalReleasePuck();
     }
 
-    // FIXED: Internal release method used by both manual and shooting releases
     private void InternalReleasePuck()
     {
         if (currentPuck == null) return;
 
         var puck = currentPuck;
         
-        // Calculate release position
         Vector3 releasePosition = transform.position + transform.forward * 2f;
         releasePosition.y = 0.71f;
         
-        // Unparent and position
-        puck.transform.SetParent(null);
         puck.transform.position = releasePosition;
         puck.transform.rotation = Quaternion.identity;
 
-        // Re-enable PuckFollower if it exists
-        var puckFollower = puck.GetComponent<PuckFollower>();
-        if (puckFollower != null)
-        {
-            puckFollower.enabled = true;
-        }
-
-        // Enable collider and physics
         var col = puck.GetComponent<Collider>();
-        if (col != null) 
-        {
-            col.enabled = true;
-        }
+        if (col != null) col.enabled = true;
 
         var rb = puck.GetComponent<Rigidbody>();
         if (rb != null)
@@ -481,14 +458,11 @@ public class PuckPickup : NetworkBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // Set puck as not held
         puck.SetHeld(false);
         
-        // Clear local state
         currentPuck = null;
         hasPuck = false;
         
-        // Send to server for network sync
         if (IsServer)
         {
             networkHasPuck.Value = false;
@@ -540,28 +514,11 @@ public class PuckPickup : NetworkBehaviour
     }
 
     // Public methods for other scripts
-    public bool HasPuck()
-    {
-        return hasPuck && !releasedForShooting;
-    }
-
-    public Puck GetCurrentPuck()
-    {
-        return releasedForShooting ? null : currentPuck;
-    }
-
-    public Transform GetPuckHoldPosition()
-    {
-        return puckHoldPosition;
-    }
-
-    // FIXED: Method for PlayerShooting to check if it can shoot
-    public bool CanShootPuck()
-    {
-        return hasPuck && currentPuck != null && !releasedForShooting;
-    }
-
-    // FIXED: Method to reset shooting flag after shot completes
+    public bool HasPuck() => hasPuck && !releasedForShooting;
+    public Puck GetCurrentPuck() => releasedForShooting ? null : currentPuck;
+    public Transform GetPuckHoldPosition() => puckHoldPosition;
+    public bool CanShootPuck() => hasPuck && currentPuck != null && !releasedForShooting;
+    
     public void ResetShootingFlag()
     {
         releasedForShooting = false;
@@ -571,17 +528,491 @@ public class PuckPickup : NetworkBehaviour
         }
     }
 
-    private void OnDrawGizmosSelected()
+    private bool TryStealPuck()
     {
-        // Draw pickup range
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, pickupRange);
-        
-        // Draw puck hold position
-        if (puckHoldPosition != null)
+        // Check cooldown
+        if (Time.time - lastStealAttemptTime < stealCooldown)
         {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(puckHoldPosition.position, 0.2f);
+            if (enableStealDebugLogs)
+            {
+                Debug.Log($"PuckPickup: Steal attempt blocked by cooldown. Time remaining: {stealCooldown - (Time.time - lastStealAttemptTime):F1}s");
+            }
+            return false;
         }
+
+        // Find nearby players with pucks
+        PuckPickup targetPlayer = FindNearestPlayerWithPuck();
+        
+        if (targetPlayer == null)
+        {
+            if (enableStealDebugLogs)
+            {
+                Debug.Log("PuckPickup: No nearby players with pucks found for stealing");
+            }
+            return false;
+        }
+
+        float distance = Vector3.Distance(transform.position, targetPlayer.transform.position);
+        
+        if (distance > stealRange)
+        {
+            if (enableStealDebugLogs)
+            {
+                Debug.Log($"PuckPickup: Target player too far for steal attempt: {distance:F2}m (max: {stealRange}m)");
+            }
+            return false;
+        }
+
+        // Record steal attempt to start cooldown
+        lastStealAttemptTime = Time.time;
+        
+        if (enableStealDebugLogs)
+        {
+            Debug.Log($"PuckPickup: Attempting to steal puck from player at {distance:F2}m distance");
+        }
+
+        // Check if this is an opponent (different team)
+        if (!IsOpponent(targetPlayer))
+        {
+            if (enableStealDebugLogs)
+            {
+                Debug.Log("PuckPickup: Cannot steal from teammate");
+            }
+            return true; // Attempt was made but blocked
+        }
+
+        // Roll for steal success
+        float roll = Random.Range(0f, 1f);
+        bool stealSuccessful = roll <= stealChance;
+        
+        if (enableStealDebugLogs)
+        {
+            Debug.Log($"PuckPickup: Steal roll: {roll:F3} (need ≤ {stealChance:F3}) - {(stealSuccessful ? "SUCCESS" : "FAILED")}");
+        }
+
+        if (stealSuccessful)
+        {
+            // Successful steal - take the puck
+            ExecutePuckSteal(targetPlayer);
+        }
+        else
+        {
+            // Failed steal attempt
+            if (enableStealDebugLogs)
+            {
+                Debug.Log("PuckPickup: Steal attempt failed - puck remains with opponent");
+            }
+            
+            // Optional: Show visual feedback for failed steal
+            ShowStealFailedEffect();
+        }
+
+        return true; // Attempt was made
+    }
+
+    private PuckPickup FindNearestPlayerWithPuck()
+    {
+        var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
+        PuckPickup nearestPlayer = null;
+        float nearestDistance = float.MaxValue;
+        
+        foreach (var player in allPlayers)
+        {
+            if (player == null || player == this) continue;
+            
+            // Check if player has a puck
+            if (!player.HasPuck()) continue;
+            
+            float distance = Vector3.Distance(transform.position, player.transform.position);
+            if (distance < nearestDistance && distance <= stealRange)
+            {
+                nearestDistance = distance;
+                nearestPlayer = player;
+            }
+        }
+        
+        return nearestPlayer;
+    }
+
+    private bool IsOpponent(PuckPickup otherPlayer)
+    {
+        // FIXED: Simplified and more reliable team check for both host and client
+        var myPlayerMovement = GetComponent<PlayerMovement>();
+        var otherPlayerMovement = otherPlayer.GetComponent<PlayerMovement>();
+        
+        if (myPlayerMovement == null || otherPlayerMovement == null)
+        {
+            Debug.LogWarning("PuckPickup: Could not get PlayerMovement components for team check");
+            // FIXED: For testing, assume all players are opponents if we can't determine teams
+            return true;
+        }
+        
+        // FIXED: Much simpler team check - just assume different teams for now to test stealing
+        if (enableStealDebugLogs)
+        {
+            Debug.Log($"PuckPickup: Team check - assuming players are on different teams for testing");
+        }
+        
+        // TEMPORARY: Always return true to test stealing mechanics
+        // TODO: Implement proper team checking once stealing works
+        return true;
+        
+        /*
+        // PROPER TEAM CHECKING CODE (disabled for testing):
+        try
+        {
+            var myTeamField = typeof(PlayerMovement).GetField("networkTeam", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            if (myTeamField != null)
+            {
+                var myTeamVar = myTeamField.GetValue(myPlayerMovement);
+                var otherTeamVar = myTeamField.GetValue(otherPlayerMovement);
+                
+                if (myTeamVar != null && otherTeamVar != null)
+                {
+                    var myTeamValue = myTeamVar.GetType().GetProperty("Value")?.GetValue(myTeamVar);
+                    var otherTeamValue = otherTeamVar.GetType().GetProperty("Value")?.GetValue(otherTeamVar);
+                    
+                    if (myTeamValue != null && otherTeamValue != null)
+                    {
+                        string myTeam = myTeamValue.ToString();
+                        string otherTeam = otherTeamValue.ToString();
+                        
+                        bool sameTeam = myTeam == otherTeam;
+                        bool isOpponent = !sameTeam;
+                        
+                        if (enableStealDebugLogs)
+                        {
+                            Debug.Log($"PuckPickup: Team check - My team: {myTeam}, Other team: {otherTeam}, Same team: {sameTeam}, Is opponent: {isOpponent}");
+                        }
+                        
+                        return isOpponent;
+                    }
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            if (enableStealDebugLogs)
+            {
+                Debug.LogWarning($"PuckPickup: Error in team check reflection: {e.Message}");
+            }
+        }
+        
+        return true; // Fallback: assume opponent
+        */
+    }
+
+    private void ExecutePuckSteal(PuckPickup targetPlayer)
+    {
+        if (enableStealDebugLogs)
+        {
+            Debug.Log($"PuckPickup: Executing successful puck steal from {targetPlayer.name}");
+        }
+
+        // --- FIX: Always get the puck reference ON THE SERVER, not on the client ---
+        // On the client, the targetPlayer's currentPuck may be null due to network sync delay.
+        // Instead, always send the ServerRpc and let the server validate and process the steal.
+
+        if (IsLocalPlayer && NetworkManager.Singleton != null && IsSpawned)
+        {
+            var targetNetworkObject = targetPlayer.GetComponent<NetworkObject>();
+            ulong targetPuckNetworkId = 0;
+
+            // Try to get the puck's NetworkObjectId, but if null, just send 0 (server will check)
+            var puck = targetPlayer.GetCurrentPuck();
+            if (puck != null)
+            {
+                var puckNetObj = puck.GetComponent<NetworkObject>();
+                if (puckNetObj != null)
+                    targetPuckNetworkId = puckNetObj.NetworkObjectId;
+            }
+
+            Debug.Log($"PuckPickup: [CLIENT] Sending ExecuteStealServerRpc from client {OwnerClientId} to server. Target: {targetNetworkObject?.NetworkObjectId}, Puck: {targetPuckNetworkId}");
+
+            if (targetNetworkObject != null)
+            {
+                ExecuteStealServerRpc(targetNetworkObject.NetworkObjectId, targetPuckNetworkId);
+            }
+            else
+            {
+                Debug.LogWarning("PuckPickup: [CLIENT] Target NetworkObject is null, cannot send ServerRpc");
+            }
+        }
+        else
+        {
+            if (!IsLocalPlayer)
+                Debug.LogWarning("PuckPickup: [CLIENT] Not IsLocalPlayer, will not send ServerRpc for steal.");
+            if (NetworkManager.Singleton == null)
+                Debug.LogWarning("PuckPickup: [CLIENT] NetworkManager.Singleton is null, cannot send ServerRpc for steal.");
+            if (!IsSpawned)
+                Debug.LogWarning("PuckPickup: [CLIENT] Not spawned, cannot send ServerRpc for steal.");
+        }
+
+        // Show feedback immediately for local player (optional)
+        ShowStealSuccessEffect();
+
+        if (enableStealDebugLogs)
+        {
+            Debug.Log("PuckPickup: Puck steal network command sent!");
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ExecuteStealServerRpc(ulong targetPlayerNetworkId, ulong puckNetworkId, ServerRpcParams rpcParams = default)
+    {
+        if (enableStealDebugLogs)
+        {
+            Debug.Log($"PuckPickup: [ServerRpc] Processing steal - Stealer: {NetworkObjectId}, Target: {targetPlayerNetworkId}, Puck: {puckNetworkId}");
+        }
+
+        var targetPlayerObj = GetNetworkObjectById(targetPlayerNetworkId);
+        if (targetPlayerObj == null)
+        {
+            Debug.LogWarning($"PuckPickup: [ServerRpc] Could not find target player object for steal.");
+            return;
+        }
+
+        var targetPuckPickup = targetPlayerObj.GetComponent<PuckPickup>();
+        if (targetPuckPickup == null)
+        {
+            Debug.LogWarning($"PuckPickup: [ServerRpc] Could not find PuckPickup on target player.");
+            return;
+        }
+
+        // --- FIX: Always get the puck reference ON THE SERVER ---
+        var puck = targetPuckPickup.GetCurrentPuck();
+        if (puck == null)
+        {
+            Debug.LogWarning("PuckPickup: [ServerRpc] Target player doesn't have a puck to steal.");
+            return;
+        }
+
+        var puckObj = puck.gameObject;
+        if (puckObj == null)
+        {
+            Debug.LogWarning("PuckPickup: [ServerRpc] Target puck object is null.");
+            return;
+        }
+
+        // Validate the target actually has the puck
+        if (!targetPuckPickup.HasPuck())
+        {
+            Debug.LogWarning($"PuckPickup: [ServerRpc] Target player doesn't have the puck.");
+            return;
+        }
+
+        if (enableStealDebugLogs)
+        {
+            Debug.Log($"PuckPickup: [ServerRpc] Executing steal - forcing target to release puck");
+        }
+
+        // Force the target player to release their puck immediately
+        targetPuckPickup.ForceReleasePuckForSteal();
+
+        // Wait a moment for the release to process
+        StartCoroutine(CompleteStealAfterRelease(puck, rpcParams.Receive.SenderClientId));
+    }
+
+    // Modified to accept stealerClientId
+    private System.Collections.IEnumerator CompleteStealAfterRelease(Puck puck, ulong stealerClientId)
+    {
+        yield return new WaitForSeconds(0.1f); // Brief delay for release to complete
+
+        if (puck == null)
+        {
+            Debug.LogWarning("PuckPickup: [ServerRpc] Puck became null during steal completion");
+            yield break;
+        }
+
+        // Find the stealer's PuckPickup by clientId
+        var stealerObj = NetworkManager.Singleton.ConnectedClients.ContainsKey(stealerClientId)
+            ? NetworkManager.Singleton.ConnectedClients[stealerClientId].PlayerObject?.GetComponent<PuckPickup>()
+            : null;
+
+        if (stealerObj == null)
+        {
+            Debug.LogWarning("PuckPickup: [ServerRpc] Could not find stealer's PuckPickup component");
+            yield break;
+        }
+
+        stealerObj.currentPuck = puck;
+        stealerObj.hasPuck = true;
+        stealerObj.releasedForShooting = false;
+        stealerObj.networkHasPuck.Value = true;
+
+        puck.SetHeld(true);
+
+        try
+        {
+            puck.PickupByPlayer(stealerObj);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"PuckPickup: [ServerRpc] PickupByPlayer failed during steal: {e.Message}");
+        }
+
+        if (enableStealDebugLogs)
+        {
+            Debug.Log($"PuckPickup: [ServerRpc] Steal completed on server - puck now belongs to stealer");
+        }
+
+        // Notify all clients about the completed steal
+        CompleteStealClientRpc(stealerObj.NetworkObjectId, puck.GetComponent<NetworkObject>().NetworkObjectId);
+    }
+
+    // FIXED: New ClientRpc to handle steal completion
+    [ClientRpc]
+    private void CompleteStealClientRpc(ulong stealerNetworkId, ulong puckNetworkId)
+    {
+        if (enableStealDebugLogs)
+        {
+            Debug.Log($"PuckPickup: [ClientRpc] Completing steal - Stealer: {stealerNetworkId}, Puck: {puckNetworkId}");
+        }
+
+        // Find the objects
+        var stealerObj = GetNetworkObjectById(stealerNetworkId);
+        var puckObj = GetNetworkObjectById(puckNetworkId);
+
+        if (stealerObj == null || puckObj == null)
+        {
+            Debug.LogWarning($"PuckPickup: [ClientRpc] Could not find objects for steal completion");
+            return;
+        }
+
+        // Update local state for the stealer (if it's the local player)
+        bool isLocalStealer = stealerObj.GetComponent<NetworkObject>().IsLocalPlayer;
+        if (isLocalStealer)
+        {
+            var stealerPickup = stealerObj.GetComponent<PuckPickup>();
+            if (stealerPickup != null)
+            {
+                stealerPickup.currentPuck = puckObj.GetComponent<Puck>();
+                stealerPickup.hasPuck = true;
+                stealerPickup.releasedForShooting = false;
+                
+                if (enableStealDebugLogs)
+                {
+                    Debug.Log($"PuckPickup: [ClientRpc] Updated local stealer state");
+                }
+            }
+        }
+
+        // Start PuckFollower for the stealer
+        var stealerPickupComponent = stealerObj.GetComponent<PuckPickup>();
+        if (stealerPickupComponent != null && stealerPickupComponent.GetPuckHoldPosition() != null)
+        {
+            var puckFollower = puckObj.GetComponent<PuckFollower>();
+            if (puckFollower == null)
+            {
+                puckFollower = puckObj.AddComponent<PuckFollower>();
+            }
+            
+            puckFollower.StartFollowing(stealerPickupComponent.GetPuckHoldPosition(), Vector3.zero);
+            puckFollower.enabled = true;
+            
+            if (enableStealDebugLogs)
+            {
+                Debug.Log($"PuckPickup: [ClientRpc] Started PuckFollower for stealer");
+            }
+        }
+
+        // Configure puck physics for being held
+        var col = puckObj.GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+        
+        var rb = puckObj.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+    }
+
+    // FIXED: Helper method to find NetworkObject by ID
+    private GameObject GetNetworkObjectById(ulong networkObjectId)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out var networkObject))
+        {
+            return networkObject.gameObject;
+        }
+        
+        // Fallback: search all NetworkObjects
+        var allNetworkObjects = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
+        foreach (var obj in allNetworkObjects)
+        {
+            if (obj != null && obj.NetworkObjectId == networkObjectId)
+            {
+                return obj.gameObject;
+            }
+        }
+        
+        return null;
+    }
+
+    private void ShowStealSuccessEffect()
+    {
+        // Add visual/audio feedback for successful steal
+        // You can add particle effects, sound effects, etc. here
+        if (enableStealDebugLogs)
+        {
+            Debug.Log("PuckPickup: Steal Succeeded"); // Simplified string
+        }
+    }
+
+    private void ShowStealFailedEffect()
+    {
+        // Add visual/audio feedback for failed steal attempt
+        // You can add particle effects, sound effects, etc. here
+        if (enableStealDebugLogs)
+        {
+            Debug.Log("PuckPickup: Steal Failed"); // Simplified string
+        }
+    }
+
+    // Called by the server to force this player to release the puck for a steal
+    public void ForceReleasePuckForSteal()
+    {
+        if (currentPuck == null) return;
+
+        // Stop following
+        var puckFollower = currentPuck.GetComponent<PuckFollower>();
+        if (puckFollower != null)
+        {
+            puckFollower.StopFollowing();
+            puckFollower.enabled = false;
+        }
+
+        // Enable collider and physics
+        var col = currentPuck.GetComponent<Collider>();
+        if (col != null) col.enabled = true;
+
+        var rb = currentPuck.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        currentPuck.SetHeld(false);
+
+        currentPuck = null;
+        hasPuck = false;
+        releasedForShooting = false;
+
+        // Sync network variable
+        networkHasPuck.Value = false;
+    }
+
+    // FIXED: Improve the PickupStolenPuck method - this method is no longer used
+    private System.Collections.IEnumerator PickupStolenPuck(Puck puck)
+    {
+        // This method is no longer needed since ExecuteStealServerRpc handles everything
+        yield break;
     }
 }

@@ -6,6 +6,7 @@ public class NetworkSpawnManager : NetworkBehaviour
 {
     public static NetworkSpawnManager Instance { get; private set; }
 
+    // REMOVED: All spawning functionality - GameNetworkManager handles everything via ConnectionApprovalCheck
     
     private Dictionary<ulong, string> playerTeams = new Dictionary<ulong, string>();
 
@@ -23,7 +24,7 @@ public class NetworkSpawnManager : NetworkBehaviour
         }
     }
 
-    // Get the team for a player based on their client ID
+    // SIMPLIFIED: Only provide team lookup functionality
     public string GetPlayerTeam(ulong clientId)
     {
         if (playerTeams.TryGetValue(clientId, out string team))
@@ -39,4 +40,6 @@ public class NetworkSpawnManager : NetworkBehaviour
         return team;
     }
 
+    // REMOVED: All spawn-related methods including RespawnPlayer
+    // All spawning is now handled by GameNetworkManager's ConnectionApprovalCheck
 }
