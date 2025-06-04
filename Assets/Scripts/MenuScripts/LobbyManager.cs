@@ -100,6 +100,34 @@ public class LobbyManager : MonoBehaviour
             networkManagerGO.name = "NetworkManager (From Prefab)";
             DontDestroyOnLoad(networkManagerGO);
 
+            // --- CRITICAL: Remove duplicate NetworkPrefabs (by prefab name) ---
+            var config = networkManagerGO.GetComponent<NetworkManager>()?.NetworkConfig;
+            if (config != null && config.Prefabs != null)
+            {
+                var seenNames = new HashSet<string>();
+                var toRemove = new List<Unity.Netcode.NetworkPrefab>();
+                foreach (var np in config.Prefabs.Prefabs)
+                {
+                    if (np.Prefab != null)
+                    {
+                        string prefabName = np.Prefab.name;
+                        if (seenNames.Contains(prefabName))
+                        {
+                            Debug.LogError($"[LobbyManager] Duplicate NetworkPrefab detected: {np.Prefab.name} - Removing from NetworkPrefabs list.");
+                            toRemove.Add(np);
+                        }
+                        else
+                        {
+                            seenNames.Add(prefabName);
+                        }
+                    }
+                }
+                foreach (var np in toRemove)
+                {
+                    config.Prefabs.Remove(np.Prefab);
+                }
+            }
+
             // Warn if prefab has a NetworkObject (should not!)
             var netObj = networkManagerGO.GetComponent<Unity.Netcode.NetworkObject>();
             if (netObj != null)
@@ -320,8 +348,14 @@ public class LobbyManager : MonoBehaviour
             lobbyPollTimer = LOBBY_POLL_INTERVAL;
             try
             {
-                // --- Use robust helper with backoff ---
-                Lobby lobby = await LobbyApiWithBackoff(() => LobbyService.Instance.GetLobbyAsync(currentLobby.Id), "PollLobbyForUpdates");
+                var lobby = await LobbyApiWithBackoff(() => LobbyService.Instance.GetLobbyAsync(currentLobby.Id), "PollLobbyForUpdates");
+                
+                // ADDED: Notify LobbyChatManager of lobby data updates
+                if (HockeyGame.UI.LobbyChatManager.Instance != null)
+                {
+                    HockeyGame.UI.LobbyChatManager.Instance.OnLobbyDataUpdated(lobby);
+                }
+                
                 if (lobby != null)
                 {
                     currentLobby = lobby;
@@ -482,8 +516,8 @@ public class LobbyManager : MonoBehaviour
             {
                 if (ex.Message.Contains("429") || ex.Message.Contains("Too Many Requests"))
                 {
-                    Debug.LogWarning("[LobbyManager] Rate limit hit (HTTP 429). Backing off polling for 10 seconds.");
-                    lobbyPollBackoff = LOBBY_POLL_BACKOFF_ON_429;
+                    Debug.LogWarning("[LobbyManager] PollLobbyForUpdates hit rate limit, backing off for 30s");
+                    lobbyPollBackoff = 30f; // INCREASED: Longer backoff on rate limit
                 }
                 else
                 {
@@ -492,7 +526,7 @@ public class LobbyManager : MonoBehaviour
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[LobbyManager] PollLobbyForUpdates error: {ex.Message}");
+                Debug.LogError($"[LobbyManager] PollLobbyForUpdates unexpected error: {ex.Message}");
             }
         }
     }
@@ -506,6 +540,14 @@ public class LobbyManager : MonoBehaviour
             if (!AuthenticationService.Instance.IsSignedIn)
             {
                 await InitializeUnityServices();
+            }
+
+            // ADDED: Create LobbyChatManager if it doesn't exist
+            if (HockeyGame.UI.LobbyChatManager.Instance == null)
+            {
+                var chatManagerGO = new GameObject("LobbyChatManager");
+                chatManagerGO.AddComponent<HockeyGame.UI.LobbyChatManager>();
+                Debug.Log("LobbyManager: Created LobbyChatManager instance");
             }
 
             // CRITICAL: Initialize local player data IMMEDIATELY and PROPERLY
@@ -537,10 +579,11 @@ public class LobbyManager : MonoBehaviour
                 Player = GetLobbyPlayer(),
                 Data = new Dictionary<string, DataObject>
                 {
-                    // RelayCode will be set when host starts the match
                     { "RelayCode", new DataObject(DataObject.VisibilityOptions.Member, "") },
                     { "GameMode", new DataObject(DataObject.VisibilityOptions.Member, "2v2") },
                     { "MaxPlayers", new DataObject(DataObject.VisibilityOptions.Member, maxPlayers.ToString()) }
+                    // REMOVED: Don't pre-create chat slots to save property count
+                    // Chat slots will be created only when needed
                 }
             };
 

@@ -3,12 +3,14 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using Unity.Services.Authentication;
-using Unity.Netcode;
+using Unity.Netcode; // Add this for networking
 using System.Linq; // Add this for FirstOrDefault
+using Unity.Collections; // Add this for FixedString512Bytes
 
 namespace HockeyGame.UI
 {
-    public class LobbyPanelManager : MonoBehaviour
+    // Make LobbyPanelManager a NetworkBehaviour so it can own a NetworkList and sync across network
+    public class LobbyPanelManager : NetworkBehaviour
     {
         // IMPROVED: Make static Instance property more resilient
         private static LobbyPanelManager _instance;
@@ -71,70 +73,21 @@ namespace HockeyGame.UI
         [SerializeField] private Button readyButton;
         [SerializeField] private Image readyIndicator;
 
-        public void InitializeManager()
+        // --- REMOVE: NetworkList for chat messages ---
+        // private NetworkList<FixedString512Bytes> networkChatMessages;
+
+        public override void OnNetworkSpawn()
         {
-            try
-            {
-                Debug.Log($"Initializing LobbyPanelManager on {gameObject.name}");
-                Instance = this;
+            base.OnNetworkSpawn();
 
-                if (!gameObject.activeInHierarchy)
-                {
-                    Debug.LogError($"GameObject {gameObject.name} is not active!");
-                    return;
-                }
-
-                // Ensure all UI components are properly referenced
-                ValidateUIComponents();
-                
-                // Set up initial UI states
-                if (lobbyCodeText) lobbyCodeText.text = "Waiting for lobby code...";
-                if (chatText) chatText.text = "";
-                if (startMatchButton) startMatchButton.interactable = false;
-                
-                // Set up indicators
-                if (blueTeamIndicator) blueTeamIndicator.gameObject.SetActive(false);
-                if (redTeamIndicator) redTeamIndicator.gameObject.SetActive(false);
-                if (readyIndicator) readyIndicator.color = Color.gray;
-
-                SetupScrollViews();
-                SetupButtons();
-
-                Debug.Log("LobbyPanelManager initialization complete");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"Failed to initialize LobbyPanelManager: {e.Message}\nStack trace: {e.StackTrace}");
-            }
+            // Subscribe to changes (all clients, including host)
+            // Remove all manual NetworkList creation from Awake
+            VerifyReferences();
         }
 
-        public void ForceInitialize()
+        public override void OnNetworkDespawn()
         {
-            try
-            {
-                Debug.Log($"Force initializing LobbyPanelManager on {gameObject.name}");
-                
-                // Ensure the GameObject is active
-                if (!gameObject.activeInHierarchy)
-                {
-                    gameObject.SetActive(true);
-                }
-
-                // Set instance
-                Instance = this;
-
-                // Initialize components
-                VerifyReferences();
-                SetupScrollViews();
-                SetupButtons();
-
-                Debug.Log($"LobbyPanelManager initialization complete. Instance is {(Instance != null ? "valid" : "null")}");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"Failed to initialize LobbyPanelManager: {e.Message}\nStack trace: {e.StackTrace}");
-                throw;
-            }
+            base.OnNetworkDespawn();
         }
 
         private void Awake()
@@ -153,10 +106,10 @@ namespace HockeyGame.UI
                 return;
             }
 
+            // Remove all manual NetworkList creation from Awake
             VerifyReferences();
         }
         
-        // FIXED: Single OnEnable method only
         private void OnEnable()
         {
             Debug.Log($"UI.LobbyPanelManager.OnEnable on {gameObject.name}");
@@ -192,8 +145,33 @@ namespace HockeyGame.UI
                     }
                 }
             }
+
+            // Subscribe to chat updates
+            if (HockeyGame.UI.LobbyChatManager.Instance != null)
+            {
+                HockeyGame.UI.LobbyChatManager.Instance.OnChatUpdated -= OnChatUpdated;
+                HockeyGame.UI.LobbyChatManager.Instance.OnChatUpdated += OnChatUpdated;
+                // Initial sync
+                OnChatUpdated(HockeyGame.UI.LobbyChatManager.Instance.GetAllMessages());
+            }
         }
         
+        private void OnDisable()
+        {
+            if (HockeyGame.UI.LobbyChatManager.Instance != null)
+            {
+                HockeyGame.UI.LobbyChatManager.Instance.OnChatUpdated -= OnChatUpdated;
+            }
+        }
+
+        public void OnDestroy()
+        {
+            if (HockeyGame.UI.LobbyChatManager.Instance != null)
+            {
+                HockeyGame.UI.LobbyChatManager.Instance.OnChatUpdated -= OnChatUpdated;
+            }
+        }
+
         public void UpdatePlayerList(List<LobbyPlayerData> players)
         {
             Debug.Log($"UI.LobbyPanelManager: UpdatePlayerList called with {players?.Count ?? 0} players");
@@ -438,6 +416,7 @@ namespace HockeyGame.UI
             }
         }
 
+        // --- Networked chat send via LobbyChatManager ---
         private void SendMessage()
         {
             if (string.IsNullOrWhiteSpace(chatInput.text)) return;
@@ -447,48 +426,52 @@ namespace HockeyGame.UI
                 "Player";
 
             bool isBlueTeam = false;
-            if (AuthenticationService.Instance != null && LobbyManager.Instance != null)
+            if (Unity.Services.Authentication.AuthenticationService.Instance != null && LobbyManager.Instance != null)
             {
-                string playerId = AuthenticationService.Instance.PlayerId;
+                string playerId = Unity.Services.Authentication.AuthenticationService.Instance.PlayerId;
                 isBlueTeam = LobbyManager.Instance.IsPlayerBlueTeam(playerId);
             }
 
             string coloredName = isBlueTeam ? 
                 $"<color=#4080FF>{playerName}</color>" : 
                 $"<color=#FF4040>{playerName}</color>";
-                
             string message = $"{coloredName}: {chatInput.text}";
-            
-            // Send message through LobbyManager
-            if (LobbyManager.Instance != null)
+
+            // --- FIXED: Only send to networked chat manager, remove local UI update ---
+            if (HockeyGame.UI.LobbyChatManager.Instance != null)
             {
-                LobbyManager.Instance.AddChatMessage(message);
+                HockeyGame.UI.LobbyChatManager.Instance.SendChat(message);
+                Debug.Log($"LobbyPanelManager: Sent message to LobbyChatManager: {message}");
             }
-            
+            else
+            {
+                Debug.LogError("LobbyPanelManager: LobbyChatManager.Instance is null!");
+            }
+
             chatInput.text = string.Empty;
             chatInput.ActivateInputField();
         }
 
-        public void ClearChat()
+        // --- UI update callback for chat ---
+        private void OnChatUpdated(List<string> messages)
         {
-            if (chatText != null)
+            Debug.Log($"LobbyPanelManager: OnChatUpdated called with {messages?.Count ?? 0} messages");
+            
+            if (chatText != null && messages != null)
             {
-                chatText.text = string.Empty;
-            }
-        }
-
-        public void AddChatMessage(string message)
-        {
-            if (chatText && !string.IsNullOrEmpty(message))
-            {
-                chatText.text += $"{message}\n";
-                
+                chatText.text = "";
+                foreach (var msg in messages)
+                {
+                    chatText.text += msg + "\n";
+                }
                 Canvas.ForceUpdateCanvases();
                 if (chatScrollRect)
                 {
                     chatScrollRect.verticalNormalizedPosition = 0f;
                     LayoutRebuilder.ForceRebuildLayoutImmediate(chatContent as RectTransform);
                 }
+                
+                Debug.Log($"LobbyPanelManager: Updated chat UI with {messages.Count} messages");
             }
         }
 
@@ -633,6 +616,16 @@ namespace HockeyGame.UI
                 Debug.LogError("Start match button is missing!");
             if (!readyButton)
                 Debug.LogError("Ready button is missing!");
+        }
+
+        // Add this method to fix missing 'ForceInitialize' errors
+        public void ForceInitialize()
+        {
+            Debug.Log("LobbyPanelManager.ForceInitialize called");
+            // Optionally, re-run initialization logic if needed
+            VerifyReferences();
+            SetupScrollViews();
+            SetupButtons();
         }
     }
 }
