@@ -1271,8 +1271,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 65, y: 213}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: 97.98187, y: 209.11975}
+  m_SizeDelta: {x: 225.9637, y: 37.7604}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &433175880
 MonoBehaviour:
@@ -1362,16 +1362,7 @@ MonoBehaviour:
   m_Value: 0
   m_MultiSelect: 0
   m_Options:
-    m_Options:
-    - m_Text: 1920x1080
-      m_Image: {fileID: 0}
-      m_Color: {r: 1, g: 1, b: 1, a: 1}
-    - m_Text: 1366x768
-      m_Image: {fileID: 0}
-      m_Color: {r: 1, g: 1, b: 1, a: 1}
-    - m_Text: 1600x900
-      m_Image: {fileID: 0}
-      m_Color: {r: 1, g: 1, b: 1, a: 1}
+    m_Options: []
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2528,8 +2519,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 68, y: 154}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: 100.98187, y: 154}
+  m_SizeDelta: {x: 225.9637, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &764962970
 MonoBehaviour:
@@ -2589,7 +2580,7 @@ MonoBehaviour:
   m_CharacterValidation: 0
   m_RegexValue: 
   m_GlobalPointSize: 14
-  m_CharacterLimit: 0
+  m_CharacterLimit: 10
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls: []
@@ -4546,6 +4537,7 @@ GameObject:
   - component: {fileID: 1162346022}
   - component: {fileID: 1162346021}
   - component: {fileID: 1162346023}
+  - component: {fileID: 1162346024}
   m_Layer: 5
   m_Name: SettingPanel
   m_TagString: Untagged
@@ -4636,6 +4628,24 @@ MonoBehaviour:
   volumeSlider: {fileID: 1742265835}
   applyButton: {fileID: 362282705}
   resetButton: {fileID: 82960144}
+  resolutionDropdown: {fileID: 433175882}
+  fullscreenToggle: {fileID: 1704699143}
+--- !u!114 &1162346024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1162346019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce9d0644bb064114bac2ee5799b1f890, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mouseSensitivity: 1
+  gameVolume: 1
+  isFullscreen: 1
+  masterMixer: {fileID: 24100000, guid: fc4f1813ef15a6c4891992163384692f, type: 2}
 --- !u!1 &1176726478
 GameObject:
   m_ObjectHideFlags: 0
@@ -6719,7 +6729,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 1920x1080
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -9032,7 +9042,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: ScriptHolder
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 2786802821878156543, guid: 9cbe049d6046597409832e8f23432718, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

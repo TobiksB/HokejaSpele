@@ -9,11 +9,14 @@ public class SettingsPanel : MonoBehaviour
     [SerializeField] private Slider volumeSlider;
     [SerializeField] private Button applyButton;
     [SerializeField] private Button resetButton;
+    [SerializeField] private TMP_Dropdown resolutionDropdown;
+    [SerializeField] private Toggle fullscreenToggle;
 
     private void Start()
     {
         LoadCurrentSettings();
         SetupListeners();
+        PopulateResolutionDropdown();
     }
 
     private void LoadCurrentSettings()
@@ -52,5 +55,28 @@ public class SettingsPanel : MonoBehaviour
         SettingsManager.Instance.ResetToDefaults();
         LoadCurrentSettings();
     }
+
+    private void PopulateResolutionDropdown()
+    {
+        if (resolutionDropdown == null) return;
+
+        resolutionDropdown.ClearOptions();
+        resolutionDropdown.AddOptions(new System.Collections.Generic.List<string>(GameSettingsManager.Instance.GetResolutionOptions()));
+        resolutionDropdown.value = GameSettingsManager.Instance.CurrentResolutionIndex;
+        resolutionDropdown.RefreshShownValue();
+
+        resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
+        fullscreenToggle.isOn = GameSettingsManager.Instance.isFullscreen;
+        fullscreenToggle.onValueChanged.AddListener(OnFullscreenToggled);
+    }
+
+    private void OnResolutionChanged(int index)
+    {
+        GameSettingsManager.Instance.SetResolution(index, GameSettingsManager.Instance.isFullscreen);
+    }
+
+    private void OnFullscreenToggled(bool isFullscreen)
+    {
+        GameSettingsManager.Instance.SetFullscreen(isFullscreen);
+    }
 }
-// No changes needed here for quarter display. See below for a new script suggestion.
