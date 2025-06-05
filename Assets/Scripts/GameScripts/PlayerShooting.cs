@@ -6,9 +6,12 @@ public class PlayerShooting : NetworkBehaviour
     [Header("Shooting Settings")]
     [SerializeField] private float shootForce = 40f; // Increased base force
     [SerializeField] private float maxChargeTime = 1.2f; // Shorter max charge for snappier feel
+    [SerializeField] private float movementVelocityMultiplier = 0.8f; // How much player movement affects puck speed
     [SerializeField] private bool enableDebugLogs = true;
 
     private PuckPickup puckPickup;
+    private PlayerMovement playerMovement; // Reference to get current velocity
+    private Rigidbody playerRb; // Reference to player's rigidbody
     private bool isCharging = false;
     private float chargeTime = 0f;
 
@@ -19,6 +22,19 @@ public class PlayerShooting : NetworkBehaviour
         {
             puckPickup = gameObject.AddComponent<PuckPickup>();
             Debug.LogWarning("PlayerShooting: Added missing PuckPickup component");
+        }
+
+        // Get references to player movement components
+        playerMovement = GetComponent<PlayerMovement>();
+        playerRb = GetComponent<Rigidbody>();
+        
+        if (playerMovement == null)
+        {
+            Debug.LogWarning("PlayerShooting: No PlayerMovement component found!");
+        }
+        if (playerRb == null)
+        {
+            Debug.LogWarning("PlayerShooting: No Rigidbody component found!");
         }
     }
 
@@ -114,9 +130,27 @@ public class PlayerShooting : NetworkBehaviour
         float chargePercentage = Mathf.Clamp01(chargeTime / maxChargeTime);
         float finalForce = shootForce * Mathf.Lerp(0.3f, 1f, chargePercentage);
 
+        // Get player's current velocity for realistic hockey physics
+        Vector3 playerVelocity = Vector3.zero;
+        if (playerRb != null)
+        {
+            // Only use horizontal velocity (X and Z), ignore Y
+            playerVelocity = new Vector3(playerRb.linearVelocity.x, 0f, playerRb.linearVelocity.z);
+        }
+
+        // Calculate base shoot direction and velocity
+        Vector3 shootDirection = transform.forward;
+        Vector3 baseShootVelocity = shootDirection * finalForce;
+        
+        // Add player movement velocity to the shot for realistic physics
+        Vector3 finalShootVelocity = baseShootVelocity + (playerVelocity * movementVelocityMultiplier);
+
         if (enableDebugLogs)
         {
-            Debug.Log($"PlayerShooting: Shooting with {chargePercentage:P0} charge (force: {finalForce:F1})");
+            Debug.Log($"PlayerShooting: Shooting with {chargePercentage:P0} charge");
+            Debug.Log($"  Base shot force: {finalForce:F1}");
+            Debug.Log($"  Player velocity: {playerVelocity} (magnitude: {playerVelocity.magnitude:F1})");
+            Debug.Log($"  Final puck velocity: {finalShootVelocity} (magnitude: {finalShootVelocity.magnitude:F1})");
         }
 
         // Get puck and release it
@@ -125,14 +159,11 @@ public class PlayerShooting : NetworkBehaviour
         {
             puckPickup.ReleasePuckForShooting();
 
-            Vector3 shootDirection = transform.forward;
-            Vector3 shootVelocity = shootDirection * finalForce;
-
-            ShootPuckServerRpc(puck.GetComponent<NetworkObject>().NetworkObjectId, shootVelocity);
+            ShootPuckServerRpc(puck.GetComponent<NetworkObject>().NetworkObjectId, finalShootVelocity);
 
             if (enableDebugLogs)
             {
-                Debug.Log($"PlayerShooting: Shot puck with velocity {shootVelocity}");
+                Debug.Log($"PlayerShooting: Shot puck with final velocity {finalShootVelocity}");
             }
         }
 
@@ -244,5 +275,40 @@ public class PlayerShooting : NetworkBehaviour
     {
         if (!isCharging) return 0f;
         return chargeTime / maxChargeTime;
+    }
+
+    // NEW: Public method to get the total shot power including movement
+    public float GetTotalShotPower()
+    {
+        if (!isCharging) return 0f;
+        
+        float chargePercentage = Mathf.Clamp01(chargeTime / maxChargeTime);
+        float baseForce = shootForce * Mathf.Lerp(0.3f, 1f, chargePercentage);
+        
+        // Calculate movement bonus
+        Vector3 playerVelocity = Vector3.zero;
+        if (playerRb != null)
+        {
+            playerVelocity = new Vector3(playerRb.linearVelocity.x, 0f, playerRb.linearVelocity.z);
+        }
+        
+        Vector3 baseShootVelocity = transform.forward * baseForce;
+        Vector3 finalVelocity = baseShootVelocity + (playerVelocity * movementVelocityMultiplier);
+        
+        return finalVelocity.magnitude;
+    }
+
+    // NEW: Public method to get the movement speed bonus
+    public float GetMovementSpeedBonus()
+    {
+        if (playerRb == null) return 0f;
+        
+        Vector3 playerVelocity = new Vector3(playerRb.linearVelocity.x, 0f, playerRb.linearVelocity.z);
+        Vector3 movementContribution = playerVelocity * movementVelocityMultiplier;
+        
+        // Project movement onto forward direction to get the forward speed bonus
+        float forwardBonus = Vector3.Dot(movementContribution, transform.forward);
+        
+        return forwardBonus;
     }
 }
