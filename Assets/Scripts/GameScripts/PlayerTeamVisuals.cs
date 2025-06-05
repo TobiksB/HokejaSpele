@@ -17,15 +17,18 @@ public class PlayerTeamVisuals : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsServer) return;
-        
+        // Subscribe to OnValueChanged on all clients, not just server
+        isBlueTeam.OnValueChanged += OnTeamChanged;
+
         if (playerTeam != null)
         {
-            isBlueTeam.Value = playerTeam.CurrentTeam == "Blue";
-            UpdateTeamColor();
+            // Only the server sets the value, but all clients will receive the change
+            if (IsServer)
+            {
+                isBlueTeam.Value = playerTeam.CurrentTeam == "Blue";
+                UpdateTeamColor();
+            }
         }
-
-        isBlueTeam.OnValueChanged += OnTeamChanged;
     }
 
     public override void OnNetworkDespawn()
@@ -48,23 +51,19 @@ public class PlayerTeamVisuals : NetworkBehaviour
     // Networked team setter
     public void SetTeamNetworked(string team)
     {
-        // FIXED: Check IsSpawned on this NetworkBehaviour, not NetworkManager
-        if (NetworkManager.Singleton != null && this.IsSpawned)
+        // Set the NetworkVariable so all clients get the correct value
+        bool blue = team.Equals("Blue", System.StringComparison.OrdinalIgnoreCase);
+        if (IsServer)
         {
-            if (IsServer)
-            {
-                ApplyTeamVisuals(team);
-                SetTeamClientRpc(team);
-            }
-            else
-            {
-                SetTeamServerRpc(team);
-            }
+            isBlueTeam.Value = blue;
+            UpdateTeamColor();
         }
         else
         {
+            // On clients, set the visuals directly (NetworkVariable will update from server)
             ApplyTeamVisuals(team);
         }
+        Debug.Log($"PlayerTeamVisuals: SetTeamNetworked called, applied {team} color");
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -85,57 +84,91 @@ public class PlayerTeamVisuals : NetworkBehaviour
 
     private void ApplyTeamVisuals(string team)
     {
-        Color teamColor = team.Equals("Blue", System.StringComparison.OrdinalIgnoreCase) ? Color.blue : Color.red;
-        
-        // FIXED: Get all renderers on this object and children
-        var renderers = GetComponentsInChildren<Renderer>();
-        
+        // Assign the correct team material to ALL submeshes and ALL renderers, including SkinnedMeshRenderer
+        Material teamMaterial = team.Equals("Blue", System.StringComparison.OrdinalIgnoreCase) ? blueTeamMaterial : redTeamMaterial;
+        var renderers = GetComponentsInChildren<Renderer>(true);
+
         foreach (var renderer in renderers)
         {
-            if (renderer != null && renderer.material != null)
+            if (renderer != null && teamMaterial != null)
             {
-                // FIXED: Set color directly on existing material instead of creating new one
-                renderer.material.color = teamColor;
+                // Replace ALL materials with the team material (not just color)
+                int matCount = renderer.materials.Length;
+                Material[] mats = new Material[matCount];
+                for (int i = 0; i < matCount; i++)
+                {
+                    mats[i] = teamMaterial;
+                }
+                renderer.materials = mats;
             }
         }
-        
-        Debug.Log($"PlayerTeamVisuals: Applied {team} color directly to {renderers.Length} renderers");
+        Debug.Log($"PlayerTeamVisuals: Applied {team} material to all {renderers.Length} renderers and submeshes (full replace)");
     }
 
     public void UpdateTeamColor(string team)
     {
         Material teamMaterial = team == "Blue" ? blueTeamMaterial : redTeamMaterial;
-        foreach (var renderer in teamColorRenderers)
+        Renderer[] renderers = teamColorRenderers;
+        if (renderers == null || renderers.Length == 0)
         {
-            if (renderer != null)
+            renderers = GetComponentsInChildren<Renderer>(true);
+        }
+        foreach (var renderer in renderers)
+        {
+            if (renderer != null && teamMaterial != null)
             {
-                renderer.material = teamMaterial;
+                int matCount = renderer.materials.Length;
+                Material[] mats = new Material[matCount];
+                for (int i = 0; i < matCount; i++)
+                {
+                    mats[i] = teamMaterial;
+                }
+                renderer.materials = mats;
             }
         }
     }
 
-    // Keep the parameterless version for backward compatibility
     public void UpdateTeamColor()
     {
-        if (teamColorRenderers == null || teamColorRenderers.Length == 0)
+        Renderer[] renderers = teamColorRenderers;
+        if (renderers == null || renderers.Length == 0)
         {
-            Debug.LogError($"[PlayerTeamVisuals] No renderers assigned for {gameObject.name}!");
-            return;
+            Debug.LogWarning($"[PlayerTeamVisuals] No teamColorRenderers assigned for {gameObject.name}, using all child renderers as fallback.");
+            renderers = GetComponentsInChildren<Renderer>(true);
         }
 
         Material teamMaterial = isBlueTeam.Value ? blueTeamMaterial : redTeamMaterial;
         if (teamMaterial == null)
         {
-            Debug.LogError($"[PlayerTeamVisuals] Team material is null for {(isBlueTeam.Value ? "Blue" : "Red")} team!");
+            Debug.LogWarning($"[PlayerTeamVisuals] Team material is null for {(isBlueTeam.Value ? "Blue" : "Red")} team! Using fallback color.");
+            Color fallbackColor = isBlueTeam.Value ? Color.blue : Color.red;
+            foreach (var renderer in renderers)
+            {
+                if (renderer != null && renderer.material != null)
+                {
+                    Material[] mats = renderer.materials;
+                    for (int i = 0; i < mats.Length; i++)
+                    {
+                        mats[i].color = fallbackColor;
+                    }
+                    renderer.materials = mats;
+                }
+            }
             return;
         }
 
-        foreach (var renderer in teamColorRenderers)
+        foreach (var renderer in renderers)
         {
             if (renderer != null)
             {
-                renderer.material = teamMaterial;
-                Debug.Log($"[PlayerTeamVisuals] Applied {(isBlueTeam.Value ? "Blue" : "Red")} team material to {renderer.name}");
+                int matCount = renderer.materials.Length;
+                Material[] mats = new Material[matCount];
+                for (int i = 0; i < matCount; i++)
+                {
+                    mats[i] = teamMaterial;
+                }
+                renderer.materials = mats;
+                Debug.Log($"[PlayerTeamVisuals] Applied {(isBlueTeam.Value ? "Blue" : "Red")} team material to {renderer.name} (full replace)");
             }
         }
     }
@@ -148,19 +181,17 @@ public class PlayerTeamVisuals : NetworkBehaviour
     // FIXED: Add SetTeamColorDirect method
     public void SetTeamColorDirect(string team)
     {
-        Color teamColor = team.Equals("Blue", System.StringComparison.OrdinalIgnoreCase) ? Color.blue : Color.red;
-        
+        // Assign the correct team material instead of changing color directly
+        Material teamMaterial = team.Equals("Blue", System.StringComparison.OrdinalIgnoreCase) ? blueTeamMaterial : redTeamMaterial;
         var renderers = GetComponentsInChildren<Renderer>();
-        
         foreach (var renderer in renderers)
         {
-            if (renderer != null && renderer.material != null)
+            if (renderer != null && teamMaterial != null)
             {
-                renderer.material.color = teamColor;
+                renderer.material = teamMaterial;
             }
         }
-        
-        Debug.Log($"PlayerTeamVisuals: Applied {team} color directly to {renderers.Length} renderers");
+        Debug.Log($"PlayerTeamVisuals: Applied {team} material directly to {renderers.Length} renderers");
     }
 
     // FIXED: Add missing SetBlueTeam method
@@ -194,24 +225,22 @@ public class PlayerTeamVisuals : NetworkBehaviour
     // FIXED: Add team color application methods if they don't exist
     private void ApplyBlueTeamColors()
     {
-        Color blueColor = Color.blue;
-        ApplyColorToRenderers(blueColor);
+        ApplyColorToRenderers(blueTeamMaterial);
     }
 
     private void ApplyRedTeamColors()
     {
-        Color redColor = Color.red;
-        ApplyColorToRenderers(redColor);
+        ApplyColorToRenderers(redTeamMaterial);
     }
 
-    private void ApplyColorToRenderers(Color color)
+    private void ApplyColorToRenderers(Material teamMaterial)
     {
         var renderers = GetComponentsInChildren<Renderer>();
         foreach (var renderer in renderers)
         {
-            if (renderer != null && renderer.material != null)
+            if (renderer != null && teamMaterial != null)
             {
-                renderer.material.color = color;
+                renderer.material = teamMaterial;
             }
         }
     }

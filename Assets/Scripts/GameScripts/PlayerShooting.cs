@@ -167,6 +167,9 @@ public class PlayerShooting : NetworkBehaviour
             }
         }
 
+        // --- TRIGGER SHOOT ANIMATION AFTER THE SHOT ---
+        TriggerShootAnimation();
+
         isCharging = false;
         chargeTime = 0f;
 
@@ -213,6 +216,9 @@ public class PlayerShooting : NetworkBehaviour
                 {
                     Debug.Log($"PlayerShooting: [ServerRpc] Applied velocity {shootVelocity} to puck");
                 }
+
+                // --- TRIGGER SHOOT ANIMATION AFTER THE SHOT ON SERVER ---
+                TriggerShootAnimation();
 
                 // Notify all clients
                 ApplyPuckVelocityClientRpc(puckNetworkId, shootVelocity);
@@ -310,5 +316,22 @@ public class PlayerShooting : NetworkBehaviour
         float forwardBonus = Vector3.Dot(movementContribution, transform.forward);
         
         return forwardBonus;
+    }
+
+    // Add this method to fix missing reference errors and trigger the animation
+    private void TriggerShootAnimation()
+    {
+        if (playerMovement != null)
+        {
+            playerMovement.TriggerShootAnimation();
+            if (enableDebugLogs)
+            {
+                Debug.Log("PlayerShooting: Triggered shoot animation on PlayerMovement");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("PlayerShooting: PlayerMovement reference is null, cannot trigger animation");
+        }
     }
 }

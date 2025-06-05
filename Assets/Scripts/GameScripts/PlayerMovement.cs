@@ -610,7 +610,26 @@ public class PlayerMovement : NetworkBehaviour
         {
             animator.SetBool("IsShooting", true);
             animator.SetTrigger("Shoot");
-            // Optionally, you can start a coroutine to reset the animation if needed
+            
+            // Reset the shooting animation after a short delay
+            StartCoroutine(ResetShootAnimation());
+            
+            Debug.Log("PlayerMovement: Shoot animation triggered");
+        }
+        else
+        {
+            Debug.LogWarning("PlayerMovement: Animator is null, cannot trigger shoot animation");
+        }
+    }
+
+    private System.Collections.IEnumerator ResetShootAnimation()
+    {
+        // Wait for the animation to play
+        yield return new WaitForSeconds(0.5f);
+        
+        if (animator != null)
+        {
+            animator.SetBool("IsShooting", false);
         }
     }
 }

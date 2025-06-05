@@ -745,10 +745,22 @@ public class GameNetworkManager : MonoBehaviour
     }
 
     // FIXED: GetTeamForClient method with improved auth ID matching and better fallbacks
-    private string GetTeamForClient(ulong clientId)
+    // FIXED: Make public for GoalTrigger and other scripts
+    public string GetTeamForClient(ulong clientId)
     {
         Debug.Log($"========== GET TEAM FOR CLIENT {clientId} ==========");
-        
+
+        // Always use local authId for local client
+        string localAuthId = "";
+        if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            try
+            {
+                localAuthId = Unity.Services.Authentication.AuthenticationService.Instance.PlayerId;
+            }
+            catch { }
+        }
+
         // Method 1: PRIORITY - Get from stored team data using auth ID matching
         try
         {
@@ -765,33 +777,22 @@ public class GameNetworkManager : MonoBehaviour
                         string playerName = parts[0];
                         string team = parts[1];
                         string authId = parts[2];
-                        
+
                         Debug.Log($"GameNetworkManager: Checking entry - Name: {playerName}, Team: {team}, AuthId: {authId}");
-                        
-                        // ENHANCED: Check both local and remote clients with stored auth ID
+
+                        // For local client, match local authId
+                        if (!string.IsNullOrEmpty(localAuthId) && clientId == NetworkManager.Singleton.LocalClientId && localAuthId == authId)
+                        {
+                            Debug.Log($"GameNetworkManager: ✓ LOCAL AUTH ID MATCH for client {clientId}: {team}");
+                            return team;
+                        }
+
+                        // For server, match stored mapping
                         string clientAuthId = GetAuthIdForClient(clientId);
                         if (!string.IsNullOrEmpty(clientAuthId) && clientAuthId == authId)
                         {
                             Debug.Log($"GameNetworkManager: ✓ EXACT AUTH ID MATCH for client {clientId}: {team}");
                             return team;
-                        }
-                        
-                        // FALLBACK: For local client, also check directly from auth service
-                        if (clientId == NetworkManager.Singleton.LocalClientId)
-                        {
-                            try
-                            {
-                                string localAuthId = Unity.Services.Authentication.AuthenticationService.Instance.PlayerId;
-                                if (localAuthId == authId)
-                                {
-                                    Debug.Log($"GameNetworkManager: ✓ LOCAL AUTH ID MATCH for client {clientId}: {team}");
-                                    return team;
-                                }
-                            }
-                            catch (System.Exception e)
-                            {
-                                Debug.LogWarning($"GameNetworkManager: Error getting local auth ID: {e.Message}");
-                            }
                         }
                     }
                 }
@@ -851,7 +852,8 @@ public class GameNetworkManager : MonoBehaviour
     }
 
     // ENHANCED: Method to get spawn position with better validation and error handling
-    private Vector3 GetSpawnPositionFromInspector(ulong clientId, string team)
+    // FIXED: Make public for GoalTrigger and other scripts
+    public Vector3 GetSpawnPositionFromInspector(ulong clientId, string team)
     {
         Debug.Log($"========== GET SPAWN POSITION FROM INSPECTOR ==========");
         Debug.Log($"Client: {clientId}, Team: {team}");
@@ -1133,8 +1135,12 @@ public class GameNetworkManager : MonoBehaviour
             playerMovement.SetTeamServerRpc(teamEnum);
         }
 
-        // REMOVE: ApplyTeamColorWithSync(playerObject, team, clientId);
-        // Let PlayerMovement handle color via NetworkVariable
+        // --- NEW: Sync team visuals on all clients after team assignment ---
+        var netObj = playerObject.GetComponent<Unity.Netcode.NetworkObject>();
+        if (netObj != null && NetworkManager.Singleton.IsServer)
+        {
+            SyncTeamVisualsClientRpc(netObj.NetworkObjectId, team);
+        }
 
         // ENHANCED: Setup camera for local player with delay
         if (clientId == NetworkManager.Singleton.LocalClientId)
@@ -1151,12 +1157,35 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        var networkObject = playerObject.GetComponent<Unity.Netcode.NetworkObject>();
         Debug.Log($"GameNetworkManager: ✓ SUCCESSFULLY SPAWNED client {clientId} ({team} team)");
         Debug.Log($"  Final Position: {playerObject.transform.position}");
         Debug.Log($"  Final Rotation: {playerObject.transform.rotation.eulerAngles}");
-        Debug.Log($"  Owner Client ID: {networkObject?.OwnerClientId}");
-        Debug.Log($"  Network Object ID: {networkObject?.NetworkObjectId}");
+        Debug.Log($"  Owner Client ID: {netObj?.OwnerClientId}");
+        Debug.Log($"  Network Object ID: {netObj?.NetworkObjectId}");
+    }
+
+    // NEW: ClientRpc to sync team visuals after spawn/team assignment
+    [Unity.Netcode.ClientRpc]
+    private void SyncTeamVisualsClientRpc(ulong networkObjectId, string team)
+    {
+        var playerObj = FindPlayerObjectByNetworkId(networkObjectId);
+        if (playerObj != null)
+        {
+            var visuals = playerObj.GetComponent<PlayerTeamVisuals>();
+            if (visuals != null)
+            {
+                visuals.SetTeamNetworked(team);
+                Debug.Log($"GameNetworkManager: [ClientRpc] SetTeamNetworked({team}) called for {playerObj.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"GameNetworkManager: [ClientRpc] PlayerTeamVisuals not found on {playerObj.name}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"GameNetworkManager: [ClientRpc] Player object not found for NetworkObjectId {networkObjectId}");
+        }
     }
 
     // COMPLETELY REWRITTEN: Much more reliable team color sync that actually works for clients
@@ -1360,12 +1389,7 @@ public class GameNetworkManager : MonoBehaviour
     // NEW: Helper method to get auth ID for a specific client
     private string GetAuthIdForClient(ulong clientId)
     {
-        if (clientAuthIds.ContainsKey(clientId))
-        {
-            return clientAuthIds[clientId];
-        }
-        
-        // For local client, get directly from auth service
+        // Always return the local authId for the local client (works on both host and client)
         if (clientId == NetworkManager.Singleton.LocalClientId)
         {
             try
@@ -1377,7 +1401,11 @@ public class GameNetworkManager : MonoBehaviour
                 Debug.LogWarning($"GameNetworkManager: Error getting local auth ID: {e.Message}");
             }
         }
-        
+        // For server, use stored mapping
+        if (clientAuthIds.ContainsKey(clientId))
+        {
+            return clientAuthIds[clientId];
+        }
         return "";
     }
 

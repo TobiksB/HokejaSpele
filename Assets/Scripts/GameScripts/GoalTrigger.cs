@@ -8,14 +8,14 @@ namespace HockeyGame.Game
         [Header("Goal Configuration")]
         [SerializeField] private bool isBlueTeamGoal = false; // true if this is Blue team's goal (Red scores here)
         [SerializeField] private string goalName = "Goal"; // For debugging
-        
+
         [Header("Effects")]
         [SerializeField] private ParticleSystem goalEffect;
         [SerializeField] private AudioSource goalSound;
-        
+
         [Header("Debug")]
         [SerializeField] private bool enableDebugLogs = true;
-        
+
         private bool goalScored = false;
         private float goalCooldown = 2f;
         private float lastGoalTime = 0f;
@@ -27,7 +27,7 @@ namespace HockeyGame.Game
             if (collider != null)
             {
                 collider.isTrigger = true;
-                
+
                 if (enableDebugLogs)
                 {
                     Debug.Log($"GoalTrigger {goalName}: Found existing collider of type {collider.GetType().Name}");
@@ -41,7 +41,7 @@ namespace HockeyGame.Game
             {
                 Debug.LogWarning($"GoalTrigger {goalName}: No collider found! Please assign a collider in the scene.");
             }
-            
+
             // Ensure proper tag and layer
             if (!gameObject.CompareTag("Goal"))
             {
@@ -51,7 +51,7 @@ namespace HockeyGame.Game
                     Debug.Log($"GoalTrigger {goalName}: Set tag to 'Goal'");
                 }
             }
-            
+
             // Set goal layer if exists
             int goalLayer = LayerMask.NameToLayer("Goal");
             if (goalLayer != -1)
@@ -62,7 +62,7 @@ namespace HockeyGame.Game
                     Debug.Log($"GoalTrigger {goalName}: Set layer to 'Goal'");
                 }
             }
-            
+
             if (enableDebugLogs)
             {
                 Debug.Log($"GoalTrigger {goalName}: Initialized. IsBlueGoal: {isBlueTeamGoal}");
@@ -71,212 +71,209 @@ namespace HockeyGame.Game
 
         private void OnTriggerEnter(Collider other)
         {
-            // Only process on server
             if (!IsServer) return;
-            
-            // Prevent multiple goals in quick succession
             if (goalScored || (Time.time - lastGoalTime) < goalCooldown) return;
 
             if (enableDebugLogs)
             {
-                Debug.Log($"GoalTrigger {goalName}: Trigger entered by {other.gameObject.name} (Tag: {other.tag}, Layer: {other.gameObject.layer})");
+                Debug.Log($"GoalTrigger: Object entered goal: {other.name}");
             }
 
-            // Check if it's the puck
             if (other.CompareTag("Puck"))
             {
-                ProcessGoal(other.gameObject);
+                HandleGoalScored(other.gameObject);
             }
         }
 
-        private void ProcessGoal(GameObject puck)
-        {
-            if (goalScored) return;
-            
-            goalScored = true;
-            lastGoalTime = Time.time;
-            
-            // Determine which team scored
-            // If puck enters Blue team's goal, Red team scores (and vice versa)
-            bool redTeamScored = isBlueTeamGoal;
-            string scoringTeam = redTeamScored ? "Red" : "Blue";
-            string goalTeam = isBlueTeamGoal ? "Blue" : "Red";
-            
-            if (enableDebugLogs)
-            {
-                Debug.Log($"GOAL SCORED! {scoringTeam} team scored in {goalTeam} team's goal!");
-            }
-
-            // Play effects on all clients
-            PlayGoalEffectsClientRpc(scoringTeam);
-            
-            // Update score through ScoreManager
-            UpdateScore(redTeamScored);
-
-            // ADDED: Reset all players to spawn points
-            ResetAllPlayersToSpawnPoints();
-
-            // Reset puck position after delay
-            StartCoroutine(ResetPuckAfterGoal(puck));
-            
-            // Reset goal state after cooldown
-            Invoke(nameof(ResetGoalState), goalCooldown);
-        }
-
-        private void UpdateScore(bool redTeamScored)
-        {
-            if (ScoreManager.Instance != null)
-            {
-                string teamName = redTeamScored ? "Red" : "Blue";
-                
-                Debug.Log($"🎯 GoalTrigger: Calling ScoreManager to add point for {teamName} team");
-                
-                if (redTeamScored)
-                {
-                    ScoreManager.Instance.AddRedScore();
-                    Debug.Log($"🔴 GoalTrigger: Red team scored! New score should be: {ScoreManager.Instance.GetRedScore()}");
-                }
-                else
-                {
-                    ScoreManager.Instance.AddBlueScore();
-                    Debug.Log($"🔵 GoalTrigger: Blue team scored! New score should be: {ScoreManager.Instance.GetBlueScore()}");
-                }
-                
-                // FIXED: Force UI update after scoring
-                ScoreManager.Instance.UpdateScoreDisplay();
-                
-                Debug.Log($"🏒 GoalTrigger: Score update complete - Red: {ScoreManager.Instance.GetRedScore()}, Blue: {ScoreManager.Instance.GetBlueScore()}");
-            }
-            else
-            {
-                Debug.LogError("🚨 GoalTrigger: ScoreManager.Instance is null! Cannot update score.");
-            }
-        }
-
-        [ClientRpc]
-        private void PlayGoalEffectsClientRpc(string scoringTeam)
-        {
-            // Play particle effect
-            if (goalEffect != null)
-            {
-                goalEffect.Play();
-            }
-            
-            // Play sound effect
-            if (goalSound != null)
-            {
-                goalSound.Play();
-            }
-            
-            // Log goal on all clients
-            Debug.Log($"🏒 GOAL! {scoringTeam} team scored!");
-            
-            // You can add more effects here like screen shake, UI animations, etc.
-        }
-
-        private System.Collections.IEnumerator ResetPuckAfterGoal(GameObject puck)
-        {
-            yield return new WaitForSeconds(1.5f);
-            
-            // Reset puck to center position
-            var puckComponent = puck.GetComponent<Puck>();
-            if (puckComponent != null && puckComponent.IsServer)
-            {
-                puckComponent.ResetToCenter();
-                if (enableDebugLogs)
-                {
-                    Debug.Log("GoalTrigger: Reset puck via Puck.ResetToCenter()");
-                }
-            }
-            else
-            {
-                // Fallback: direct position reset
-                puck.transform.position = new Vector3(0, 0.71f, 0);
-                var puckRigidbody = puck.GetComponent<Rigidbody>();
-                if (puckRigidbody != null)
-                {
-                    puckRigidbody.linearVelocity = Vector3.zero;
-                    puckRigidbody.angularVelocity = Vector3.zero;
-                }
-                if (enableDebugLogs)
-                {
-                    Debug.Log("GoalTrigger: Reset puck via direct transform");
-                }
-            }
-        }
-
-        // ADDED: Reset all players to their spawn points after a goal
-        private void ResetAllPlayersToSpawnPoints()
+        private void HandleGoalScored(GameObject puck)
         {
             if (!IsServer) return;
 
-            var gameNetMgr = FindFirstObjectByType<GameNetworkManager>();
+            goalScored = true;
+            lastGoalTime = Time.time;
+
+            string scoringTeam = isBlueTeamGoal ? "Red" : "Blue";
+            Debug.Log($"GoalTrigger: GOAL! {scoringTeam} team scored in {goalName}!");
+
+            // ADD: Update score
+            var scoreManager = ScoreManager.Instance;
+            if (scoreManager != null)
+            {
+                if (scoringTeam == "Red")
+                    scoreManager.AddRedScore();
+                else
+                    scoreManager.AddBlueScore();
+            }
+            else
+            {
+                Debug.LogWarning("GoalTrigger: ScoreManager.Instance is null, cannot update score!");
+            }
+
+            // Play effects on all clients
+            PlayGoalEffectsClientRpc();
+
+            // Reset all players to their correct team spawn positions
+            RespawnAllPlayersAfterGoal();
+
+            // Reset puck using the working coroutine
+            StartCoroutine(ResetPuckAfterGoal(puck, scoringTeam));
+
+            // Reset goal cooldown after a delay
+            StartCoroutine(ResetGoalCooldown());
+        }
+
+        [ClientRpc]
+        private void PlayGoalEffectsClientRpc()
+        {
+            if (goalEffect != null) goalEffect.Play();
+            if (goalSound != null) goalSound.Play();
+        }
+
+        private void RespawnAllPlayersAfterGoal()
+        {
+            var gameNetMgr = GameNetworkManager.Instance;
             if (gameNetMgr == null)
             {
-                Debug.LogWarning("GoalTrigger: GameNetworkManager not found, cannot reset player positions.");
+                Debug.LogError("GoalTrigger: GameNetworkManager.Instance is null!");
                 return;
             }
 
-            var players = FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None);
-            foreach (var player in players)
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
             {
-                ulong clientId = player.GetComponent<NetworkObject>()?.OwnerClientId ?? 0;
-                // Try to get team as string
-                string team = "Red";
-                if (player.GetType().GetProperty("Team") != null)
+                ulong clientId = client.ClientId;
+                string team = gameNetMgr.GetTeamForClient(clientId);
+                Vector3 spawnPos = gameNetMgr.GetSpawnPositionFromInspector(clientId, team);
+
+                var playerObj = client.PlayerObject != null ? client.PlayerObject.gameObject : null;
+                if (playerObj == null)
                 {
-                    team = player.GetType().GetProperty("Team").GetValue(player).ToString();
-                }
-                else if (player.GetType().GetField("team") != null)
-                {
-                    team = player.GetType().GetField("team").GetValue(player).ToString();
-                }
-                else if (player.GetType().GetField("networkTeam", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null)
-                {
-                    var networkTeamVar = player.GetType().GetField("networkTeam", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(player);
-                    if (networkTeamVar != null)
-                    {
-                        var valueProp = networkTeamVar.GetType().GetProperty("Value");
-                        if (valueProp != null)
-                        {
-                            var enumValue = valueProp.GetValue(networkTeamVar);
-                            team = enumValue.ToString();
-                        }
-                    }
+                    Debug.LogWarning($"GoalTrigger: No player object for client {clientId}");
+                    continue;
                 }
 
-                // Get spawn position from GameNetworkManager
-                Vector3 spawnPos = gameNetMgr.GetType().GetMethod("GetSpawnPositionFromInspector", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                    .Invoke(gameNetMgr, new object[] { clientId, team }) as Vector3? ?? player.transform.position;
-
-                Quaternion spawnRot = team == "Blue"
+                var rb = playerObj.GetComponent<Rigidbody>();
+                playerObj.transform.position = spawnPos;
+                playerObj.transform.rotation = team == "Blue"
                     ? Quaternion.Euler(0, 90, 0)
                     : Quaternion.Euler(0, -90, 0);
 
-                // Teleport player to spawn
-                player.transform.position = spawnPos;
-                player.transform.rotation = spawnRot;
-                var rb = player.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
                     rb.position = spawnPos;
-                    rb.rotation = spawnRot;
+                    rb.rotation = playerObj.transform.rotation;
                     rb.linearVelocity = Vector3.zero;
                     rb.angularVelocity = Vector3.zero;
                 }
-            }
 
-            Debug.Log("GoalTrigger: All players reset to their spawn points after goal.");
+                Debug.Log($"GoalTrigger: Reset player {clientId} ({team} team) to {spawnPos}");
+            }
         }
 
-        // ADDED: Reset goal state so another goal can be scored after cooldown
-        private void ResetGoalState()
+        private System.Collections.IEnumerator ResetPuckAfterGoal(GameObject puck, string goalType)
         {
-            goalScored = false;
-            if (enableDebugLogs)
+            yield return new WaitForSeconds(1.5f);
+            
+            if (puck == null)
             {
-                Debug.Log("GoalTrigger: Goal state reset, ready for next goal.");
+                Debug.LogWarning("GoalTrigger: Puck became null during reset, finding puck in scene");
+                var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
+                if (allPucks.Length > 0)
+                {
+                    puck = allPucks[0].gameObject;
+                }
             }
+            
+            if (puck != null)
+            {
+                var puckComponent = puck.GetComponent<Puck>();
+                
+                // CRITICAL: Ensure puck is completely free before reset
+                if (puckComponent != null)
+                {
+                    // Force clear all held states
+                    puckComponent.SetHeld(false);
+                    
+                    // Clear from any player still holding it
+                    var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
+                    foreach (var player in allPlayers)
+                    {
+                        if (player.GetCurrentPuck() == puckComponent)
+                        {
+                            player.ForceReleasePuckForSteal();
+                            if (enableDebugLogs)
+                            {
+                                Debug.Log($"GoalTrigger: Cleared remaining reference from {player.name}");
+                            }
+                        }
+                    }
+                }
+                
+                // Stop any PuckFollower components
+                var puckFollower = puck.GetComponent<PuckFollower>();
+                if (puckFollower != null)
+                {
+                    puckFollower.StopFollowing();
+                    puckFollower.enabled = false;
+                }
+                
+                // FIXED: Proper puck reset to center
+                Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
+                puck.transform.SetParent(null);
+                puck.transform.position = centerPos;
+                puck.transform.rotation = Quaternion.identity;
+                
+                var rb = puck.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.isKinematic = false;
+                    rb.useGravity = true;
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                    rb.position = centerPos; // Force rigidbody position too
+                }
+                
+                var col = puck.GetComponent<Collider>();
+                if (col != null)
+                {
+                    col.enabled = true;
+                }
+                
+                // ADDED: Use Puck's ResetToCenter method if available (for network sync)
+                if (puckComponent != null && puckComponent.IsServer)
+                {
+                    try
+                    {
+                        var resetMethod = puckComponent.GetType().GetMethod("ResetToCenter");
+                        if (resetMethod != null)
+                        {
+                            resetMethod.Invoke(puckComponent, null);
+                            if (enableDebugLogs)
+                            {
+                                Debug.Log("GoalTrigger: Used Puck.ResetToCenter() method for network sync");
+                            }
+                        }
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogWarning($"GoalTrigger: Failed to use Puck.ResetToCenter(): {e.Message}");
+                    }
+                }
+                
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"GoalTrigger: Puck reset to center after {goalType} goal at position {centerPos}");
+                }
+            }
+            else
+            {
+                Debug.LogError("GoalTrigger: Could not find puck to reset!");
+            }
+        }
+
+        private System.Collections.IEnumerator ResetGoalCooldown()
+        {
+            yield return new WaitForSeconds(goalCooldown);
+            goalScored = false;
         }
     }
 }
