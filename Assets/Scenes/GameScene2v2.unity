@@ -1512,8 +1512,9 @@ GameObject:
   - component: {fileID: 423122857}
   - component: {fileID: 423122856}
   - component: {fileID: 423122855}
+  - component: {fileID: 423122858}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: Pause/SettingCanva
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1533,7 +1534,7 @@ RectTransform:
   m_Children:
   - {fileID: 1894553832}
   - {fileID: 1925179147}
-  m_Father: {fileID: 1908911667}
+  m_Father: {fileID: 1605121701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -1603,6 +1604,29 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &423122858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 423122853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32eaea8a813a99b44ab2ee60643c689a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pausePanel: {fileID: 1894553831}
+  resumeButton: {fileID: 1874461547}
+  settingsButton: {fileID: 356068112}
+  mainMenuButton: {fileID: 773383333}
+  exitButton: {fileID: 1362032121}
+  settingsPanel: {fileID: 1925179146}
+  mouseSensitivitySlider: {fileID: 1200989016}
+  volumeSlider: {fileID: 2035834011}
+  fullscreenToggle: {fileID: 1617991020}
+  resolutionDropdown: {fileID: 1090422506}
+  settingsBackButton: {fileID: 668063881}
 --- !u!1001 &438988006
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4009,9 +4033,6 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 1197048450634966163, guid: 683e7a85c8579f044a47bb4c4dcb9841, type: 3}
-      insertIndex: 0
-      addedObject: {fileID: 423122854}
     - targetCorrespondingSourceObject: {fileID: 1197048450634966163, guid: 683e7a85c8579f044a47bb4c4dcb9841, type: 3}
       insertIndex: -1
       addedObject: {fileID: 539304286}
@@ -7612,6 +7633,38 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f4d7d5ed7fcd20c4fb4866e690f79aa4, type: 3}
+--- !u!1 &1605121700
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1605121701}
+  m_Layer: 0
+  m_Name: PauseHolder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1605121701
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605121700}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 582.508, y: 330.49948, z: 3.117368}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 423122854}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &1616273073
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -9095,7 +9148,6 @@ GameObject:
   - component: {fileID: 1894553832}
   - component: {fileID: 1894553834}
   - component: {fileID: 1894553833}
-  - component: {fileID: 1894553835}
   m_Layer: 5
   m_Name: PausePanel
   m_TagString: Untagged
@@ -9164,29 +9216,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894553831}
   m_CullTransparentMesh: 1
---- !u!114 &1894553835
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894553831}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32eaea8a813a99b44ab2ee60643c689a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pausePanel: {fileID: 1894553831}
-  resumeButton: {fileID: 1874461547}
-  settingsButton: {fileID: 356068112}
-  mainMenuButton: {fileID: 773383333}
-  exitButton: {fileID: 1362032121}
-  settingsPanel: {fileID: 1925179146}
-  mouseSensitivitySlider: {fileID: 1200989016}
-  volumeSlider: {fileID: 2035834011}
-  fullscreenToggle: {fileID: 1617991020}
-  resolutionDropdown: {fileID: 1090422506}
-  settingsBackButton: {fileID: 668063881}
 --- !u!4 &1902419576 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 481860622586406839, guid: 60bdb5bae49f08f4db86b3126ecb0814, type: 3}
@@ -10631,3 +10660,4 @@ SceneRoots:
   - {fileID: 1937983690}
   - {fileID: 1591263434}
   - {fileID: 808439344}
+  - {fileID: 1605121701}
