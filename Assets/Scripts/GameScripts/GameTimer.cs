@@ -7,7 +7,7 @@ namespace HockeyGame.Game
     public class GameTimer : MonoBehaviour
     {
         [Header("Timer Settings")]
-        [SerializeField] private float quarterDuration = 300f; // 5 minutes per quarter
+        [SerializeField] private float quarterDuration = 100f; // 5 minutes per quarter
         [SerializeField] private TMP_Text timerText;
         
         private float currentTime;

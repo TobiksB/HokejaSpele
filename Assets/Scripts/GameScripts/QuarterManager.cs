@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using TMPro; // Add TMPro namespace
 
 namespace HockeyGame.Game
 {
@@ -8,18 +9,18 @@ namespace HockeyGame.Game
         public static QuarterManager Instance { get; private set; }
         
         [Header("Game Settings")]
-        [SerializeField] private float quarterDuration = 100f; // 5 minutes
+        [SerializeField] private float quarterDuration = 20f; // TEST: 30 seconds per quarter
         [SerializeField] private int totalQuarters = 3;
         
         [Header("UI References")]
-        [SerializeField] private GameTimer gameTimer;
+        [SerializeField] private TMP_Text timerText;
+        [SerializeField] private QuarterDisplayUI quarterDisplayUI;
         [SerializeField] private QuarterTransitionPanel quarterTransitionPanel;
-        
-        private NetworkVariable<int> currentQuarter = new NetworkVariable<int>(1);
-        private NetworkVariable<float> timeRemaining = new NetworkVariable<float>(300f);
-        private bool isGameActive = true;
+        [SerializeField] private GameOverPanel gameOverPanel; // Add this inspector reference
 
-        private QuarterDisplayUI quarterDisplayUI; // Add this field
+        private NetworkVariable<int> currentQuarter = new NetworkVariable<int>(1);
+        private NetworkVariable<float> timeRemaining = new NetworkVariable<float>(20f); // TEST: 30 seconds initial value
+        private bool isGameActive = true;
 
         private void Awake()
         {
@@ -48,17 +49,6 @@ namespace HockeyGame.Game
                 // IMPROVED: Only look for dependencies if we're in an actual game scene with UI
                 if (currentScene != "TrainingMode") // Training mode might not have full UI
                 {
-                    if (gameTimer == null)
-                    {
-                        gameTimer = FindFirstObjectByType<GameTimer>();
-                        if (gameTimer == null)
-                        {
-                            Debug.LogWarning("GameTimer not found, creating one now.");
-                            var go = new GameObject("GameTimer");
-                            gameTimer = go.AddComponent<GameTimer>();
-                        }
-                    }
-
                     if (quarterTransitionPanel == null)
                     {
                         quarterTransitionPanel = FindFirstObjectByType<QuarterTransitionPanel>();
@@ -110,10 +100,13 @@ namespace HockeyGame.Game
                 currentQuarter.Value = 1;
                 StartQuarter();
             }
-            
+
             // Subscribe to changes for UI updates
             timeRemaining.OnValueChanged += OnTimeChanged;
             currentQuarter.OnValueChanged += OnQuarterChanged;
+
+            // Ensure UI is correct on spawn
+            UpdateQuarterUI();
         }
 
         public override void OnNetworkDespawn()
@@ -146,10 +139,7 @@ namespace HockeyGame.Game
             timeRemaining.Value = quarterDuration;
 
             // --- Ensure quarter display is updated at the start of each quarter ---
-            if (quarterDisplayUI != null)
-            {
-                quarterDisplayUI.SetQuarter(currentQuarter.Value);
-            }
+            UpdateQuarterUI();
 
             // Update UI
             UpdateTimerUI();
@@ -159,19 +149,145 @@ namespace HockeyGame.Game
         {
             if (!IsServer) return;
 
-            Debug.Log($"Quarter {currentQuarter.Value} ended");
             isGameActive = false;
 
-            // --- NEW: Reset all players to spawn points at end of quarter ---
+            // Reset all players to spawn points at end of quarter
             ResetAllPlayersToSpawnPoints();
+
+            // --- Reset puck to center after each quarter ---
+            ResetPuckToCenter();
 
             if (currentQuarter.Value >= totalQuarters)
             {
-                EndGame();
+                // Show GameOverPanel and do NOT transfer players or change scene
+                ShowGameOverPanel();
             }
             else
             {
                 StartCoroutine(TransitionToNextQuarter());
+            }
+        }
+
+        // --- Show GameOverPanel with winner and score, do not transfer players ---
+        private void ShowGameOverPanel()
+        {
+            int redScore = 0, blueScore = 0;
+            var scoreManager = ScoreManager.Instance;
+            if (scoreManager != null)
+            {
+                redScore = scoreManager.GetRedScore();
+                blueScore = scoreManager.GetBlueScore();
+            }
+
+            // Try inspector reference first, then fallback to FindObjectOfType
+            GameOverPanel panelToUse = gameOverPanel;
+            if (panelToUse == null)
+            {
+                panelToUse = FindFirstObjectByType<GameOverPanel>();
+            }
+
+            if (panelToUse != null)
+            {
+                panelToUse.ShowGameOver(redScore, blueScore);
+                Debug.Log($"QuarterManager: Game over panel shown with scores Red: {redScore}, Blue: {blueScore}");
+            }
+            else
+            {
+                Debug.LogWarning("QuarterManager: GameOverPanel not found in scene!");
+                
+                // Fallback: Create a temporary game over panel
+                var tempPanel = new GameObject("TempGameOverPanel");
+                var canvas = tempPanel.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 100;
+                
+                var background = tempPanel.AddComponent<UnityEngine.UI.Image>();
+                background.color = new Color(0, 0, 0, 0.8f);
+                
+                var text = new GameObject("GameOverText");
+                text.transform.SetParent(tempPanel.transform);
+                var textComponent = text.AddComponent<TMPro.TextMeshProUGUI>();
+                textComponent.text = $"Game Over!\nRed: {redScore} - Blue: {blueScore}";
+                textComponent.fontSize = 36;
+                textComponent.color = Color.white;
+                textComponent.alignment = TMPro.TextAlignmentOptions.Center;
+                
+                var rectTransform = text.GetComponent<RectTransform>();
+                rectTransform.anchorMin = Vector2.zero;
+                rectTransform.anchorMax = Vector2.one;
+                rectTransform.sizeDelta = Vector2.zero;
+                rectTransform.anchoredPosition = Vector2.zero;
+                
+                Debug.Log("QuarterManager: Created temporary game over panel");
+            }
+        }
+
+        // --- Reset puck to center after each quarter ---
+        private void ResetPuckToCenter()
+        {
+            var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
+            if (allPucks.Length == 0)
+            {
+                Debug.LogWarning("QuarterManager: No puck found to reset after quarter.");
+                return;
+            }
+
+            foreach (var puck in allPucks)
+            {
+                if (puck == null) continue;
+
+                // Clear any references to this puck from players
+                var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
+                foreach (var player in allPlayers)
+                {
+                    if (player.GetCurrentPuck() == puck)
+                    {
+                        player.ForceReleasePuckForSteal();
+                    }
+                }
+
+                // Stop PuckFollower
+                var puckFollower = puck.GetComponent<PuckFollower>();
+                if (puckFollower != null)
+                {
+                    puckFollower.StopFollowing();
+                    puckFollower.enabled = false;
+                }
+
+                // Reset physics
+                var rb = puck.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.isKinematic = false;
+                    rb.useGravity = true;
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+
+                var col = puck.GetComponent<Collider>();
+                if (col != null) col.enabled = true;
+
+                puck.SetHeld(false);
+
+                // Move to center spawn position
+                Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
+                puck.transform.position = centerPos;
+                puck.transform.rotation = Quaternion.identity;
+
+                if (rb != null)
+                {
+                    rb.position = centerPos;
+                    rb.rotation = Quaternion.identity;
+                }
+
+                // Use Puck's ResetToCenter method if available for network sync
+                var resetMethod = puck.GetType().GetMethod("ResetToCenter");
+                if (resetMethod != null)
+                {
+                    resetMethod.Invoke(puck, null);
+                }
+
+                Debug.Log("QuarterManager: Puck reset to center after quarter end.");
             }
         }
 
@@ -186,36 +302,76 @@ namespace HockeyGame.Game
             }
 
             var players = FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None);
+            if (players == null || players.Length == 0)
+            {
+                Debug.LogWarning("QuarterManager: No PlayerMovement objects found to reset positions.");
+                return;
+            }
+
             foreach (var player in players)
             {
-                ulong clientId = player.GetComponent<NetworkObject>()?.OwnerClientId ?? 0;
+                if (player == null)
+                {
+                    Debug.LogWarning("QuarterManager: Found null PlayerMovement in players array.");
+                    continue;
+                }
+
+                var netObj = player.GetComponent<NetworkObject>();
+                if (netObj == null)
+                {
+                    Debug.LogWarning($"QuarterManager: Player {player.name} has no NetworkObject.");
+                    continue;
+                }
+
+                ulong clientId = netObj.OwnerClientId;
                 // Try to get team as string
                 string team = "Red";
-                if (player.GetType().GetProperty("Team") != null)
+                try
                 {
-                    team = player.GetType().GetProperty("Team").GetValue(player).ToString();
-                }
-                else if (player.GetType().GetField("team") != null)
-                {
-                    team = player.GetType().GetField("team").GetValue(player).ToString();
-                }
-                else if (player.GetType().GetField("networkTeam", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null)
-                {
-                    var networkTeamVar = player.GetType().GetField("networkTeam", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(player);
-                    if (networkTeamVar != null)
+                    if (player.GetType().GetProperty("Team") != null)
                     {
-                        var valueProp = networkTeamVar.GetType().GetProperty("Value");
-                        if (valueProp != null)
+                        team = player.GetType().GetProperty("Team").GetValue(player)?.ToString() ?? "Red";
+                    }
+                    else if (player.GetType().GetField("team") != null)
+                    {
+                        team = player.GetType().GetField("team").GetValue(player)?.ToString() ?? "Red";
+                    }
+                    else if (player.GetType().GetField("networkTeam", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null)
+                    {
+                        var networkTeamVar = player.GetType().GetField("networkTeam", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(player);
+                        if (networkTeamVar != null)
                         {
-                            var enumValue = valueProp.GetValue(networkTeamVar);
-                            team = enumValue.ToString();
+                            var valueProp = networkTeamVar.GetType().GetProperty("Value");
+                            if (valueProp != null)
+                            {
+                                var enumValue = valueProp.GetValue(networkTeamVar);
+                                team = enumValue?.ToString() ?? "Red";
+                            }
                         }
                     }
                 }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"QuarterManager: Error determining team for player {player.name}: {e.Message}");
+                }
 
-                // Get spawn position from GameNetworkManager
-                Vector3 spawnPos = gameNetMgr.GetType().GetMethod("GetSpawnPositionFromInspector", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                    .Invoke(gameNetMgr, new object[] { clientId, team }) as Vector3? ?? player.transform.position;
+                Vector3 spawnPos = player.transform.position;
+                try
+                {
+                    var method = gameNetMgr.GetType().GetMethod("GetSpawnPositionFromInspector", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (method != null)
+                    {
+                        var result = method.Invoke(gameNetMgr, new object[] { clientId, team });
+                        if (result is Vector3 pos)
+                        {
+                            spawnPos = pos;
+                        }
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"QuarterManager: Error getting spawn position for player {player.name}: {e.Message}");
+                }
 
                 Quaternion spawnRot = team == "Blue"
                     ? Quaternion.Euler(0, 90, 0)
@@ -244,21 +400,30 @@ namespace HockeyGame.Game
             {
                 quarterTransitionPanel.ShowTransition(currentQuarter.Value + 1);
             }
-            
+
             yield return new WaitForSeconds(3f); // 3 second transition
-            
-            // Start next quarter
+
             if (IsServer)
             {
-                currentQuarter.Value++;
-                StartQuarter();
+                // --- CRITICAL: Use a ServerRpc to update quarter and timer for all clients ---
+                SetNextQuarterServerRpc();
             }
-            
+
             // Hide transition panel
             if (quarterTransitionPanel != null)
             {
                 quarterTransitionPanel.HideTransition();
             }
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void SetNextQuarterServerRpc()
+        {
+            currentQuarter.Value++;
+            timeRemaining.Value = quarterDuration;
+            isGameActive = true;
+            UpdateQuarterUI();
+            UpdateTimerUI();
         }
 
         private void EndGame()
@@ -334,14 +499,20 @@ namespace HockeyGame.Game
 
         private void OnQuarterChanged(int previousValue, int newValue)
         {
+            // --- CRITICAL: Reset timer and activate game on all clients when quarter changes ---
+            timeRemaining.Value = quarterDuration;
+            isGameActive = true;
             UpdateQuarterUI();
+            UpdateTimerUI();
         }
 
         private void UpdateTimerUI()
         {
-            if (gameTimer != null)
+            if (timerText != null)
             {
-                gameTimer.UpdateTimer(timeRemaining.Value);
+                int minutes = Mathf.FloorToInt(timeRemaining.Value / 60f);
+                int seconds = Mathf.FloorToInt(timeRemaining.Value % 60f);
+                timerText.text = $"{minutes:00}:{seconds:00}";
             }
             
             // Also update ScoreManager if it exists
@@ -357,6 +528,10 @@ namespace HockeyGame.Game
         {
             // Update quarter display in UI
             Debug.Log($"Current Quarter: {currentQuarter.Value}/{totalQuarters}");
+            if (quarterDisplayUI == null)
+            {
+                quarterDisplayUI = FindFirstObjectByType<QuarterDisplayUI>();
+            }
             if (quarterDisplayUI != null)
             {
                 quarterDisplayUI.SetQuarter(currentQuarter.Value);

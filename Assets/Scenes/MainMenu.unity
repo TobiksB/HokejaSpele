@@ -1504,9 +1504,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4519452395190527355, guid: 1df020a6622fbe446bb88d38f211a1c7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6921306537054483832, guid: 1df020a6622fbe446bb88d38f211a1c7, type: 3}
       propertyPath: m_Name
       value: GamemodePanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 6921306537054483832, guid: 1df020a6622fbe446bb88d38f211a1c7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7124518995962797927, guid: 1df020a6622fbe446bb88d38f211a1c7, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
