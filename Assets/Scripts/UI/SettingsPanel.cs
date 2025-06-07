@@ -5,20 +5,21 @@ using UnityEngine.UI;
 public class SettingsPanel : MonoBehaviour
 {
     [Header("UI Elements - ASSIGN THESE IN INSPECTOR")]
-    [SerializeField] private TMP_InputField playerNameInput;
-    [SerializeField] private TMP_Dropdown resolutionDropdown;
-    [SerializeField] private Toggle fullscreenToggle;
-    [SerializeField] private Slider mouseSensitivitySlider;
-    [SerializeField] private Slider volumeSlider; // Single volume slider for all sounds
-    [SerializeField] private Button applyButton;
-    [SerializeField] private Button resetButton;
+    public TMP_InputField playerNameInput;
+    public TMP_Dropdown resolutionDropdown;
+    public Toggle fullscreenToggle;
+    public Slider mouseSensitivitySlider;
+    public Slider volumeSlider; // Single volume slider for all sounds
+    public Button applyButton;
+    public Button resetButton;
 
     // ADDED: Text display components (optional)
-    [SerializeField] private TMPro.TextMeshProUGUI volumeText;
-    [SerializeField] private TMPro.TextMeshProUGUI mouseSensitivityText;
+    public TMPro.TextMeshProUGUI volumeText;
+    public TMPro.TextMeshProUGUI mouseSensitivityText;
 
     private void Start()
     {
+        EnsureGameSettingsManagerExists();
         ValidateUIElements();
         LoadCurrentSettings();
         SetupSliderListeners();
@@ -26,7 +27,24 @@ public class SettingsPanel : MonoBehaviour
 
     private void OnEnable()
     {
+        EnsureGameSettingsManagerExists();
         LoadCurrentSettings();
+    }
+
+    // Add this helper to ensure GameSettingsManager exists
+    private void EnsureGameSettingsManagerExists()
+    {
+        if (GameSettingsManager.Instance == null)
+        {
+            var gsm = FindObjectOfType<GameSettingsManager>();
+            if (gsm == null)
+            {
+                var go = new GameObject("GameSettingsManager");
+                go.AddComponent<GameSettingsManager>();
+                DontDestroyOnLoad(go);
+                Debug.LogWarning("SettingsPanel: Created missing GameSettingsManager at runtime.");
+            }
+        }
     }
 
     private void ValidateUIElements()

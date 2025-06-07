@@ -61,30 +61,9 @@ namespace HockeyGame.Game
             if (settingsBackButton != null)
                 settingsBackButton.onClick.AddListener(CloseSettings);
 
-            if (mouseSensitivitySlider != null)
-            {
-                mouseSensitivitySlider.value = GameSettingsManager.Instance.mouseSensitivity;
-                mouseSensitivitySlider.onValueChanged.AddListener(GameSettingsManager.Instance.SetMouseSensitivity);
-            }
-            if (volumeSlider != null)
-            {
-                volumeSlider.value = GameSettingsManager.Instance.gameVolume;
-                volumeSlider.onValueChanged.AddListener(GameSettingsManager.Instance.SetGameVolume);
-            }
-            if (fullscreenToggle != null)
-            {
-                fullscreenToggle.isOn = GameSettingsManager.Instance.isFullscreen;
-                fullscreenToggle.onValueChanged.AddListener(GameSettingsManager.Instance.SetFullscreen);
-            }
-            if (resolutionDropdown != null)
-            {
-                var options = GameSettingsManager.Instance.GetResolutionOptions();
-                resolutionDropdown.ClearOptions();
-                resolutionDropdown.AddOptions(new System.Collections.Generic.List<string>(options));
-                resolutionDropdown.value = GameSettingsManager.Instance.CurrentResolutionIndex;
-                resolutionDropdown.RefreshShownValue();
-                resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
-            }
+            // --- FORCE POPULATE SETTINGS PANEL UI ON START ---
+            // Do NOT set up listeners here, only populate values
+            ForcePopulateSettingsPanelUI();
         }
 
         private void Update()
@@ -253,6 +232,69 @@ namespace HockeyGame.Game
 
         private void OpenSettings()
         {
+            // Always update UI and listeners when opening settings
+
+            // --- SYNC FROM SettingsPanel IF IT EXISTS ---
+            var settingsPanelObj = GameObject.FindObjectOfType<SettingsPanel>();
+            bool copiedDropdown = false;
+            if (settingsPanelObj != null)
+            {
+                // Copy values from SettingsPanel UI to PauseMenuManager's UI
+                if (mouseSensitivitySlider != null && settingsPanelObj.mouseSensitivitySlider != null)
+                    mouseSensitivitySlider.value = settingsPanelObj.mouseSensitivitySlider.value;
+                if (volumeSlider != null && settingsPanelObj.volumeSlider != null)
+                    volumeSlider.value = settingsPanelObj.volumeSlider.value;
+                if (fullscreenToggle != null && settingsPanelObj.fullscreenToggle != null)
+                    fullscreenToggle.isOn = settingsPanelObj.fullscreenToggle.isOn;
+                if (resolutionDropdown != null && settingsPanelObj.resolutionDropdown != null)
+                {
+                    // --- FIX: Copy options using AddOptions with string list ---
+                    resolutionDropdown.ClearOptions();
+                    var optionList = new System.Collections.Generic.List<string>();
+                    foreach (var opt in settingsPanelObj.resolutionDropdown.options)
+                        optionList.Add(opt.text);
+                    resolutionDropdown.AddOptions(optionList);
+                    resolutionDropdown.value = settingsPanelObj.resolutionDropdown.value;
+                    resolutionDropdown.RefreshShownValue();
+                    copiedDropdown = true;
+                }
+            }
+            // --- CRITICAL: Always populate dropdown from GameSettingsManager if SettingsPanel is missing or has no options ---
+            if (!copiedDropdown && resolutionDropdown != null && GameSettingsManager.Instance != null)
+            {
+                resolutionDropdown.ClearOptions();
+                var options = GameSettingsManager.Instance.GetResolutionOptions();
+                if (options != null && options.Length > 0)
+                {
+                    resolutionDropdown.AddOptions(new System.Collections.Generic.List<string>(options));
+                    resolutionDropdown.SetValueWithoutNotify(GameSettingsManager.Instance.CurrentResolutionIndex);
+                }
+                else
+                {
+                    // Fallback: add current screen resolution if no options
+                    string currentRes = $"{Screen.currentResolution.width} x {Screen.currentResolution.height}";
+                    resolutionDropdown.AddOptions(new System.Collections.Generic.List<string> { currentRes });
+                    resolutionDropdown.SetValueWithoutNotify(0);
+                }
+                resolutionDropdown.RefreshShownValue();
+            }
+
+            SetupSettingsPanelListenersAndValues();
+            // --- CRITICAL: Set up listeners for FULLSCREEN toggle and dropdown here ---
+            if (fullscreenToggle != null)
+            {
+                fullscreenToggle.onValueChanged.RemoveAllListeners();
+                fullscreenToggle.SetIsOnWithoutNotify(GameSettingsManager.Instance != null ? GameSettingsManager.Instance.isFullscreen : Screen.fullScreen);
+                fullscreenToggle.onValueChanged.AddListener(OnFullscreenToggled);
+            }
+            if (resolutionDropdown != null)
+            {
+                resolutionDropdown.onValueChanged.RemoveAllListeners();
+                resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
+            }
+
+            ForcePopulateSettingsPanelUI();
+
             if (settingsPanel != null)
             {
                 settingsPanel.SetActive(true);
@@ -260,6 +302,45 @@ namespace HockeyGame.Game
             if (pausePanel != null)
             {
                 pausePanel.SetActive(false);
+            }
+        }
+
+        // Helper to set up listeners and values for settings panel (call ONLY when opening)
+        private void SetupSettingsPanelListenersAndValues()
+        {
+            if (GameSettingsManager.Instance == null) return;
+
+            // Mouse Sensitivity
+            if (mouseSensitivitySlider != null)
+            {
+                mouseSensitivitySlider.onValueChanged.RemoveAllListeners();
+                mouseSensitivitySlider.SetValueWithoutNotify(GameSettingsManager.Instance.mouseSensitivity);
+                mouseSensitivitySlider.onValueChanged.AddListener(GameSettingsManager.Instance.SetMouseSensitivity);
+            }
+            // Volume
+            if (volumeSlider != null)
+            {
+                volumeSlider.onValueChanged.RemoveAllListeners();
+                volumeSlider.SetValueWithoutNotify(GameSettingsManager.Instance.gameVolume);
+                volumeSlider.onValueChanged.AddListener(GameSettingsManager.Instance.SetGameVolume);
+            }
+            // Fullscreen
+            if (fullscreenToggle != null)
+            {
+                fullscreenToggle.onValueChanged.RemoveAllListeners();
+                fullscreenToggle.SetIsOnWithoutNotify(GameSettingsManager.Instance.isFullscreen);
+                fullscreenToggle.onValueChanged.AddListener(GameSettingsManager.Instance.SetFullscreen);
+            }
+            // Resolution Dropdown
+            if (resolutionDropdown != null)
+            {
+                resolutionDropdown.onValueChanged.RemoveAllListeners();
+                var options = GameSettingsManager.Instance.GetResolutionOptions();
+                resolutionDropdown.ClearOptions();
+                resolutionDropdown.AddOptions(new System.Collections.Generic.List<string>(options));
+                resolutionDropdown.SetValueWithoutNotify(GameSettingsManager.Instance.CurrentResolutionIndex);
+                resolutionDropdown.RefreshShownValue();
+                resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
             }
         }
 
@@ -277,7 +358,25 @@ namespace HockeyGame.Game
 
         private void OnResolutionChanged(int index)
         {
-            GameSettingsManager.Instance.SetResolution(index, GameSettingsManager.Instance.isFullscreen);
+            if (GameSettingsManager.Instance != null)
+                GameSettingsManager.Instance.SetResolution(index, fullscreenToggle != null ? fullscreenToggle.isOn : false);
+        }
+
+        private void OnFullscreenToggled(bool isFullscreen)
+        {
+            if (GameSettingsManager.Instance != null)
+            {
+                GameSettingsManager.Instance.isFullscreen = isFullscreen;
+                Resolution currentRes = Screen.currentResolution;
+                Screen.SetResolution(currentRes.width, currentRes.height, isFullscreen);
+                PlayerPrefs.SetInt("Fullscreen", isFullscreen ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+            else
+            {
+                Screen.fullScreen = isFullscreen;
+            }
+            Debug.Log($"PauseMenuManager: Fullscreen toggled to {isFullscreen} using SetResolution");
         }
 
         private void EnsureTimeScaleIsNormal()
@@ -287,6 +386,36 @@ namespace HockeyGame.Game
                 Debug.LogWarning($"PauseMenuManager: Time.timeScale was {Time.timeScale}, resetting to 1");
                 Time.timeScale = 1f;
             }
+        }
+
+        /// <summary>
+        /// Ensures the settings panel UI is always fully populated, even if the scene was loaded directly.
+        /// </summary>
+        private void ForcePopulateSettingsPanelUI()
+        {
+            if (GameSettingsManager.Instance == null) return;
+
+            // Only set values, do not set up listeners here
+            if (mouseSensitivitySlider != null)
+                mouseSensitivitySlider.SetValueWithoutNotify(GameSettingsManager.Instance.mouseSensitivity);
+            if (volumeSlider != null)
+                volumeSlider.SetValueWithoutNotify(GameSettingsManager.Instance.gameVolume);
+            if (fullscreenToggle != null)
+                fullscreenToggle.SetIsOnWithoutNotify(GameSettingsManager.Instance.isFullscreen);
+            if (resolutionDropdown != null)
+            {
+                var options = GameSettingsManager.Instance.GetResolutionOptions();
+                resolutionDropdown.ClearOptions();
+                resolutionDropdown.AddOptions(new System.Collections.Generic.List<string>(options));
+                resolutionDropdown.SetValueWithoutNotify(GameSettingsManager.Instance.CurrentResolutionIndex);
+                resolutionDropdown.RefreshShownValue();
+            }
+        }
+
+        private void OnEnable()
+        {
+            // Ensure settings panel is always populated when this object is enabled (scene load, etc.)
+            ForcePopulateSettingsPanelUI();
         }
     }
 }

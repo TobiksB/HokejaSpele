@@ -129,6 +129,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3456653972754715650, guid: 1df020a6622fbe446bb88d38f211a1c7, type: 3}
   m_PrefabInstance: {fileID: 3219570572498022323}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &70571014 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1103214644848575621, guid: 1b252b9a7b67aa845b7d4fbc86bf02d3, type: 3}
+  m_PrefabInstance: {fileID: 4804547170416768043}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &72514909
 GameObject:
   m_ObjectHideFlags: 0
@@ -922,7 +933,9 @@ MonoBehaviour:
   playButton: {fileID: 198944429}
   settingsButton: {fileID: 1421357071}
   exitButton: {fileID: 1509372507}
-  backButtons: []
+  backButtons:
+  - {fileID: 70571014}
+  - {fileID: 536680214}
   createLobbyButton: {fileID: 886827235}
   joinLobbyButton: {fileID: 2029402597}
   backToMainMenuButton: {fileID: 536680214}
