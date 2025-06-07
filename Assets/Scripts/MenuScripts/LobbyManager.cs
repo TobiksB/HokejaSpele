@@ -1754,6 +1754,29 @@ public class LobbyManager : MonoBehaviour
         }
         Debug.Log("Unity Services initialized successfully");
     }
+
+    // Add this public method to reset all relevant state
+    public void ResetLobbyState()
+    {
+        // Reset all fields that could block new host/client sessions
+        hostRelayCreated = false;
+        relayJoinCode = null;
+        relayCreationInProgress = false;
+        relayConfiguredForClient = false;
+        clientStartedGame = false;
+        selectedGameMode = GameMode.None;
+        heartbeatTimer = 0f;
+        lobbyPollTimer = 0f;
+        lobbyPollBackoff = 0f;
+        lastLobbyUpdateTime = 0f;
+        // Optionally clear chat and player lists again
+        playerTeams?.Clear();
+        playerNames?.Clear();
+        playerReadyStates?.Clear();
+        chatMessages?.Clear();
+        currentLobby = null;
+        Debug.Log("LobbyManager: ResetLobbyState called, all state cleared.");
+    }
 }
 
 // FIXED: Ensure LobbyPlayerData is defined only once in its own file (remove any duplicate definitions from this file)

@@ -174,6 +174,69 @@ namespace HockeyGame.Game
 
         public void GoToMainMenu()
         {
+            // Shut down all networking
+            if (Unity.Netcode.NetworkManager.Singleton != null)
+            {
+                try
+                {
+                    if (Unity.Netcode.NetworkManager.Singleton.IsHost || Unity.Netcode.NetworkManager.Singleton.IsServer || Unity.Netcode.NetworkManager.Singleton.IsClient)
+                    {
+                        Unity.Netcode.NetworkManager.Singleton.Shutdown();
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"PauseMenuManager: Error shutting down NetworkManager: {e.Message}");
+                }
+            }
+
+            // Reset lobby player list and chat
+            if (LobbyManager.Instance != null)
+            {
+                try
+                {
+                    LobbyManager.Instance.StopAllCoroutines();
+                    // Use reflection to clear private dictionaries and chat
+                    var lobbyType = typeof(LobbyManager);
+                    var playerNamesField = lobbyType.GetField("playerNames", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var playerTeamsField = lobbyType.GetField("playerTeams", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var playerReadyStatesField = lobbyType.GetField("playerReadyStates", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var chatMessagesField = lobbyType.GetField("chatMessages", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    var currentLobbyField = lobbyType.GetField("currentLobby", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                    if (playerNamesField != null)
+                    {
+                        var dict = playerNamesField.GetValue(LobbyManager.Instance) as System.Collections.IDictionary;
+                        dict?.Clear();
+                    }
+                    if (playerTeamsField != null)
+                    {
+                        var dict = playerTeamsField.GetValue(LobbyManager.Instance) as System.Collections.IDictionary;
+                        dict?.Clear();
+                    }
+                    if (playerReadyStatesField != null)
+                    {
+                        var dict = playerReadyStatesField.GetValue(LobbyManager.Instance) as System.Collections.IDictionary;
+                        dict?.Clear();
+                    }
+                    if (chatMessagesField != null)
+                    {
+                        var chatList = chatMessagesField.GetValue(LobbyManager.Instance) as System.Collections.IList;
+                        chatList?.Clear();
+                    }
+                    if (currentLobbyField != null)
+                    {
+                        currentLobbyField.SetValue(LobbyManager.Instance, null);
+                    }
+                    // ADD: Reset all internal state to allow new host/client sessions
+                    LobbyManager.Instance.ResetLobbyState();
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"PauseMenuManager: Error resetting lobby player list or chat: {e.Message}");
+                }
+            }
+
             Time.timeScale = 1f;
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }

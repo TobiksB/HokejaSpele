@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 5873128042488466851}
   - component: {fileID: 6333645161240535778}
   - component: {fileID: 5483094258313282841}
-  - component: {fileID: 2786802821878156543}
   m_Layer: 0
   m_Name: ScriptHolder
   m_TagString: Untagged
@@ -134,19 +133,3 @@ MonoBehaviour:
   maxMessages: 10
   pollInterval: 5
   sendCooldown: 2
---- !u!114 &2786802821878156543
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8749710131017493102}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce9d0644bb064114bac2ee5799b1f890, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mouseSensitivity: 1
-  gameVolume: 1
-  isFullscreen: 1
-  masterMixer: {fileID: 24100000, guid: fc4f1813ef15a6c4891992163384692f, type: 2}

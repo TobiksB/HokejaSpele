@@ -218,6 +218,27 @@ public class PlayerMovement : NetworkBehaviour
 
         HandleMovementInput();
 
+        // --- MOUSE LOOK WITH SENSITIVITY ---
+        if (IsOwner && Input.GetKey(KeyCode.LeftAlt))
+        {
+            float mouseX = Input.GetAxis("Mouse X");
+            float mouseSensitivity = 1.0f;
+            // Always get the latest value from GameSettingsManager
+            if (GameSettingsManager.Instance != null)
+                mouseSensitivity = GameSettingsManager.Instance.mouseSensitivity;
+
+            // Apply mouse sensitivity to camera rotation (horizontal look)
+            if (playerCamera != null)
+            {
+                playerCamera.transform.Rotate(Vector3.up, mouseX * mouseSensitivity * 2.0f, Space.World);
+            }
+            else
+            {
+                // If camera is child of player, rotate player
+                transform.Rotate(0f, mouseX * mouseSensitivity * 2.0f, 0f);
+            }
+        }
+
         // REMOVED: All puck pickup logic - PuckPickup component handles this
     }
 

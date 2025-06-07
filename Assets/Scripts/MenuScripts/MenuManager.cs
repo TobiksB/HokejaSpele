@@ -43,14 +43,16 @@ public class MenuManager : MonoBehaviour
 
     private void Awake()
     {
+        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // DontDestroyOnLoad(gameObject); // REMOVE THIS LINE
         }
-        else
+        else if (Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
     }
 
@@ -89,24 +91,7 @@ public class MenuManager : MonoBehaviour
             }
         }
 
-        // Set up button listeners
-        if (playButton) playButton.onClick.AddListener(OpenGamemodePanel);
-        if (settingsButton) settingsButton.onClick.AddListener(OpenSettingsPanel);
-        if (exitButton) exitButton.onClick.AddListener(ExitGame);
-
-        if (trainingButton) trainingButton.onClick.AddListener(() => SelectGameMode(GameMode.Training));
-        if (mode2v2Button) mode2v2Button.onClick.AddListener(() => SelectGameMode(GameMode.Mode2v2));
-        if (mode4v4Button) mode4v4Button.onClick.AddListener(() => SelectGameMode(GameMode.Mode4v4));
-
-        foreach (Button backButton in backButtons)
-        {
-            if (backButton) backButton.onClick.AddListener(ReturnToMainMenu);
-        }
-
-        if (createLobbyButton) createLobbyButton.onClick.AddListener(OpenCreateLobby);
-        if (joinLobbyButton) joinLobbyButton.onClick.AddListener(OpenJoinLobby);
-        if (backToMainMenuButton) backToMainMenuButton.onClick.AddListener(ReturnToMainMenu);
-        if (joinLobbyConfirmButton) joinLobbyConfirmButton.onClick.AddListener(JoinLobby);
+        SetupButtonListeners();
 
         // Add debug console setup
         if (debugConsoleButton) debugConsoleButton.onClick.AddListener(ToggleDebugConsole);
@@ -131,6 +116,68 @@ public class MenuManager : MonoBehaviour
         ShowPanel(mainMenuPanel);
         
         FileLogger.LogToFile("MenuManager: Initialization complete");
+    }
+
+    private void SetupButtonListeners()
+    {
+        // Remove all listeners before adding to prevent stacking/clicking
+        if (playButton != null)
+        {
+            playButton.onClick.RemoveAllListeners();
+            playButton.onClick.AddListener(OpenGamemodePanel);
+        }
+        if (settingsButton != null)
+        {
+            settingsButton.onClick.RemoveAllListeners();
+            settingsButton.onClick.AddListener(OpenSettingsPanel);
+        }
+        if (exitButton != null)
+        {
+            exitButton.onClick.RemoveAllListeners();
+            exitButton.onClick.AddListener(ExitGame);
+        }
+
+        if (trainingButton != null)
+        {
+            trainingButton.onClick.RemoveAllListeners();
+            trainingButton.onClick.AddListener(() => SelectGameMode(GameMode.Training));
+        }
+        if (mode2v2Button != null)
+        {
+            mode2v2Button.onClick.RemoveAllListeners();
+            mode2v2Button.onClick.AddListener(() => SelectGameMode(GameMode.Mode2v2));
+        }
+        if (mode4v4Button != null)
+        {
+            mode4v4Button.onClick.RemoveAllListeners();
+            mode4v4Button.onClick.AddListener(() => SelectGameMode(GameMode.Mode4v4));
+        }
+
+        foreach (Button backButton in backButtons)
+        {
+            if (backButton) backButton.onClick.AddListener(ReturnToMainMenu);
+        }
+
+        if (createLobbyButton != null)
+        {
+            createLobbyButton.onClick.RemoveAllListeners();
+            createLobbyButton.onClick.AddListener(OpenCreateLobby);
+        }
+        if (joinLobbyButton != null)
+        {
+            joinLobbyButton.onClick.RemoveAllListeners();
+            joinLobbyButton.onClick.AddListener(OpenJoinLobby);
+        }
+        if (backToMainMenuButton != null)
+        {
+            backToMainMenuButton.onClick.RemoveAllListeners();
+            backToMainMenuButton.onClick.AddListener(ReturnToMainMenu);
+        }
+        if (joinLobbyConfirmButton != null)
+        {
+            joinLobbyConfirmButton.onClick.RemoveAllListeners();
+            joinLobbyConfirmButton.onClick.AddListener(JoinLobby);
+        }
     }
 
     private void ShowPanel(GameObject panel)
@@ -494,5 +541,13 @@ public class MenuManager : MonoBehaviour
                 Debug.Log($"MenuManager: Disabled player camera: {camera.gameObject.name}");
             }
         }
+    }
+
+    // Call this when returning to main menu to clean up
+    public void CleanupOnMainMenu()
+    {
+        // Optionally reset static instance if you want to reload inspector values
+        Instance = null;
+        Destroy(gameObject);
     }
 }
