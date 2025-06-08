@@ -7,13 +7,12 @@ public class PlayerMovement : NetworkBehaviour
 {
     public enum Team : byte { Red = 0, Blue = 1 }
 
-    [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 80f; // Reduced for more realistic ice feel
-    [SerializeField] private float sprintSpeed = 120f; // Reduced for more realistic ice feel
-    [SerializeField] private float rotationSpeed = 200f; // Reduced for more realistic turning
-    [SerializeField] private float iceFriction = 0.98f; // Higher value = more slippery (was 0.95f)
-    [SerializeField] private float acceleration = 60f; // How fast we reach target speed
-    [SerializeField] private float deceleration = 40f; // How fast we slow down when no input
+    [Header("Movement Settings")]    [SerializeField] private float moveSpeed = 80f; // Samazināts reālistiskākai ledus sajūtai
+    [SerializeField] private float sprintSpeed = 120f; // Samazināts reālistiskākai ledus sajūtai
+    [SerializeField] private float rotationSpeed = 200f; // Samazināts reālistiskākai ledus pagriezieniem
+    [SerializeField] private float iceFriction = 0.98f; // Augstāka vērtība = slidenāks (bija 0.95f)
+    [SerializeField] private float acceleration = 60f; // Cik ātri sasniegam mērķa ātrumu
+    [SerializeField] private float deceleration = 40f; // Cik ātri palēninām ātrumu, kad nav ievades
 
     [Header("Stamina Settings")]
     [SerializeField] private float maxStamina = 100f;
@@ -29,11 +28,9 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Interaction")]
     [SerializeField] private float pickupRange = 1.5f;
     [SerializeField] private SphereCollider pickupTrigger;
-    [SerializeField] private SphereCollider pickupCollider;
-
-    private NetworkVariable<bool> isSkating = new NetworkVariable<bool>();
+    [SerializeField] private SphereCollider pickupCollider;    private NetworkVariable<bool> isSkating = new NetworkVariable<bool>();
     private NetworkVariable<bool> isShooting = new NetworkVariable<bool>();
-    // FIXED: Re-add the missing network variables that were accidentally removed
+    // LABOTS: Atkārtoti pievienojam trūkstošos tīkla mainīgos, kas tika nejauši dzēsti
     private NetworkVariable<Vector3> networkPosition = new NetworkVariable<Vector3>();
     private NetworkVariable<Vector3> networkVelocity = new NetworkVariable<Vector3>();
     private NetworkVariable<Team> networkTeam = new NetworkVariable<Team>(Team.Red, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -47,26 +44,22 @@ public class PlayerMovement : NetworkBehaviour
     private Vector3 moveDirection;
     private bool currentSprintState;
     private bool canMove = true;
-    private bool isMovementEnabled = true;
-
-    // FIXED: Add missing variable declarations
+    private bool isMovementEnabled = true;    // LABOTS: Pievienojam trūkstošās mainīgo deklarācijas
     private bool isMyPlayer = false;
     private ulong localClientId = 0;
     private PlayerTeam teamComponent;
     private PlayerTeamVisuals visuals;
-    private bool hasLoggedOwnership = false;
-
-    // Animation hash IDs for performance
+    private bool hasLoggedOwnership = false;    // Animāciju haši veiktspējai
     private int isSkatingHash;
     private int isShootingHash;
     private int shootTriggerHash;
     private int speedHash;
 
-    // Movement tracking for ServerRpc optimization
+    // Kustību sekošana ServerRpc optimizācijai
     private float lastSentHorizontal = 0f;
     private float lastSentVertical = 0f;
     private bool lastSentSprint = false;
-    private float inputSendRate = 0.05f; // Send input 20 times per second
+    private float inputSendRate = 0.05f; // Sūta ievadi 20 reizes sekundē
     private float lastInputSendTime = 0f;
 
     public override void OnNetworkSpawn()
@@ -89,15 +82,13 @@ public class PlayerMovement : NetworkBehaviour
             Debug.Log($"Player spawned. IsOwner: {IsOwner}, ClientId: {OwnerClientId}");
             SetupCamera();
             SetupPickupTrigger();
-        }
-
-        isSkating.OnValueChanged += OnSkatingChanged;
+        }        isSkating.OnValueChanged += OnSkatingChanged;
         isShooting.OnValueChanged += OnShootingChanged;
 
-        // Listen for team changes
+        // Klausās komandas izmaiņas
         networkTeam.OnValueChanged += (oldTeam, newTeam) => { ApplyTeamColor(newTeam); };
 
-        // Apply color immediately on spawn
+        // Uzreiz piemēro krāsu pie parādīšanās
         ApplyTeamColor(networkTeam.Value);
     }
 
@@ -107,18 +98,16 @@ public class PlayerMovement : NetworkBehaviour
         if (rb == null)
         {
             rb = gameObject.AddComponent<Rigidbody>();
-        }
-
-        // ICE PHYSICS: Enhanced for more realistic ice feel
+        }        // LEDUS FIZIKA: Uzlabota reālistiskākai ledus sajūtai
         rb.useGravity = false;
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
-        rb.mass = 75f; // Slightly lighter for better ice feel
-        rb.linearDamping = 0.1f; // Small amount of damping for realism
-        rb.angularDamping = 5f; // Reduced for more sliding during rotation
+        rb.mass = 75f; // Nedaudz vieglāks labākai ledus sajūtai
+        rb.linearDamping = 0.1f; // Neliels daudzums slāpēšanas reālismam
+        rb.angularDamping = 5f; // Samazināts lielākam slidinājumam rotācijas laikā
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        // Force initial Y position
+        // Piespiedu sākotnējā Y pozīcija
         Vector3 pos = transform.position;
         pos.y = 0.71f;
         transform.position = pos;
@@ -209,60 +198,54 @@ public class PlayerMovement : NetworkBehaviour
             physicsCollider.radius = 0.5f;
             physicsCollider.isTrigger = false;
         }
-    }
-
-    private void Update()
+    }    private void Update()
     {
-        // Only process input for the owner
+        // Apstrādā ievadi tikai īpašniekam
         if (!IsOwner && NetworkManager.Singleton != null) return;
 
         HandleMovementInput();
 
-        // --- MOUSE LOOK WITH SENSITIVITY ---
+        // --- PELES SKATS AR JUTĪGUMU ---
         if (IsOwner && Input.GetKey(KeyCode.LeftAlt))
         {
             float mouseX = Input.GetAxis("Mouse X");
             float mouseSensitivity = 1.0f;
-            // Always get the latest value from GameSettingsManager
+            // Vienmēr iegūst jaunāko vērtību no GameSettingsManager
             if (GameSettingsManager.Instance != null)
                 mouseSensitivity = GameSettingsManager.Instance.mouseSensitivity;
 
-            // Apply mouse sensitivity to camera rotation (horizontal look)
+            // Piemēro peles jutīgumu kameras rotācijai (horizontālā skatīšanās)
             if (playerCamera != null)
             {
                 playerCamera.transform.Rotate(Vector3.up, mouseX * mouseSensitivity * 2.0f, Space.World);
             }
             else
             {
-                // If camera is child of player, rotate player
+                // Ja kamera ir spēlētāja bērns, rotē spēlētāju
                 transform.Rotate(0f, mouseX * mouseSensitivity * 2.0f, 0f);
             }
         }
 
-        // REMOVED: All puck pickup logic - PuckPickup component handles this
-    }
-
-    private void HandleMovementInput()
+        // NOŅEMTS: Visa ripas pacelšanas loģika - PuckPickup komponents to apstrādā
+    }    private void HandleMovementInput()
     {
-        float horizontal = Input.GetAxis("Horizontal"); // A/D for rotation ONLY
-        float vertical = Input.GetAxis("Vertical");     // W/S for movement ONLY
+        float horizontal = Input.GetAxis("Horizontal"); // A/D tikai rotācijai
+        float vertical = Input.GetAxis("Vertical");     // W/S tikai kustībai
         bool sprint = Input.GetKey(KeyCode.LeftShift);
-        bool quickStop = Input.GetKey(KeyCode.Space);   // NEW: Space for quick stopping
+        bool quickStop = Input.GetKey(KeyCode.Space);   // JAUNS: Space taustiņš ātrai apturēšanai
 
-        currentSprintState = sprint;
-
-        if (IsOwner)
+        currentSprintState = sprint;        if (IsOwner)
         {
-            // Store current velocity before any changes
+            // Saglabā pašreizējo ātrumu pirms jebkādām izmaiņām
             Vector3 currentVel = rb != null ? rb.linearVelocity : Vector3.zero;
             float currentHorizontalSpeed = new Vector3(currentVel.x, 0f, currentVel.z).magnitude;
             
-            // ICE PHYSICS: Smoother rotation with momentum preservation
+            // LEDUS FIZIKA: Vienmērīgāka rotācija ar impulsa saglabāšanu
             if (Mathf.Abs(horizontal) > 0.01f)
             {
-                // Rotation happens regardless of movement state - keeps momentum
+                // Rotācija notiek neatkarīgi no kustības stāvokļa - saglabā impulsu
                 float rotationAmount = horizontal * rotationSpeed * Time.deltaTime;
-                // Reduce rotation speed when moving fast for more realistic ice turning
+                // Samazina rotācijas ātrumu, kad kustas ātri, lai būtu reālistiskāki ledus pagriezieni
                 if (currentHorizontalSpeed > 30f)
                 {
                     rotationAmount *= Mathf.Lerp(1f, 0.6f, (currentHorizontalSpeed - 30f) / 70f);
@@ -270,48 +253,47 @@ public class PlayerMovement : NetworkBehaviour
                 transform.Rotate(0f, rotationAmount, 0f);
             }
 
-            // PRIORITY 1: Quick stop with space (overrides everything)
+            // PRIORITĀTE 1: Ātrā apstāšanās ar atstarpi (pārspēj visu)
             if (quickStop && rb != null)
             {
-                // ICE PHYSICS: More gradual stopping (still quick but feels more icy)
-                Vector3 stoppedVel = currentVel * 0.7f; // Less aggressive than 0.5f
+                // LEDUS FIZIKA: Pakāpeniskāka apturēšana (joprojām ātra, bet jūtas vairāk ledaina)
+                Vector3 stoppedVel = currentVel * 0.7f; // Mazāk agresīva nekā 0.5f
                 rb.linearVelocity = new Vector3(stoppedVel.x, currentVel.y, stoppedVel.z);
             }
-            // PRIORITY 2: Active movement input (W/S pressed)
+            // PRIORITĀTE 2: Aktīvā kustības ievade (W/S nospiests)
             else if (Mathf.Abs(vertical) > 0.1f)
             {
-                // ICE PHYSICS: Gradual acceleration instead of instant velocity
+                // LEDUS FIZIKA: Pakāpeniska paātrināšanās pretstatā tūlītējam ātrumam
                 float targetSpeed = sprint ? sprintSpeed : moveSpeed;
                 Vector3 targetDirection = transform.forward * vertical;
                 Vector3 targetVelocity = targetDirection * targetSpeed;
-                
-                if (rb != null)
+                  if (rb != null)
                 {
                     Vector3 currentHorizontalVel = new Vector3(currentVel.x, 0f, currentVel.z);
                     Vector3 velocityDiff = targetVelocity - currentHorizontalVel;
                     
-                    // Apply acceleration force for more realistic ice feel
+                    // Piemēro paātrinājuma spēku reālistiskākai ledus sajūtai
                     float accelForce = acceleration * Time.deltaTime;
                     Vector3 newVelocity;
                     
                     if (velocityDiff.magnitude > accelForce)
                     {
-                        // Gradual acceleration
+                        // Pakāpeniska paātrināšanās
                         newVelocity = currentHorizontalVel + velocityDiff.normalized * accelForce;
                     }
                     else
                     {
-                        // Close enough to target
+                        // Pietiekami tuvu mērķim
                         newVelocity = targetVelocity;
                     }
                     
                     rb.linearVelocity = new Vector3(newVelocity.x, currentVel.y, newVelocity.z);
                 }
             }
-            // PRIORITY 3: Momentum maintenance - ICE PHYSICS: Natural sliding
+            // PRIORITĀTE 3: Impulsa uzturēšana - LEDUS FIZIKA: Dabiska slīdēšana
             else if (currentHorizontalSpeed > 0.1f)
             {
-                // ICE PHYSICS: Apply gradual deceleration when no input
+                // LEDUS FIZIKA: Piemēro pakāpenisku palēnināšanos, kad nav ievades
                 if (rb != null)
                 {
                     Vector3 horizontalVel = new Vector3(currentVel.x, 0f, currentVel.z);
@@ -324,28 +306,26 @@ public class PlayerMovement : NetworkBehaviour
                     }
                     else
                     {
-                        // Almost stopped
+                        // Gandrīz apstājies
                         rb.linearVelocity = new Vector3(0f, currentVel.y, 0f);
                     }
                 }
             }
-            // PRIORITY 4: Complete stop (no velocity adjustment needed)
-            // Let the natural deceleration handle the final stopping
-
-            // FIXED: Update animations based ONLY on active W/S input (not momentum or velocity)
+            // PRIORITĀTE 4: Pilnīga apstāšanās (nav nepieciešama ātruma regulēšana)
+            // Ļauj dabiskai palēnināšanai apstrādāt galīgo apstāšanos            // LABOTS: Atjaunina animācijas TIKAI, balstoties uz aktīvu W/S ievadi (nevis impulsu vai ātrumu)
             if (animator != null)
             {
-                // CRITICAL: Animation ONLY plays when actively pressing W/S, NOT during momentum maintenance
+                // SVARĪGI: Animācija tiek atskaņota TIKAI aktīvi spiežot W/S, NEVIS impulsa uzturēšanas laikā
                 bool isActivelyMoving = Mathf.Abs(vertical) > 0.1f && !quickStop;
                 animator.SetBool("IsSkating", isActivelyMoving);
                 animator.speed = sprint ? 1.5f : 1.0f;
                 
-                // Debug log to verify animation state
-                Debug.Log($"DIAGNOSTIC: Animation - vertical input: {vertical:F2}, isActivelyMoving: {isActivelyMoving}, quickStop: {quickStop}");
+                // Atkļūdošanas ieraksts animācijas stāvokļa pārbaudei
+                Debug.Log($"DIAGNOSTIKA: Animācija - vertikālā ievade: {vertical:F2}, aktīvi kustīgs: {isActivelyMoving}, ātrā apture: {quickStop}");
             }
         }
 
-        // Network sync: Send all inputs including quick stop
+        // Tīkla sinhronizācija: Nosūta visas ievades, ieskaitot ātro apstāšanos
         bool inputChanged = Mathf.Abs(horizontal - lastSentHorizontal) > 0.05f || 
                            Mathf.Abs(vertical - lastSentVertical) > 0.05f || 
                            sprint != lastSentSprint;
@@ -373,13 +353,12 @@ public class PlayerMovement : NetworkBehaviour
         {
             transform.position = clientPosition;
             transform.rotation = clientRotation;
-        }
-        else // NON-OWNER (remote clients) - apply server-side movement
+        }        else // NE-ĪPAŠNIEKS (attālie klienti) - piemēro servera puses kustību
         {
             Vector3 currentVel = rb.linearVelocity;
             float currentHorizontalSpeed = new Vector3(currentVel.x, 0f, currentVel.z).magnitude;
             
-            // ICE PHYSICS: Apply same rotation logic for remote clients
+            // LEDUS FIZIKA: Piemēro tādu pašu rotācijas loģiku attālajiem klientiem
             if (Mathf.Abs(horizontal) > 0.01f)
             {
                 float rotationAmount = horizontal * rotationSpeed * Time.fixedDeltaTime;
@@ -388,16 +367,14 @@ public class PlayerMovement : NetworkBehaviour
                     rotationAmount *= Mathf.Lerp(1f, 0.6f, (currentHorizontalSpeed - 30f) / 70f);
                 }
                 transform.Rotate(0f, rotationAmount, 0f);
-            }
-
-            if (quickStop)
+            }            if (quickStop)
             {
-                Vector3 stoppedVel = currentVel * 0.7f; // Same as owner
+                Vector3 stoppedVel = currentVel * 0.7f; // Tāds pats kā īpašniekam
                 rb.linearVelocity = new Vector3(stoppedVel.x, currentVel.y, stoppedVel.z);
             }
             else if (Mathf.Abs(vertical) > 0.1f)
             {
-                // ICE PHYSICS: Same gradual acceleration for remote clients
+                // LEDUS FIZIKA: Tāda pati pakāpeniskā paātrināšanās attālajiem klientiem
                 float targetSpeed = sprint ? sprintSpeed : moveSpeed;
                 Vector3 targetDirection = transform.forward * vertical;
                 Vector3 targetVelocity = targetDirection * targetSpeed;
@@ -418,10 +395,9 @@ public class PlayerMovement : NetworkBehaviour
                 }
                 
                 rb.linearVelocity = new Vector3(newVelocity.x, currentVel.y, newVelocity.z);
-            }
-            else if (currentHorizontalSpeed > 0.1f)
+            }            else if (currentHorizontalSpeed > 0.1f)
             {
-                // ICE PHYSICS: Same gradual deceleration for remote clients
+                // LEDUS FIZIKA: Tāda pati pakāpeniskā palēnināšanās attālajiem klientiem
                 Vector3 horizontalVel = new Vector3(currentVel.x, 0f, currentVel.z);
                 float decelAmount = deceleration * Time.fixedDeltaTime;
                 
@@ -434,9 +410,7 @@ public class PlayerMovement : NetworkBehaviour
                 {
                     rb.linearVelocity = new Vector3(0f, currentVel.y, 0f);
                 }
-            }
-
-            // REMOTE CLIENTS ONLY: Lock Y position and velocity
+            }            // TIKAI ATTĀLAJIEM KLIENTIEM: Bloķē Y pozīciju un ātrumu
             Vector3 pos = transform.position;
             if (Mathf.Abs(pos.y - 0.71f) > 0.001f)
             {
@@ -463,40 +437,36 @@ public class PlayerMovement : NetworkBehaviour
 
         // Update other clients
         UpdateMovementClientRpc(transform.position, rb != null ? rb.linearVelocity : Vector3.zero, transform.rotation, sprint, quickStop, vertical);
-    }
-
-    [ClientRpc]
+    }    [ClientRpc]
     private void UpdateMovementClientRpc(Vector3 position, Vector3 velocity, Quaternion rotation, bool sprint, bool quickStop, float verticalInput)
     {
-        // Only apply to non-owners (remote players)
+        // Piemēro tikai ne-īpašniekiem (attālajiem spēlētājiem)
         if (!IsOwner && rb != null)
         {
-            // Smooth interpolation to server position for remote players
-            float lerpSpeed = 25f; // Increased from 20f for even faster sync
+            // Vienmērīga interpolācija uz servera pozīciju attālajiem spēlētājiem
+            float lerpSpeed = 25f; // Palielināts no 20f ātrākai sinhronizācijai
             transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * lerpSpeed);
             transform.rotation = Quaternion.Lerp(transform.rotation, rotation, Time.deltaTime * lerpSpeed);
             
-            // Apply velocity for remote players
+            // Piemēro ātrumu attālajiem spēlētājiem
             rb.linearVelocity = velocity;
 
-            // FIXED: Update animations for remote players based on INPUT, not velocity
+            // LABOTS: Atjaunina attālo spēlētāju animācijas, balstoties uz IEVADI, nevis ātrumu
             if (animator != null)
             {
-                // CRITICAL: Use the actual input state from the remote player, not velocity
+                // SVARĪGI: Izmanto faktisko ievades stāvokli no attālā spēlētāja, nevis ātrumu
                 bool isActivelyMoving = Mathf.Abs(verticalInput) > 0.1f && !quickStop;
                 animator.SetBool("IsSkating", isActivelyMoving);
                 animator.speed = sprint ? 1.5f : 1.0f;
             }
         }
-    }
-
-    private void FixedUpdate()
+    }    private void FixedUpdate()
     {
-        // CRITICAL: For HOST/OWNER, handle Y-locking on CLIENT-SIDE ONLY
-        // This prevents server interference with host physics
+        // SVARĪGI: HOST/ĪPAŠNIEKAM apstrādā Y-bloķēšanu TIKAI KLIENTA PUSĒ
+        // Tas novērš servera iejaukšanos hosta fizikā
         if (IsOwner)
         {
-            // HOST: Client-side Y position locking (no server interference)
+            // HOSTS: Klienta puses Y pozīcijas bloķēšana (bez servera iejaukšanās)
             Vector3 pos = transform.position;
             if (Mathf.Abs(pos.y - 0.71f) > 0.01f)
             {
@@ -505,21 +475,21 @@ public class PlayerMovement : NetworkBehaviour
                 if (rb != null)
                 {
                     rb.position = pos;
-                    // Only zero Y velocity, preserve X/Z momentum exactly
+                    // Tikai nulles Y ātrums, saglabā X/Z impulsu precīzi
                     Vector3 vel = rb.linearVelocity;
                     rb.linearVelocity = new Vector3(vel.x, 0f, vel.z);
                 }
             }
 
-            // HOST: Client-side velocity limiting
+            // HOSTS: Klienta puses ātruma ierobežošana
             if (rb != null)
             {
                 Vector3 vel = rb.linearVelocity;
                 float maxSpeed = currentSprintState ? sprintSpeed : moveSpeed;
                 float horizontalSpeed = new Vector3(vel.x, 0f, vel.z).magnitude;
                 
-                // Allow some overshoot for ice physics but cap at reasonable limit
-                float maxAllowed = maxSpeed * 1.3f; // Reduced from 2.0f for more control
+                // Atļauj nelielu pārsniegšanu ledus fizikas dēļ, bet ierobežo līdz saprātīgam limitam
+                float maxAllowed = maxSpeed * 1.3f; // Samazināts no 2.0f labākai kontrolei
                 
                 if (horizontalSpeed > maxAllowed)
                 {
@@ -529,9 +499,9 @@ public class PlayerMovement : NetworkBehaviour
                 }
             }
         }
-        else // NON-OWNER
+        else // NE-ĪPAŠNIEKS
         {
-            // REMOTE CLIENTS: Server handles Y-locking
+            // ATTĀLIE KLIENTI: Serveris apstrādā Y-bloķēšanu
             Vector3 pos = transform.position;
             if (Mathf.Abs(pos.y - 0.71f) > 0.01f)
             {
@@ -545,24 +515,22 @@ public class PlayerMovement : NetworkBehaviour
             }
         }
 
-        // SERVER: Update network variables (but don't interfere with host physics)
+        // SERVERIS: Atjaunina tīkla mainīgos (bet neiejaucas hosta fizikā)
         if (IsServer && rb != null)
         {
             networkPosition.Value = transform.position;
             networkVelocity.Value = rb.linearVelocity;
         }
-    }
-
-    private void ApplyIceFriction()
+    }    private void ApplyIceFriction()
     {
         if (rb == null) return;
 
         Vector3 currentVel = rb.linearVelocity;
-        // ICE PHYSICS: Very minimal friction for true ice feel
+        // LEDUS FIZIKA: Ļoti minimāla berze īstai ledus sajūtai
         rb.linearVelocity = new Vector3(currentVel.x * iceFriction, currentVel.y, currentVel.z * iceFriction);
         
-        // Only stop when velocity is extremely low for realistic ice sliding
-        if (rb.linearVelocity.magnitude < 0.5f) // Increased threshold for more sliding
+        // Apstājas tikai tad, kad ātrums ir ārkārtīgi zems reālistiskai ledus slīdēšanai
+        if (rb.linearVelocity.magnitude < 0.5f) // Palielināts slieksnis lielākai slīdēšanai
         {
             rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
         }
@@ -582,9 +550,7 @@ public class PlayerMovement : NetworkBehaviour
         {
             animator.SetBool("IsShooting", newValue);
         }
-    }
-
-    // Call this from GameNetworkManager after spawning the player object:
+    }    // Izsauc šo no GameNetworkManager pēc spēlētāja objekta parādīšanās:
     [ServerRpc]
     public void SetTeamServerRpc(Team team)
     {
@@ -592,7 +558,7 @@ public class PlayerMovement : NetworkBehaviour
             networkTeam.Value = team;
     }
 
-    // Public method to ensure the player camera is set up (called by GameNetworkManager)
+    // Publiska metode, lai nodrošinātu, ka spēlētāja kamera ir iestatīta (izsauc GameNetworkManager)
     public void EnsurePlayerCamera()
     {
         if (IsOwner && playerCamera == null)
@@ -601,7 +567,7 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-    // This method applies the color to the player object
+    // Šī metode piemēro krāsu spēlētāja objektam
     private void ApplyTeamColor(Team team)
     {
         Color teamColor = team == Team.Blue ? new Color(0f, 0.5f, 1f, 1f) : new Color(1f, 0.2f, 0.2f, 1f);
@@ -616,15 +582,14 @@ public class PlayerMovement : NetworkBehaviour
                 mats[i].color = teamColor;
                 if (mats[i].HasProperty("_Color")) mats[i].SetColor("_Color", teamColor);
                 if (mats[i].HasProperty("_BaseColor")) mats[i].SetColor("_BaseColor", teamColor);
-            }
-            renderer.materials = mats;
+            }            renderer.materials = mats;
         }
         
-        // Note: PlayerTeamVisuals component handles its own team colors via NetworkVariable
-        // No need to call SetTeamColor as it doesn't exist
+        // Piezīme: PlayerTeamVisuals komponents apstrādā savas komandas krāsas caur NetworkVariable
+        // Nav nepieciešams izsaukt SetTeamColor, jo tas neeksistē
     }
 
-    // Add this method to allow PlayerShooting to trigger the shoot animation
+    // Pievieno šo metodi, lai ļautu PlayerShooting aktivizēt šaušanas animāciju
     public void TriggerShootAnimation()
     {
         if (animator != null)
@@ -632,20 +597,18 @@ public class PlayerMovement : NetworkBehaviour
             animator.SetBool("IsShooting", true);
             animator.SetTrigger("Shoot");
             
-            // Reset the shooting animation after a short delay
+            // Atiestata šaušanas animāciju pēc īsa laika
             StartCoroutine(ResetShootAnimation());
             
-            Debug.Log("PlayerMovement: Shoot animation triggered");
+            Debug.Log("PlayerMovement: Šaušanas animācija aktivizēta");
         }
         else
         {
-            Debug.LogWarning("PlayerMovement: Animator is null, cannot trigger shoot animation");
+            Debug.LogWarning("PlayerMovement: Animator ir null, nevar aktivizēt šaušanas animāciju");
         }
-    }
-
-    private System.Collections.IEnumerator ResetShootAnimation()
+    }    private System.Collections.IEnumerator ResetShootAnimation()
     {
-        // Wait for the animation to play
+        // Gaida animācijas atskaņošanu
         yield return new WaitForSeconds(0.5f);
         
         if (animator != null)
