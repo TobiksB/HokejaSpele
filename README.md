@@ -18,7 +18,7 @@ Spele tiek veidota uz Unity 6000.0.24f1 versijas
 # Kā uzstādīt datorspēli?
 
 1. **Lejupielādējiet Hokeja spēlei**
-   - []
+   - [Lejupielādējiet HockeyShot jaunāko versiju](https://github.com/TobiksB/HokejaSpele/releases/tag/Latest)
 2. **Izpakojiet spēles failu**
    - Pēc faila lejupielādes, atveriet to un izvelciet visas lietas, ko lejupielādējāt
 3. **Spēles atvēršana**
