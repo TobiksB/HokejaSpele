@@ -1,5 +1,5 @@
-# Datorspēle "Hokejs"
-Datorspēle "Hokejs" izstrāda Tomijs Būmerts. Hokejs ir sporta spēle, kura galvenais mērķis ir uzvarēt pretinieka komandu, un iegūt vārtus sastrādājoties ar saviem komandas biedriem.
+# Datorspēle "HockeyShot"
+Datorspēle "HockeyShot" izstrāda Tomijs Būmerts. HockeyShot ir sporta spēle, kura galvenais mērķis ir uzvarēt pretinieka komandu, un iegūt vārtus sastrādājoties ar saviem komandas biedriem.
 Spēlē būs 3D izskatā un būs iespēja spēlēt vairākos spēles režīmos, kurus varēs izvēlēties spēlētājs. Šajā spēlē būs iespējams spēlēt ar citiem spēlētājiem kopīgi Multiplayer režīmā vienam pret otru, vai komandā.
 Šī spēle piedāvās režīmus kā: "Treniņu režīms", Tīkla režīms.
 
