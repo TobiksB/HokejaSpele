@@ -143,8 +143,141 @@ namespace HockeyGame.Game
 
             // Update UI
             UpdateTimerUI();
+
+            // --- CRITICAL: Always reset puck at start of quarter, especially Q2 and Q3 ---
+            StartCoroutine(BruteForceResetPuck());
         }
 
+        // --- NEW: Completely reliable puck reset with clear debugging ---
+        private System.Collections.IEnumerator BruteForceResetPuck() 
+        {
+            Debug.LogWarning($"QuarterManager: BRUTE FORCE puck reset at Q{currentQuarter.Value} start");
+            
+            // Wait for physics to stabilize
+            yield return new WaitForSeconds(1.0f);
+            
+            // Find all pucks
+            var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
+            if (allPucks.Length == 0) {
+                Debug.LogError("QuarterManager: No puck found to reset!");
+                yield break;
+            }
+            
+            GameObject puck = allPucks[0].gameObject;
+            Debug.Log($"QuarterManager: Found puck {puck.name} at position {puck.transform.position}");
+            
+            // Force release from any player
+            var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
+            foreach (var player in allPlayers) {
+                if (player.HasPuck()) {
+                    Debug.Log($"QuarterManager: Forcing player {player.name} to release puck");
+                    player.ForceReleasePuckForSteal();
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            
+            // Clear all PuckFollower
+            var puckFollower = puck.GetComponent<PuckFollower>();
+            if (puckFollower != null) {
+                Debug.Log("QuarterManager: Stopping PuckFollower");
+                puckFollower.StopFollowing();
+                puckFollower.enabled = false;
+            }
+            
+            // Teleport to center
+            Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
+            Debug.Log($"QuarterManager: Teleporting puck from {puck.transform.position} to {centerPos}");
+            
+            puck.transform.position = centerPos;
+            puck.transform.rotation = Quaternion.identity;
+            
+            // Reset rigidbody and physics
+            var rb = puck.GetComponent<Rigidbody>();
+            if (rb != null) {
+                rb.isKinematic = false;
+                rb.useGravity = true;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.position = centerPos;
+                rb.rotation = Quaternion.identity;
+                Debug.Log($"QuarterManager: Reset puck rigidbody to {centerPos}");
+            }
+            
+            // Ensure collider is enabled
+            var col = puck.GetComponent<Collider>();
+            if (col != null) {
+                col.enabled = true;
+                Debug.Log("QuarterManager: Enabled puck collider");
+            }
+            
+            // Reset held state
+            var puckComponent = puck.GetComponent<Puck>();
+            if (puckComponent != null) {
+                puckComponent.SetHeld(false);
+                Debug.Log("QuarterManager: Set puck held state to false");
+            }
+            
+            // Tell all clients to reset puck position
+            if (puckComponent != null && IsServer) {
+                var puckNetObj = puck.GetComponent<NetworkObject>();
+                if (puckNetObj != null) {
+                    SetPuckPositionClientRpc(puckNetObj.NetworkObjectId, centerPos);
+                    Debug.Log($"QuarterManager: Sent SetPuckPositionClientRpc to clients for puck {puckNetObj.NetworkObjectId}");
+                }
+            }
+            
+            Debug.LogWarning($"QuarterManager: PUCK RESET COMPLETE - Now at {puck.transform.position}");
+        }
+
+        [ClientRpc]
+        private void SetPuckPositionClientRpc(ulong puckNetworkId, Vector3 position)
+        {
+            Debug.Log($"QuarterManager: CLIENT received SetPuckPositionClientRpc for puck {puckNetworkId}");
+            
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(puckNetworkId, out var netObj))
+            {
+                var puck = netObj.gameObject;
+                Debug.Log($"QuarterManager: CLIENT found puck {puck.name}, setting position to {position}");
+                
+                // Set position
+                puck.transform.position = position;
+                puck.transform.rotation = Quaternion.identity;
+                
+                // Reset physics
+                var rb = puck.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.isKinematic = false;
+                    rb.useGravity = true;
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                    rb.position = position;
+                    rb.rotation = Quaternion.identity;
+                }
+                
+                // End any following
+                var puckFollower = puck.GetComponent<PuckFollower>();
+                if (puckFollower != null)
+                {
+                    puckFollower.StopFollowing();
+                    puckFollower.enabled = false;
+                }
+                
+                // Reset held state
+                var puckComponent = puck.GetComponent<Puck>();
+                if (puckComponent != null)
+                {
+                    puckComponent.SetHeld(false);
+                }
+                
+                Debug.LogWarning($"QuarterManager: CLIENT puck reset complete at {position}");
+            }
+            else
+            {
+                Debug.LogError($"QuarterManager: CLIENT could not find puck with NetworkObjectId {puckNetworkId}");
+            }
+        }
+        
         private void EndQuarter()
         {
             if (!IsServer) return;
@@ -154,13 +287,12 @@ namespace HockeyGame.Game
             // Reset all players to spawn points at end of quarter
             ResetAllPlayersToSpawnPoints();
 
-            // --- Reset puck to center after each quarter ---
-            ResetPuckToCenter();
+            // --- FINAL FIX: Use the same logic as GoalTrigger to reset the puck ---
+            ResetPuckToCenterGoalTriggerStyle();
 
             if (currentQuarter.Value >= totalQuarters)
             {
-                // Show GameOverPanel and do NOT transfer players or change scene
-                ShowGameOverPanel();
+                ShowGameOverPanelClientRpc();
             }
             else
             {
@@ -168,127 +300,280 @@ namespace HockeyGame.Game
             }
         }
 
-        // --- Show GameOverPanel with winner and score, do not transfer players ---
-        private void ShowGameOverPanel()
+        // --- FINAL: Use the exact logic as GoalTrigger for puck reset ---
+        private void ResetPuckToCenterGoalTriggerStyle()
         {
+            StartCoroutine(ResetPuckCoroutineGoalStyle());
+        }
+
+        private System.Collections.IEnumerator ResetPuckCoroutineGoalStyle()
+        {
+            yield return new WaitForSeconds(1.5f); // Wait for player resets and network sync
+
+            // ENHANCED: Multiple strategies to find the puck
+            GameObject puckObject = FindPuckByAllMeans();
+            
+            if (puckObject == null)
+            {
+                Debug.LogError("QuarterManager: No puck found after exhaustive search. Cannot reset!");
+                yield break;
+            }
+            
+            Debug.Log($"QuarterManager: Found puck: {puckObject.name} at position {puckObject.transform.position}");
+            
+            var puckComponent = puckObject.GetComponent<Puck>();
+
+            // Ensure puck is completely free before reset
+            if (puckComponent != null)
+            {
+                puckComponent.SetHeld(false);
+
+                // Clear from any player still holding it
+                var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
+                foreach (var player in allPlayers)
+                {
+                    if (player.GetCurrentPuck() == puckComponent)
+                    {
+                        player.ForceReleasePuckForSteal();
+                        Debug.Log($"QuarterManager: Cleared remaining reference from {player.name}");
+                    }
+                }
+            }
+
+            // Stop any PuckFollower components
+            var puckFollower = puckObject.GetComponent<PuckFollower>();
+            if (puckFollower != null)
+            {
+                puckFollower.StopFollowing();
+                puckFollower.enabled = false;
+            }
+
+            // Proper puck reset to center (same as after goal)
+            Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
+            puckObject.transform.SetParent(null);
+            puckObject.transform.position = centerPos;
+            puckObject.transform.rotation = Quaternion.identity;
+
+            var rb = puckObject.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.useGravity = true;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.position = centerPos;
+            }
+
+            var col = puckObject.GetComponent<Collider>();
+            if (col != null)
+            {
+                col.enabled = true;
+            }
+
+            // Use Puck's ResetToCenter method if available (for network sync)
+            if (puckComponent != null && puckComponent.IsServer)
+            {
+                try
+                {
+                    var resetMethod = puckComponent.GetType().GetMethod("ResetToCenter");
+                    if (resetMethod != null)
+                    {
+                        resetMethod.Invoke(puckComponent, null);
+                        Debug.Log("QuarterManager: Used Puck.ResetToCenter() method for network sync");
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"QuarterManager: Failed to use Puck.ResetToCenter(): {e.Message}");
+                }
+            }
+
+            Debug.Log($"QuarterManager: Puck reset to center after quarter at position {centerPos}");
+        }
+        
+        // New method to find puck using multiple search strategies
+        private GameObject FindPuckByAllMeans()
+        {
+            Debug.Log("QuarterManager: Starting exhaustive puck search using multiple methods...");
+            
+            // Method 1: FindObjectsByType<Puck>
+            var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
+            if (allPucks != null && allPucks.Length > 0)
+            {
+                Debug.Log($"QuarterManager: Found {allPucks.Length} pucks using FindObjectsByType<Puck>");
+                return allPucks[0].gameObject;
+            }
+            
+            // Method 2: FindGameObjectsWithTag
+            var taggedObjects = GameObject.FindGameObjectsWithTag("Puck");
+            if (taggedObjects != null && taggedObjects.Length > 0)
+            {
+                Debug.Log($"QuarterManager: Found {taggedObjects.Length} objects with tag 'Puck'");
+                return taggedObjects[0];
+            }
+            
+            // Method 3: Find objects on puck layer
+            var allObjects = FindObjectsOfType<GameObject>();
+            foreach (var obj in allObjects)
+            {
+                if (obj.layer == LayerMask.NameToLayer("Puck"))
+                {
+                    Debug.Log($"QuarterManager: Found object {obj.name} on 'Puck' layer");
+                    return obj;
+                }
+            }
+            
+            // Method 4: Find by name contains
+            foreach (var obj in allObjects)
+            {
+                if (obj.name.ToLower().Contains("puck"))
+                {
+                    Debug.Log($"QuarterManager: Found object with 'puck' in name: {obj.name}");
+                    return obj;
+                }
+            }
+            
+            // Method 5: Last resort - create a new puck
+            Debug.LogWarning("QuarterManager: No puck found! Creating a new puck at center position.");
+            var newPuck = new GameObject("EmergencyPuck");
+            newPuck.transform.position = new Vector3(0f, 0.71f, 0f);
+            newPuck.transform.rotation = Quaternion.identity;
+            newPuck.tag = "Puck";
+            newPuck.layer = LayerMask.NameToLayer("Puck");
+            var rb = newPuck.AddComponent<Rigidbody>();
+            rb.useGravity = true;
+            rb.constraints = RigidbodyConstraints.None;
+            newPuck.AddComponent<SphereCollider>().radius = 0.5f;
+            
+            // Add a simple Puck component
+            if (newPuck.GetComponent<Puck>() == null)
+            {
+                newPuck.AddComponent<Puck>();
+            }
+            
+            return newPuck;
+        }
+
+        // --- Show GameOverPanel on ALL clients ---
+        [ClientRpc]
+        private void ShowGameOverPanelClientRpc()
+        {
+            Debug.Log("QuarterManager: [ClientRpc] ShowGameOverPanelClientRpc called on client");
+            
+            // Force immediate execution on main thread
+            StartCoroutine(ShowGameOverPanelCoroutine());
+        }
+
+        private System.Collections.IEnumerator ShowGameOverPanelCoroutine()
+        {
+            yield return null; // Wait one frame
+            
+            Debug.Log("QuarterManager: [Coroutine] Starting GameOver panel search and display");
+            
+            // Get scores from all possible sources
             int redScore = 0, blueScore = 0;
             var scoreManager = ScoreManager.Instance;
             if (scoreManager != null)
             {
                 redScore = scoreManager.GetRedScore();
                 blueScore = scoreManager.GetBlueScore();
+                Debug.Log($"QuarterManager: Got scores from ScoreManager - Red: {redScore}, Blue: {blueScore}");
             }
 
-            // Try inspector reference first, then fallback to FindObjectOfType
+            // Try multiple ways to find the GameOverPanel
             GameOverPanel panelToUse = gameOverPanel;
+            
             if (panelToUse == null)
             {
                 panelToUse = FindFirstObjectByType<GameOverPanel>();
+                Debug.Log($"QuarterManager: FindFirstObjectByType result: {(panelToUse != null ? panelToUse.name : "null")}");
+            }
+            
+            if (panelToUse == null)
+            {
+                var panelGO = GameObject.Find("GameOverPanel");
+                if (panelGO != null)
+                {
+                    panelToUse = panelGO.GetComponent<GameOverPanel>();
+                    Debug.Log($"QuarterManager: Found by GameObject.Find: {panelGO.name}");
+                }
+            }
+            
+            if (panelToUse == null)
+            {
+                // Search in all canvases
+                var allCanvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+                foreach (var canvas in allCanvases)
+                {
+                    var panel = canvas.GetComponentInChildren<GameOverPanel>(true);
+                    if (panel != null)
+                    {
+                        panelToUse = panel;
+                        Debug.Log($"QuarterManager: Found GameOverPanel in canvas: {canvas.name}");
+                        break;
+                    }
+                }
             }
 
             if (panelToUse != null)
             {
+                Debug.Log($"QuarterManager: Found GameOverPanel: {panelToUse.name}, activating...");
+                
+                // Force activate the panel's game object first
+                panelToUse.gameObject.SetActive(true);
+                
+                // Wait a frame for activation
+                yield return null;
+                
+                // Now show the game over screen
                 panelToUse.ShowGameOver(redScore, blueScore);
-                Debug.Log($"QuarterManager: Game over panel shown with scores Red: {redScore}, Blue: {blueScore}");
+                
+                Debug.Log($"QuarterManager: GameOverPanel activated and ShowGameOver called!");
             }
             else
             {
-                Debug.LogWarning("QuarterManager: GameOverPanel not found in scene!");
-                
-                // Fallback: Create a temporary game over panel
-                var tempPanel = new GameObject("TempGameOverPanel");
-                var canvas = tempPanel.AddComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                canvas.sortingOrder = 100;
-                
-                var background = tempPanel.AddComponent<UnityEngine.UI.Image>();
-                background.color = new Color(0, 0, 0, 0.8f);
-                
-                var text = new GameObject("GameOverText");
-                text.transform.SetParent(tempPanel.transform);
-                var textComponent = text.AddComponent<TMPro.TextMeshProUGUI>();
-                textComponent.text = $"Game Over!\nRed: {redScore} - Blue: {blueScore}";
-                textComponent.fontSize = 36;
-                textComponent.color = Color.white;
-                textComponent.alignment = TMPro.TextAlignmentOptions.Center;
-                
-                var rectTransform = text.GetComponent<RectTransform>();
-                rectTransform.anchorMin = Vector2.zero;
-                rectTransform.anchorMax = Vector2.one;
-                rectTransform.sizeDelta = Vector2.zero;
-                rectTransform.anchoredPosition = Vector2.zero;
-                
-                Debug.Log("QuarterManager: Created temporary game over panel");
+                Debug.LogError("QuarterManager: Could not find GameOverPanel anywhere! Creating fallback...");
+                CreateFallbackGameOverUI(redScore, blueScore);
             }
         }
 
-        // --- Reset puck to center after each quarter ---
-        private void ResetPuckToCenter()
+        // --- Create a simple fallback UI if GameOverPanel is missing ---
+        private void CreateFallbackGameOverUI(int redScore, int blueScore)
         {
-            var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
-            if (allPucks.Length == 0)
-            {
-                Debug.LogWarning("QuarterManager: No puck found to reset after quarter.");
-                return;
-            }
-
-            foreach (var puck in allPucks)
-            {
-                if (puck == null) continue;
-
-                // Clear any references to this puck from players
-                var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
-                foreach (var player in allPlayers)
-                {
-                    if (player.GetCurrentPuck() == puck)
-                    {
-                        player.ForceReleasePuckForSteal();
-                    }
-                }
-
-                // Stop PuckFollower
-                var puckFollower = puck.GetComponent<PuckFollower>();
-                if (puckFollower != null)
-                {
-                    puckFollower.StopFollowing();
-                    puckFollower.enabled = false;
-                }
-
-                // Reset physics
-                var rb = puck.GetComponent<Rigidbody>();
-                if (rb != null)
-                {
-                    rb.isKinematic = false;
-                    rb.useGravity = true;
-                    rb.linearVelocity = Vector3.zero;
-                    rb.angularVelocity = Vector3.zero;
-                }
-
-                var col = puck.GetComponent<Collider>();
-                if (col != null) col.enabled = true;
-
-                puck.SetHeld(false);
-
-                // Move to center spawn position
-                Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
-                puck.transform.position = centerPos;
-                puck.transform.rotation = Quaternion.identity;
-
-                if (rb != null)
-                {
-                    rb.position = centerPos;
-                    rb.rotation = Quaternion.identity;
-                }
-
-                // Use Puck's ResetToCenter method if available for network sync
-                var resetMethod = puck.GetType().GetMethod("ResetToCenter");
-                if (resetMethod != null)
-                {
-                    resetMethod.Invoke(puck, null);
-                }
-
-                Debug.Log("QuarterManager: Puck reset to center after quarter end.");
-            }
+            var tempPanel = new GameObject("FallbackGameOverPanel");
+            var canvas = tempPanel.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 100;
+            
+            var canvasScaler = tempPanel.AddComponent<UnityEngine.UI.CanvasScaler>();
+            canvasScaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasScaler.referenceResolution = new Vector2(1920, 1080);
+            
+            tempPanel.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            
+            var background = tempPanel.AddComponent<UnityEngine.UI.Image>();
+            background.color = new Color(0, 0, 0, 0.8f);
+            
+            var text = new GameObject("GameOverText");
+            text.transform.SetParent(tempPanel.transform);
+            var textComponent = text.AddComponent<TMPro.TextMeshProUGUI>();
+            
+            string winner = "Draw!";
+            if (redScore > blueScore) winner = "Red Team Wins!";
+            else if (blueScore > redScore) winner = "Blue Team Wins!";
+            
+            textComponent.text = $"{winner}\nRed: {redScore} - Blue: {blueScore}\n\nGame Over";
+            textComponent.fontSize = 48;
+            textComponent.color = Color.white;
+            textComponent.alignment = TMPro.TextAlignmentOptions.Center;
+            
+            var rectTransform = text.GetComponent<RectTransform>();
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.sizeDelta = Vector2.zero;
+            rectTransform.anchoredPosition = Vector2.zero;
+            
+            Debug.Log("QuarterManager: Created fallback game over UI successfully");
         }
 
         // --- NEW: Reset all players to their spawn points (same as after a goal) ---

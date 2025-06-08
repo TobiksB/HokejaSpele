@@ -6,7 +6,7 @@ public class GameOverPanel : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI winnerText;
-    [SerializeField] private TextMeshProUGUI scoreText; // Add this in the inspector
+    [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button exitButton;
 
@@ -40,17 +40,17 @@ public class GameOverPanel : MonoBehaviour
         Color winnerColor;
         if (redScore > blueScore)
         {
-            winner = "Red Won!";
+            winner = "Sarkanā komanda uzvarēja!";
             winnerColor = redColor;
         }
         else if (blueScore > redScore)
         {
-            winner = "Blue Won!";
+            winner = "Zilā komanda uzvarēja!";
             winnerColor = blueColor;
         }
         else
         {
-            winner = "Draw!";
+            winner = "Neizšķirts!";
             winnerColor = Color.gray;
         }
 

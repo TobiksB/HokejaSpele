@@ -59,8 +59,8 @@
     <UnityVersion>6000.0.24f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Users\evita\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.1.2\Analyzers\Microsoft.Unity.Analyzers.dll" />
-    <Analyzer Include="C:\Users\evita\Desktop\HokejaSpele\Library\PackageCache\com.unity.transport\Analyzers\Unity.Transport.Analyzers.dll" />
+    <Analyzer Include="C:\Users\user\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.1.2\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="C:\Users\user\Desktop\HokejaSpele\Library\PackageCache\com.unity.transport\Analyzers\Unity.Transport.Analyzers.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.24f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -114,6 +114,7 @@
     <Compile Include="Assets\Scripts\GameScripts\PlayerShooting.cs" />
     <Compile Include="Assets\Scripts\GameScripts\PuckFollower.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextInfoDebugTool.cs" />
+    <Compile Include="Assets\Scripts\Managers\GameStateManager.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameConfig2v2.cs" />
     <Compile Include="Assets\Scripts\GameScripts\ScoreManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeA.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Assets\Scripts\GameScripts\CameraFollowFix.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ChatController.cs" />
     <Compile Include="Assets\Scripts\GameScripts\QuarterTransitionPanel.cs" />
+    <Compile Include="Assets\Scripts\MenuScripts\MainMenuManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_FrameRateCounter.cs" />
     <Compile Include="Assets\Scripts\GameScripts\CompilationErrorFixInstructions.cs" />
@@ -134,19 +136,23 @@
     <Compile Include="Assets\Scripts\ClientNetworkTransform.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\CameraController.cs" />
     <Compile Include="Assets\Scripts\GameScripts\QuarterManager.cs" />
+    <Compile Include="Assets\Scripts\Audio\AudioManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark03.cs" />
     <Compile Include="Assets\Scripts\GameScripts\HockeyGameNamespace.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameManagerHelper.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\GameNetworkManager.cs" />
+    <Compile Include="Assets\Scripts\UI\LobbyChatManager.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\DebugConsole.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\DropdownSample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexColorCycler.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameUI.cs" />
+    <Compile Include="Assets\Scripts\UI\GameSettingsManager.cs" />
     <Compile Include="Assets\Scripts\GameScripts\PlayerTeam.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ObjectSpin.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyPanelManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GoalTrigger.cs" />
+    <Compile Include="Assets\Scripts\UI\QuarterDisplayUI.cs" />
     <Compile Include="Assets\Scripts\GameScripts\InputManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextConsoleSimulator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TeleType.cs" />
