@@ -132,6 +132,18 @@ public class GameOverPanel : MonoBehaviour
             }
         }
 
+        // Find and destroy GameSettingsManager to prevent duplicates when restarting
+        var gameSettingsManager = FindObjectOfType<GameSettingsManager>();
+        if (gameSettingsManager != null)
+        {
+            Debug.Log("GameOverPanel: Destroying GameSettingsManager before returning to MainMenu");
+            Destroy(gameSettingsManager.gameObject);
+        }
+        else
+        {
+            Debug.Log("GameOverPanel: No GameSettingsManager found to destroy");
+        }
+
         Time.timeScale = 1f;
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }

@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
+using Unity.Netcode;
 
 namespace HockeyGame.Game
 {
@@ -22,6 +24,7 @@ namespace HockeyGame.Game
         [SerializeField] private Button settingsBackButton;
 
         private bool isPaused = false;
+        private float previousTimeScale;
 
         private void Awake()
         {
@@ -52,7 +55,7 @@ namespace HockeyGame.Game
                 settingsButton.onClick.AddListener(OpenSettings);
 
             if (mainMenuButton != null)
-                mainMenuButton.onClick.AddListener(GoToMainMenu);
+                mainMenuButton.onClick.AddListener(ReturnToMainMenu);
 
             if (exitButton != null)
                 exitButton.onClick.AddListener(ExitGame);
@@ -124,10 +127,9 @@ namespace HockeyGame.Game
 
         public void PauseGame()
         {
-            if (isPaused) return;
-
-            isPaused = true;
+            previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
+            isPaused = true;
 
             if (pausePanel != null)
                 pausePanel.SetActive(true);
@@ -220,8 +222,53 @@ namespace HockeyGame.Game
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
 
+        public void ReturnToMainMenu()
+        {
+            // Find and destroy GameSettingsManager to prevent duplicates when returning to MainMenu
+            var gameSettingsManager = FindObjectOfType<GameSettingsManager>();
+            if (gameSettingsManager != null)
+            {
+                Debug.Log("PauseMenuManager: Destroying GameSettingsManager before returning to MainMenu");
+                Destroy(gameSettingsManager.gameObject);
+            }
+            else
+            {
+                Debug.Log("PauseMenuManager: No GameSettingsManager found to destroy");
+            }
+
+            // Shutdown networking if running
+            if (Unity.Netcode.NetworkManager.Singleton != null)
+            {
+                try
+                {
+                    if (Unity.Netcode.NetworkManager.Singleton.IsHost || Unity.Netcode.NetworkManager.Singleton.IsServer || Unity.Netcode.NetworkManager.Singleton.IsClient)
+                    {
+                        Unity.Netcode.NetworkManager.Singleton.Shutdown();
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"PauseMenuManager: Error shutting down NetworkManager: {e.Message}");
+                }
+            }
+
+            // Reset time scale (in case it was paused)
+            Time.timeScale = 1f;
+
+            // Load main menu
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        }
+
         public void ExitGame()
         {
+            // Find and destroy GameSettingsManager before exiting
+            var gameSettingsManager = FindObjectOfType<GameSettingsManager>();
+            if (gameSettingsManager != null)
+            {
+                Debug.Log("PauseMenuManager: Destroying GameSettingsManager before exiting game");
+                Destroy(gameSettingsManager.gameObject);
+            }
+
             Time.timeScale = 1f;
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;

@@ -77,11 +77,13 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_A.cs" />
     <Compile Include="Assets\Scripts\GameScripts\CameraFollow.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameOverPanel.cs" />
+    <Compile Include="Assets\Scripts\GameScripts\TrainingPuckPickup.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark02.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameTypes.cs" />
     <Compile Include="Assets\Scripts\GameScripts\Player.cs" />
     <Compile Include="Assets\Scripts\GameScripts\CameraFollowHelper.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameManager.cs" />
+    <Compile Include="Assets\Scripts\GameScripts\TrainingPlayerShooting.cs" />
     <Compile Include="Assets\Scripts\UI\PlayerListItem.cs" />
     <Compile Include="Assets\Scripts\Utils\FileLogger.cs" />
     <Compile Include="Assets\Scripts\GameScripts\NetworkUI.cs" />
@@ -116,9 +118,11 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextInfoDebugTool.cs" />
     <Compile Include="Assets\Scripts\Managers\GameStateManager.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameConfig2v2.cs" />
+    <Compile Include="Assets\Scripts\GameScripts\TrainingModeGoalTrigger.cs" />
     <Compile Include="Assets\Scripts\GameScripts\ScoreManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeA.cs" />
     <Compile Include="Assets\Scripts\GameScripts\PlayerCameraFix.cs" />
+    <Compile Include="Assets\Scripts\GameScripts\TrainingPlayerMovement.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01_UGUI.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SimpleScript.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark04.cs" />
@@ -126,6 +130,7 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ChatController.cs" />
     <Compile Include="Assets\Scripts\GameScripts\QuarterTransitionPanel.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\MainMenuManager.cs" />
+    <Compile Include="Assets\Scripts\GameScripts\TrainingModeManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_FrameRateCounter.cs" />
     <Compile Include="Assets\Scripts\GameScripts\CompilationErrorFixInstructions.cs" />
@@ -141,7 +146,9 @@
     <Compile Include="Assets\Scripts\GameScripts\HockeyGameNamespace.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameManagerHelper.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\GameNetworkManager.cs" />
+    <Compile Include="Assets\Scripts\GameScripts\TrainingHUD.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyChatManager.cs" />
+    <Compile Include="Assets\Scripts\GameScripts\TrainingResetUI.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\DebugConsole.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\DropdownSample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexColorCycler.cs" />
@@ -162,7 +169,6 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshProFloatingText.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\RelayManager.cs" />
     <Compile Include="Assets\Scripts\GameScripts\PlayerSpawner.cs" />
-    <Compile Include="Assets\Scripts\GameScripts\GameConfig4v4.cs" />
     <Compile Include="Assets\Scripts\Extensions\UIExtensions.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\LobbyPlayerData.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\LobbyPanelManager.cs" />

@@ -295,7 +295,7 @@ AudioSource:
   m_PlayOnAwake: 1
   m_Volume: 0.303
   m_Pitch: 1
-  Loop: 1
+  Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -1247,73 +1247,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!1 &1803995316
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1803995318}
-  - component: {fileID: 1803995317}
-  m_Layer: 0
-  m_Name: MenuScripts
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1803995317
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1803995316}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adb8979a3a047d4429be5b4a92276199, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainMenuPanel: {fileID: 407518950}
-  gamemodePanel: {fileID: 58971004}
-  settingsPanel: {fileID: 1162346019}
-  lobbyPanel: {fileID: 1901828026}
-  createOrJoinPanel: {fileID: 1706830871}
-  playButton: {fileID: 198944429}
-  settingsButton: {fileID: 1421357071}
-  exitButton: {fileID: 1509372507}
-  backButtons:
-  - {fileID: 70571014}
-  - {fileID: 536680214}
-  - {fileID: 1155447834}
-  createLobbyButton: {fileID: 886827235}
-  joinLobbyButton: {fileID: 2029402597}
-  backToMainMenuButton: {fileID: 536680214}
-  trainingButton: {fileID: 1176726480}
-  mode2v2Button: {fileID: 1836642050}
-  mode4v4Button: {fileID: 0}
-  joinLobbyCodeInput: {fileID: 1867436868}
-  joinLobbyConfirmButton: {fileID: 2029402597}
-  debugConsoleButton: {fileID: 0}
-  debugConsole: {fileID: 0}
-  buildLogger: {fileID: 0}
---- !u!4 &1803995318
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1803995316}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 559.809, y: 236.05444, z: 3.6826978}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1836642050 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7124518995962797927, guid: 1df020a6622fbe446bb88d38f211a1c7, type: 3}
@@ -2136,6 +2069,135 @@ PrefabInstance:
       insertIndex: 3
       addedObject: {fileID: 1901828031}
   m_SourcePrefab: {fileID: 100100000, guid: bad6a6a955df52a418d591187bfdb37f, type: 3}
+--- !u!1001 &1964587331090972083
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5538691755612604830, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_Name
+      value: MenuScripts
+      objectReference: {fileID: 0}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: exitButton
+      value: 
+      objectReference: {fileID: 1509372507}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: lobbyPanel
+      value: 
+      objectReference: {fileID: 1901828026}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: playButton
+      value: 
+      objectReference: {fileID: 198944429}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: gamemodePanel
+      value: 
+      objectReference: {fileID: 58971004}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: mainMenuPanel
+      value: 
+      objectReference: {fileID: 407518950}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: mode2v2Button
+      value: 
+      objectReference: {fileID: 1836642050}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: settingsPanel
+      value: 
+      objectReference: {fileID: 1162346019}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: settingsButton
+      value: 
+      objectReference: {fileID: 1421357071}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: trainingButton
+      value: 
+      objectReference: {fileID: 1176726480}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: joinLobbyButton
+      value: 
+      objectReference: {fileID: 2029402597}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: createLobbyButton
+      value: 
+      objectReference: {fileID: 886827235}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: createOrJoinPanel
+      value: 
+      objectReference: {fileID: 1706830871}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: joinLobbyCodeInput
+      value: 
+      objectReference: {fileID: 1867436868}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: backToMainMenuButton
+      value: 
+      objectReference: {fileID: 536680214}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: joinLobbyConfirmButton
+      value: 
+      objectReference: {fileID: 2029402597}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: 'backButtons.Array.data[0]'
+      value: 
+      objectReference: {fileID: 70571014}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: 'backButtons.Array.data[1]'
+      value: 
+      objectReference: {fileID: 536680214}
+    - target: {fileID: 6730417754326088962, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: 'backButtons.Array.data[2]'
+      value: 
+      objectReference: {fileID: 1155447834}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 559.809
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 236.05444
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 3.6826978
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8216420952830638532, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 876b728cd03b46744901d68f9e21ae27, type: 3}
 --- !u!1001 &2363027227067575417
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3226,4 +3288,4 @@ SceneRoots:
   - {fileID: 1108565339}
   - {fileID: 296313936}
   - {fileID: 4383543523808094799}
-  - {fileID: 1803995318}
+  - {fileID: 1964587331090972083}
