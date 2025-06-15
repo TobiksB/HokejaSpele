@@ -352,8 +352,9 @@ public class PlayerMovement : NetworkBehaviour
     [ServerRpc]
     private void MoveServerRpc(float horizontal, float vertical, bool sprint, bool quickStop, Vector3 clientPosition, Quaternion clientRotation)
     {
+        // ja neitek piesaistīts rigidbody, tad nekas netiek darīts
         if (rb == null) return;
-
+        // saglabā vai spēlētājs skrien
         currentSprintState = sprint;
 
         if (IsOwner) 

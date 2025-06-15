@@ -73,7 +73,6 @@
     <Compile Include="Assets\Scripts\GameScripts\Puck.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\PlayerList.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\EnvMapAnimator.cs" />
-    <Compile Include="Assets\Scripts\GameScripts\CameraFollowExtensions.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_A.cs" />
     <Compile Include="Assets\Scripts\GameScripts\CameraFollow.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameOverPanel.cs" />
@@ -81,7 +80,6 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark02.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameTypes.cs" />
     <Compile Include="Assets\Scripts\GameScripts\Player.cs" />
-    <Compile Include="Assets\Scripts\GameScripts\CameraFollowHelper.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameManager.cs" />
     <Compile Include="Assets\Scripts\GameScripts\TrainingPlayerShooting.cs" />
     <Compile Include="Assets\Scripts\UI\PlayerListItem.cs" />
@@ -91,7 +89,6 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMPro_InstructionOverlay.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeB.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\MenuManager.cs" />
-    <Compile Include="Assets\Scripts\GameScripts\PlayerCamera.cs" />
     <Compile Include="Assets\Scripts\GameScripts\ClientNetworkTransform.cs" />
     <Compile Include="Assets\Scripts\GameScripts\PauseMenuManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexJitter.cs" />
@@ -109,8 +106,6 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\WarpTextExample.cs" />
     <Compile Include="Assets\Scripts\GameScripts\PlayerTeamVisuals.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ShaderPropAnimator.cs" />
-    <Compile Include="Assets\Scripts\PlayerCamera.cs" />
-    <Compile Include="Assets\Scripts\MenuScripts\PlayerListItem.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GameTimer.cs" />
     <Compile Include="Assets\Scripts\GameScripts\PlayerStamina.cs" />
     <Compile Include="Assets\Scripts\GameScripts\PlayerShooting.cs" />
@@ -121,19 +116,16 @@
     <Compile Include="Assets\Scripts\GameScripts\TrainingModeGoalTrigger.cs" />
     <Compile Include="Assets\Scripts\GameScripts\ScoreManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeA.cs" />
-    <Compile Include="Assets\Scripts\GameScripts\PlayerCameraFix.cs" />
     <Compile Include="Assets\Scripts\GameScripts\TrainingPlayerMovement.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01_UGUI.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SimpleScript.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark04.cs" />
-    <Compile Include="Assets\Scripts\GameScripts\CameraFollowFix.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\ChatController.cs" />
     <Compile Include="Assets\Scripts\GameScripts\QuarterTransitionPanel.cs" />
     <Compile Include="Assets\Scripts\MenuScripts\MainMenuManager.cs" />
     <Compile Include="Assets\Scripts\GameScripts\TrainingModeManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_FrameRateCounter.cs" />
-    <Compile Include="Assets\Scripts\GameScripts\CompilationErrorFixInstructions.cs" />
     <Compile Include="Assets\Scripts\GameScripts\StaminaBar.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshSpawner.cs" />
@@ -160,7 +152,6 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
     <Compile Include="Assets\Scripts\GameScripts\GoalTrigger.cs" />
     <Compile Include="Assets\Scripts\UI\QuarterDisplayUI.cs" />
-    <Compile Include="Assets\Scripts\GameScripts\InputManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextConsoleSimulator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TeleType.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextEventCheck.cs" />

@@ -47,6 +47,8 @@ public class LobbyManager : MonoBehaviour
     [Header("Tīkla konfigurācija")]
     [SerializeField] private GameObject networkManagerPrefab; // Pievieno savu NetworkManager prefabu šeit
 
+    /// Inicializē un iestata LobbyManager. Pārbauda, vai jau eksistē dublēta instance un iznīcina to.
+    /// Veic sākotnējo NetworkManager iestatīšanu.
     private void Awake()
     {
         if (Instance == null)
@@ -58,7 +60,7 @@ public class LobbyManager : MonoBehaviour
             // Iestatīt noklusējuma spēles režīmu uz 2v2, lai nodrošinātu, ka CanStartMatch darbojas pareizi
             selectedGameMode = GameMode.Mode2v2;
 
-            // LABOTS: Vienkārša NetworkManager iestatīšana
+            //  Vienkārša NetworkManager iestatīšana
             EnsureNetworkManagerExists();
         }
         else
@@ -68,7 +70,9 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Metode, kas nodrošina NetworkManager komponenta esamību un pareizu konfigurāciju
+    /// Nodrošina NetworkManager komponenta esamību un pareizu konfigurāciju.
+    /// Meklē esošu NetworkManager vai izveido jaunu no prefaba.
+    /// Noņem dublētus NetworkPrefabs un pārbauda NetworkObject komponentes, kas varētu izraisīt kļūdas.
     private void EnsureNetworkManagerExists()
     {
         // Izmantot FindObjectsByType nevis novecojušo FindObjectsOfType
@@ -144,7 +148,7 @@ public class LobbyManager : MonoBehaviour
              
                 RemoveInvalidNetworkPrefabs(networkManager);
 
-                //  Pārliecināties, ka PlayerPrefab ir piešķirts NetworkManager.NetworkConfig ---
+                //  Pārliecināties, ka PlayerPrefab ir piešķirts NetworkManager.NetworkConfig
                 if (networkManager.NetworkConfig != null && networkManager.NetworkConfig.PlayerPrefab == null)
                 {
                     // Mēģināt piešķirt Player prefabu no Resources vai inspektora
@@ -216,7 +220,10 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Noņem NetworkManager no NetworkPrefabs saraksta, jo tas var izraisīt kļūdas
+    
+    /// Noņem NetworkManager no NetworkPrefabs saraksta, lai novērstu kļūdas, jo NetworkManager
+    /// nevar būt NetworkPrefab.
+    
     private void RemoveInvalidNetworkPrefabs(NetworkManager nm)
     {
         if (nm.NetworkConfig?.Prefabs == null) return;
@@ -235,7 +242,11 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Vienkāršota rezerves NetworkManager izveide gadījumā, ja prefabs nav pieejams
+    
+    /// Izveido vienkāršu NetworkManager gadījumā, ja prefabs nav pieejams.
+    /// Konfigurē pamata komponentes un iestatījumus, kas nepieciešami NetworkManager darbībai.
+    /// Šis ir rezerves variants, ja prefabs nav piešķirts inspektorā.
+    
     private void CreateBasicNetworkManager()
     {
         Debug.Log("LobbyManager: Veidojam pamata NetworkManager kā rezerves variantu...");
@@ -246,8 +257,6 @@ public class LobbyManager : MonoBehaviour
         networkManager.NetworkConfig.ConnectionApproval = false;
         networkManager.NetworkConfig.Prefabs = new Unity.Netcode.NetworkPrefabs();
 
-        // NEPIEVIENOT NetworkObject objektam NetworkManager!
-        // ...existing code...
         var transport = networkManagerGO.AddComponent<UnityTransport>();
         networkManager.NetworkConfig.NetworkTransport = transport;
         networkManagerGO.AddComponent<GameNetworkManager>();
@@ -256,6 +265,11 @@ public class LobbyManager : MonoBehaviour
         Debug.Log("LobbyManager: Basic NetworkManager created with proper configuration");
     }
 
+    
+    /// Galvenā atjaunināšanas metode, kas regulāri notiek katru kadru.
+    /// Pārvalda lobija "sirdspukstus" un atjauninājumus aptaujāšanu.
+    /// Aptur lobija operācijas, ja nav MainMenu scenā.
+    
     private void Update()
     {
         // KRITISKI: Apstrādāt lobija operācijas tikai MainMenu scenā
@@ -270,7 +284,11 @@ public class LobbyManager : MonoBehaviour
         PollLobbyForUpdates();
     }
 
-    // Metode, kas nodrošina regulārus "sirdspukstus" lobijam, lai tas paliktu aktīvs
+    
+    /// Nodrošina regulārus "sirdspukstus" Unity Lobby servisam.
+    /// Lobijs automātiski aizveras, ja nesaņem regulārus heartbeat signālus no resursdatora.
+    /// Šī metode nodrošina, ka lobijs paliek aktīvs.
+    
     private void HandleLobbyHeartbeat()
     {
         if (currentLobby != null && IsLobbyHost())
@@ -291,8 +309,11 @@ public class LobbyManager : MonoBehaviour
     // Karogs, kas novērš vairākkārtēju scēnas sākšanu
     private bool clientStartedGame = false;
 
-    // Palīgmetode robustu lobija API izsaukumu veikšanai ar eksponenciālo atpakaļspiedienu
-    // Šī metode mēģina izsaukt API, un ja saņem ātruma ierobežojuma kļūdu (429), pagaida un mēģina vēlreiz
+    
+    /// Palīgmetode, kas ļauj izpildīt Lobby API izsaukumus ar eksponenciālo atpakaļspiedienu.
+    /// Ja saņem 429 kļūdu (Too Many Requests), palielina gaidīšanas laiku un mēģina vēlreiz.
+    
+
     private async Task<T> LobbyApiWithBackoff<T>(Func<Task<T>> apiCall, string context = "")
     {
         int retries = 0;
@@ -327,7 +348,11 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Metode, kas periodiski aptaujā lobija stāvokli, lai iegūtu jaunāko informāciju
+    
+    /// Regulāri pārbauda lobija stāvokli, lai iegūtu jaunāko informāciju.
+    /// Atjaunina lokālos spēlētāju datus, komandas, gatavības statusu.
+    /// Arī pārvalda klienta releja pievienošanās loģiku un spēles sākšanu.
+    
     private async void PollLobbyForUpdates()
     {
         if (currentLobby == null) return;
@@ -355,7 +380,6 @@ public class LobbyManager : MonoBehaviour
             {
                 var lobby = await LobbyApiWithBackoff(() => LobbyService.Instance.GetLobbyAsync(currentLobby.Id), "PollLobbyForUpdates");
                 
-                // ADDED: Notify LobbyChatManager of lobby data updates
                 if (HockeyGame.UI.LobbyChatManager.Instance != null)
                 {
                     HockeyGame.UI.LobbyChatManager.Instance.OnLobbyDataUpdated(lobby);
@@ -402,7 +426,7 @@ public class LobbyManager : MonoBehaviour
                     }
 
                     // --- Klienta releju pievienošanās loģika ---
-                    // --- IZMAIŅA: Sākt klientu tikai, ja RelayCode ir norādīts UN GameStarted ir "true" ---
+                    //  Sākt klientu tikai, ja RelayCode ir norādīts UN GameStarted ir "true" ---
                     bool gameStarted = currentLobby.Data != null && currentLobby.Data.ContainsKey("GameStarted") && currentLobby.Data["GameStarted"].Value == "true";
                     if (!IsLobbyHost() && currentLobby.Data != null && currentLobby.Data.ContainsKey("RelayCode"))
                     {
@@ -536,7 +560,10 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Metode, kas izveido jaunu lobiju un atgriež pievienošanās kodu
+    
+    /// Metode, kas izveido jaunu lobiju un atgriež pievienošanās kodu
+    
+
     public async Task<string> CreateLobby(int maxPlayers)
     {
         try
@@ -625,7 +652,10 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Metode, kas pārbauda, vai relejs ir konfigurēts pareizi
+    
+    /// Pārbauda, vai Unity Relay ir pareizi konfigurēts.
+    /// Veic transporta konfigurācijas validāciju, lai pārliecinātos par savienojuma iestatījumiem.
+    
     public bool IsRelayConfigured()
     {
         var networkManager = FindOrCreateNetworkManager();
@@ -651,20 +681,20 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Atgriež pašreizējo releja pievienošanās kodu
+    
+    /// Atgriež pašreizējo releja pievienošanās kodu.
+    
     public string GetCurrentRelayJoinCode()
     {
         return relayJoinCode;
     }
 
-    // Šī metode izveido Unity Relay servera piešķīrumu, lai hostētu tīkla spēli.
-    // To drīkst izsaukt tikai lobija resursdators (host). 
-    // Tiek nodrošināts, ka vienlaikus nevar notikt vairākas releja izveides (izmantojot relayCreationInProgress karogu).
-    // Ja kāds cits process jau izveido releju, šī metode pagaidīs un atgriezīs jau izveidoto kodu.
-    // Ja relejs jau ir izveidots, atgriežam esošo kodu, lai novērstu lieku izveidi.
-    // Ja nepieciešams, inicializē Unity pakalpojumus un autentificē lietotāju anonīmi.
-    // Pēc veiksmīgas izveides tiek konfigurēts Unity Transport ar iegūtajiem releja datiem un validēts, vai konfigurācija ir korekta.
-    // Ja notiek kļūda, karogi tiek atiestatīti, lai nākamais mēģinājums varētu notikt korekti.
+    
+    /// Izveido Unity Relay servera piešķīrumu, lai hostētu tīkla spēli.
+    /// To drīkst izsaukt tikai lobija resursdators (host).
+    /// Nodrošina, ka vienlaikus nevar notikt vairākas releja izveides.
+    /// Konfigurē Unity Transport ar iegūtajiem releja datiem.
+    
     public async Task<string> CreateRelay()
     {
         if (!IsLobbyHost())
@@ -695,7 +725,7 @@ public class LobbyManager : MonoBehaviour
             }
         }
 
-        // LABOTS: Ja relejs jau izveidots, atgriezt esošo kodu
+        //  Ja relejs jau izveidots, atgriezt esošo kodu
         if (hostRelayCreated && !string.IsNullOrEmpty(relayJoinCode))
         {
             Debug.Log($"[LobbyManager] Relejs jau izveidots, atgriežam esošo kodu: {relayJoinCode}");
@@ -797,27 +827,30 @@ public class LobbyManager : MonoBehaviour
             // SOLIS 4: Apiešanas risinājums Unity Transport adreses kļūdai
             await Task.Delay(500);
             
-            var connectionData = transport.ConnectionData;
+            var connectionData = transport.ConnectionData; // iegustam transporta savienojuma datus
             Debug.Log($"Transporta konfigurācijas rezultāts:");
             Debug.Log($"  Adrese: {connectionData.Address}");
             Debug.Log($"  Ports: {connectionData.Port}");
             Debug.Log($"  Protokols: {transport.Protocol}");
 
-            //  Accept relay configuration if protocol is RelayUnityTransport
-            bool isRelayConfigured = false;
+            bool isRelayConfigured = false; // pienemam ka relay nav konfigurets
             
             if (transport.Protocol == Unity.Netcode.Transports.UTP.UnityTransport.ProtocolType.RelayUnityTransport)
+            // Ja tiek izmantots Relay protokols, 
+            // konfigurācija tiek uzskatīta par derīgu.
             {
                 isRelayConfigured = true;
                 Debug.Log("✓ Releja konfigurācija VALIDĒTA - izmanto releja protokolu (Unity Transport adreses kļūdas apiešanas risinājums)");
             }
             else if (connectionData.Address == allocation.RelayServer.IpV4 && connectionData.Port == allocation.RelayServer.Port)
+            //Ja adrese un ports precīzi sakrīt ar piešķīruma (allocation) servera datiem, arī tiek uzskatīts, ka viss ir pareizi.
             {
                 isRelayConfigured = true;
                 Debug.Log("✓ Releja konfigurācija VALIDĒTA - precīza adreses atbilstība");
             }
-            else if (!string.IsNullOrEmpty(connectionData.Address) && 
-                     connectionData.Address != "127.0.0.1" && 
+            // ja adrese nav tuksa vai nav lokala tiek pienemts savienojums 
+            else if (!string.IsNullOrEmpty(connectionData.Address) &&
+                     connectionData.Address != "127.0.0.1" &&
                      connectionData.Address != "localhost")
             {
                 isRelayConfigured = true;
@@ -828,7 +861,7 @@ public class LobbyManager : MonoBehaviour
             {
                 Debug.LogWarning("Releja konfigurācijas validācija neizdevās, bet tas var būt Unity Transport adreses kļūdas dēļ");
                 Debug.LogWarning("Turpinām tik un tā, jo piešķīrums izdevās un protokols ir iestatīts pareizi");
-                isRelayConfigured = true; // Piespiedu pieņemšana pagaidām
+                isRelayConfigured = true; // Piespiedu pieņemšana pagaidām, lai netraucetu parejo darbību
             }
 
             //  Saglabāt releja kodu un atzīmēt kā izveidotu
@@ -838,7 +871,7 @@ public class LobbyManager : MonoBehaviour
             Debug.Log("✓ Releja izveide un konfigurācija pabeigta veiksmīgi!");
             Debug.Log($"  Gala transporta protokols: {transport.Protocol}");
             Debug.Log($"  Saglabātais releja kods: {relayJoinCode}");
-            Debug.Log($"  Piezīme: Adrese var rādīt 127.0.0.1 Unity kļūdas dēļ, bet relejs ir pareizi konfigurēts");
+            Debug.Log($"  Piezīme: Adrese var rādīt 127.0.0.1 Unity kļūdas dēļ, bet relejs ir pareizi konfigurēts"); // sis notiek ja mes piespiezam pienemt 
             
             return joinCode;
         }
@@ -847,19 +880,22 @@ public class LobbyManager : MonoBehaviour
             Debug.LogError($"Neizdevās izveidot releju: {e.Message}");
             Debug.LogError($"Steka izsekošana: {e.StackTrace}");
             
-            //  Atiestatīt karodziņus neveiksmīgas izveides gadījumā
+            //  Ja netiek izveidots tad nonemam nost true no hostrelaycreated
             hostRelayCreated = false;
             relayJoinCode = null;
             throw;
         }
         finally
         {
-            // Vienmēr atbrīvojam relayCreationInProgress karogu, lai citi varētu mēģināt izveidot releju
             relayCreationInProgress = false;
         }
     }
 
-    // Piespiedu spēles sākšana, pat ja ne visi nosacījumi ir izpildīti (galvenokārt izmanto testēšanai)
+    
+    /// Piespiedu spēles sākšana, pat ja ne visi nosacījumi ir izpildīti.
+    /// Saglabā komandu datus, izveido Unity Relay (ja nepieciešams) un uzsāk spēli.
+    /// Izmantojama testēšanai vai kad administratīvi nepieciešams sākt spēli.
+    
     public async void ForceStartMatch()
     {
         if (!CanStartMatch())
@@ -877,7 +913,7 @@ public class LobbyManager : MonoBehaviour
 
         if (IsLobbyHost())
         {
-            // LABOTS: Veidot releju tikai tad, ja tas vēl nav izveidots
+            // Veidot releju tikai tad, ja tas vēl nav izveidots
             if (!hostRelayCreated && string.IsNullOrEmpty(relayJoinCode))
             {
                 Debug.Log("[LobbyManager] RESURSDATORS: Veidojam releja piešķīrumu spēles sākšanai...");
@@ -897,7 +933,6 @@ public class LobbyManager : MonoBehaviour
 
             Debug.Log($"[LobbyManager] RESURSDATORS: Iestatām releja kodu lobijā: '{relayJoinCode}'");
 
-            // --- Izmantojam robustu palīgu UpdateLobbyAsync izsaukšanai ---
             try
             {
                 var updateOptions = new UpdateLobbyOptions
@@ -917,7 +952,7 @@ public class LobbyManager : MonoBehaviour
                 return;
             }
 
-            // --- AIZSARDZĪBA: Gaidiet, līdz lobija dati izplatās, pirms sākt spēli ---
+            // Gaidiet, līdz lobija dati izplatās, pirms sākt spēli ---
             Debug.Log("[LobbyManager] RESURSDATORS: Gaidām, līdz releja kods tiek izplatīts lobija datos...");
             float waitTime = 0f;
             const float maxWait = 60f; // Palielinām maksimālo gaidīšanas laiku līdz 60s
@@ -991,23 +1026,23 @@ public class LobbyManager : MonoBehaviour
     // =====================
     // Šī metode ļauj klientam pievienoties esošam lobijam pēc koda.
     // Soļi un paskaidrojumi:
-    // 1. Inicializē Unity Services un autentificē lietotāju anonīmi, ja tas vēl nav izdarīts (nepieciešams, lai izmantotu Lobby API).
+    // 1. Inicializē Unity Services un autentifikē lietotāju anonīmi, ja tas vēl nav izdarīts (nepieciešams, lai izmantotu Lobby API).
     // 2. Izsauc LobbyService.Instance.JoinLobbyByCodeAsync ar norādīto kodu un spēlētāja datiem (iegūstam lobija objektu no servera).
     // 3. Pēc veiksmīgas pievienošanās atjauno lokālos vārdnīcu datus (playerNames, playerTeams, playerReadyStates), lai tie atbilstu lobija stāvoklim.
     // 4. Ja lobijā jau ir relay kods, klients var sākt relay pievienošanās procesu (JoinRelay), kas ļauj pieslēgties tīkla spēlei, kad host to uzsāk.
     // 5. Ja notiek kļūda, tiek izvadīts kļūdas paziņojums, bet UI tiek atjaunināts, lai atspoguļotu aktuālo stāvokli.
     // Šī loģika nodrošina, ka klients vienmēr ir sinhronizēts ar lobija stāvokli un gatavs pievienoties spēlei, kad host to uzsāk.
-    public async Task JoinLobby(string lobbyCode)
+    public async Task JoinLobby(string lobbyCode) // Pievienošanās esošam lobijam pēc koda
     {
         Debug.Log($"Mēģinām pievienoties lobijam ar kodu: {lobbyCode}");
         
-        // Pārliecināties, ka Unity Services un Authentication ir inicializēti
+        // Pārliecināties, ka Unity Services un Authentication ir inicializēti savak inicialize
         if (!UnityServices.State.Equals(ServicesInitializationState.Initialized))
         {
             Debug.Log("JoinLobby: Inicializējam Unity Services...");
             await UnityServices.InitializeAsync();
         }
-        if (!AuthenticationService.Instance.IsSignedIn)
+        if (!AuthenticationService.Instance.IsSignedIn) // ja speletajs nav pierakstijis, tiek veikts anonims pieraksts
         {
             Debug.Log("JoinLobby: Ielogojoties anonīmi...");
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
@@ -1015,23 +1050,23 @@ public class LobbyManager : MonoBehaviour
         
         try
         {
-            var joinOptions = new JoinLobbyByCodeOptions
+            var joinOptions = new JoinLobbyByCodeOptions // tiek izveidots join option objekts kura ieklauts ir speletaja info un ad ar to pievienojas
             {
-                Player = GetLobbyPlayer()
+                Player = GetLobbyPlayer() // sis info 
             };
             currentLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode, joinOptions);
             Debug.Log($"Veiksmīgi pievienojies lobijam: {currentLobby.Name}");
             
-            // FIXED: Initialize dictionaries before updating from lobby
+            // parbauda un inicalize vārdnīcas kur tiek glabati speletaju vārdi, komandas un gatavības stāvoklis
             if (playerNames == null) playerNames = new Dictionary<string, string>();
             if (playerTeams == null) playerTeams = new Dictionary<string, string>();
             if (playerReadyStates == null) playerReadyStates = new Dictionary<string, bool>();
             
-            // Update local player data from lobby
+            //  sinhronize lokalos datus ar datiem no lobija (vards, komanda, gataviba)
             UpdateLocalPlayerDataFromLobby();
             
-            // Get relay code from lobby data and join relay
             relayConfiguredForClient = false;
+            // iegust relay kodu no lobija datiem, ja tas ir pieejams
             if (currentLobby.Data != null && currentLobby.Data.ContainsKey("RelayCode"))
             {
                 string relayCode = currentLobby.Data["RelayCode"].Value;
@@ -1063,18 +1098,20 @@ public class LobbyManager : MonoBehaviour
             relayConfiguredForClient = false;
         }
         
-        // Force UI update
+        // atjauno speletaja UI
         UpdatePlayerListUI();
         
         Debug.Log("Lobby join process completed");
     }
 
-    // Atjaunina lokālos datus ar jaunāko informāciju no lobija
+    
+    /// Atjaunina lokālos datus ar jaunāko informāciju no lobija
+    
     private void UpdateLocalPlayerDataFromLobby()
     {
         if (currentLobby == null) return;
         
-        // FIXED: Initialize dictionaries if null
+        // Pārliecināties, ka vārdnīcas ir inicializētas
         if (playerNames == null) playerNames = new Dictionary<string, string>();
         if (playerTeams == null) playerTeams = new Dictionary<string, string>();
         if (playerReadyStates == null) playerReadyStates = new Dictionary<string, bool>();
@@ -1104,7 +1141,11 @@ public class LobbyManager : MonoBehaviour
         Debug.Log($"Updated player data from lobby. Total players: {playerNames.Count}");
     }
 
-    // Pārbauda, vai var sākt spēli, pamatojoties uz spēlētāju skaitu, komandu sadalījumu un gatavības statusu
+    
+    /// Pārbauda, vai var sākt spēli, pamatojoties uz spēlētāju skaitu, komandu sadalījumu
+    /// un gatavības statusu. Loģika atšķiras atkarībā no izvēlētā spēles režīma.
+    
+    /// <returns>true, ja spēli var sākt, citādi false</returns>
     private bool CanStartMatch()
     {
         if (playerNames.Count == 0)
@@ -1155,22 +1196,29 @@ public class LobbyManager : MonoBehaviour
         return hasMinimumPlayers && allPlayersReady && hasTeamAssignment;
     }
 
-    // Atjaunina lobija datus serverī ar lokālajām izmaiņām
+    
+    /// Atjaunina lobija datus serverī ar lokālajām izmaiņām.
+    /// Izmanto Unity Lobby API, lai sinhronizētu spēlētāja datus (vārdu, komandu, gatavību).
+    
     private async void UpdateLobbyData()
     {
-        if (currentLobby == null) return;
-        if (Time.realtimeSinceStartup - lastLobbyUpdateTime < MIN_UPDATE_INTERVAL)
+        if (currentLobby == null) return; // kamer nav lobijs neko nedara
+        if (Time.realtimeSinceStartup - lastLobbyUpdateTime < MIN_UPDATE_INTERVAL) // netjauno parak biezi ar ieksejo timeri unity
         {
             Debug.Log("Skipping lobby update due to rate limit");
             return;
         }
         try
         {
+            // Atjauno pedejas atjauninasanas laiku, iegust speletaja ID un sagatvo opcijas objektu UpdatePlayerOptions
             lastLobbyUpdateTime = Time.realtimeSinceStartup;
             string playerId = AuthenticationService.Instance.PlayerId;
             var options = new UpdatePlayerOptions();
+            // Ja speletajs pievienots komandai tad playerTeams.ContainKey(....)
+            // Tiek sagatavoti 3 dati, vards, komanda un gatavības stāvoklis
             if (playerTeams.ContainsKey(playerId))
             {
+                // dati tiek iestatiti ka PlayerDataObject ar redzamibu member nozime to ka redzami tikai lobby dalibniekiem
                 options.Data = new Dictionary<string, PlayerDataObject>
                 {
                     { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, playerNames[playerId]) },
@@ -1178,18 +1226,24 @@ public class LobbyManager : MonoBehaviour
                     { "IsReady", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, playerReadyStates.ContainsKey(playerId) ? playerReadyStates[playerId].ToString().ToLower() : "false") }
                 };
                 await LobbyService.Instance.UpdatePlayerAsync(currentLobby.Id, playerId, options);
+                // nosuta speletaju info uz lobby serveri, izmantojot Unity Multiplayer pakalpojumus
+                // Tādejādi citi spēlētāji atuajuno statusu bez nepieciešamības restartēt lobiju.
             }
         }
         catch (System.Exception e)
         {
             Debug.LogError($"Failed to update player data: {e.Message}");
+            // Ja atjaunošanas laiā notiek kļūda izvada ziņojumu 
         }
     }
 
-    // Nodrošina unikālus spēlētāju vārdus, pievienojot skaitli, ja vārds jau eksistē
-    private string EnsureUniquePlayerName(string baseName, string playerId)
+    
+    /// Nodrošina unikālus spēlētāju vārdus, pievienojot skaitli, ja vārds jau eksistē.
+    /// Pārbauda visus spēlētāju vārdus un pievieno sufiksu, ja nepieciešams.
+    
+    private string EnsureUniquePlayerName(string baseName, string playerId) // Vārds, ko spēlētājs izvēlas izmantot un Unikals ID
     {
-        // First, check if the base name is already unique
+        // Cauriet visus vārdu playerNames vārdnīca, ja kāds cits spēlētājs jau izmanto šo vārdu tad tas nav unikāls 
         bool isUnique = true;
         foreach (var kvp in playerNames)
         {
@@ -1200,13 +1254,14 @@ public class LobbyManager : MonoBehaviour
             }
         }
         
+        // ja vārds ir unikāls vienkārši atgriež to
         if (isUnique)
         {
             Debug.Log($"LobbyManager: Player name '{baseName}' is unique");
             return baseName;
         }
-        
-        // If not unique, append a suffix to make it unique
+
+        // Ja vārds nav unikāls, pievieno sufiksu, lai padarītu to unikālu piemērām Jānis_1 utt
         string uniqueName = baseName;
         int suffix = 1;
         
@@ -1226,19 +1281,21 @@ public class LobbyManager : MonoBehaviour
             
             suffix++;
             
-            // Safety check to prevent infinite loop
             if (suffix > 100)
             {
                 uniqueName = $"{baseName}_{UnityEngine.Random.Range(1000, 9999)}";
                 break;
             }
         }
-        
+        // atgriež unikālo vārdu
         Debug.Log($"LobbyManager: Made unique player name: '{baseName}' -> '{uniqueName}'");
         return uniqueName;
     }
 
-    // Iestata spēlētāja komandu un atjaunina UI
+    
+    /// Iestata spēlētāja komandu un atjaunina UI.
+    /// Saglabā komandas izvēli lokāli un aktualizē serverī.
+    
     public void SetPlayerTeam(string playerId, string team)
     {
         if (playerTeams.ContainsKey(playerId))
@@ -1256,14 +1313,17 @@ public class LobbyManager : MonoBehaviour
         RefreshPlayerList();
     }
 
-    // Saglabā spēlētāju komandu datus, lai tie būtu pieejami spēles scēnā
+    
+    /// Saglabā spēlētāju komandu datus, lai tie būtu pieejami spēles scēnā.
+    /// Kombinē datus formātā, kas ļauj tos ielādēt spēles scēnā.
+    
     private void StoreTeamDataForGameScene()
     {
         Debug.Log("========== STORING TEAM DATA FOR GAME SCENE ==========");
         
         List<string> teamDataEntries = new List<string>();
         
-        //  Validate we have player data to store
+        //  ja nav neviena spēlētāja vai komandu datu tiek pārtraukta darbība uz izvadīta kļūda
         if (playerNames == null || playerNames.Count == 0)
         {
             Debug.LogError("LobbyManager: No player names available for team data storage!");
@@ -1276,8 +1336,8 @@ public class LobbyManager : MonoBehaviour
             return;
         }
         
-        // Saglaba speletaja izveletas komandas datus 
         var allClientIds = new List<string>();
+        // izveido sarakstu ar visiem spēlētāju ID un sakārto tos pēc alfabēta, lai būtu konsistenti
         foreach (var kvp in playerNames)
         {
             allClientIds.Add(kvp.Key);
@@ -1285,13 +1345,14 @@ public class LobbyManager : MonoBehaviour
         allClientIds.Sort(); 
         
         Debug.Log($"LobbyManager: All player IDs (sorted): [{string.Join(", ", allClientIds)}]");
-        
-        // Saglabājam komandu datus katram spēlētājam
+
+        // Atrod viņa vārdu(playerNames)
+        // pārbauda vai viņs jau izvēlējies komandu(playerTeams)
         for (int i = 0; i < allClientIds.Count; i++)
         {
             string authId = allClientIds[i];
             string playerName = playerNames.ContainsKey(authId) ? playerNames[authId] : $"Player_{authId.Substring(0, Mathf.Min(4, authId.Length))}";
-            
+
             // Izmanto spēlētāja izvēlēto komandu, ja tā ir pieejama, pretējā gadījumā izmanto sarkano
             string team = "Red"; // Default fallback
             if (playerTeams.ContainsKey(authId))
@@ -1305,17 +1366,17 @@ public class LobbyManager : MonoBehaviour
                 team = (i % 2 == 0) ? "Red" : "Blue";
                 Debug.LogWarning($"LobbyManager: Player {i}: {playerName} (ID: {authId}) has NO team selection, using fallback: {team}");
             }
-            
+
             // parbauda vai izveleta komanda atbilst pieļaujamajām komandām
             if (team != "Red" && team != "Blue")
             {
                 Debug.LogWarning($"LobbyManager: Invalid team '{team}' for player {playerName}, defaulting to Red");
                 team = "Red";
             }
-            
+
             teamDataEntries.Add($"{playerName}:{team}:{authId}");
         }
-        
+        // serializē visus datus viena tekstā un saglabā
         string serializedData = string.Join("|", teamDataEntries);
         PlayerPrefs.SetString("AllPlayerTeams", serializedData);
         Debug.Log($"LobbyManager: Stored combined team data: {serializedData}");
@@ -1333,10 +1394,10 @@ public class LobbyManager : MonoBehaviour
             Debug.LogError($"  Actual: {validationData}");
         }
         
-        // saglaba individuālos komandu datus katram spēlētājam
         foreach (var authId in allClientIds)
         {
             string team = playerTeams.ContainsKey(authId) ? playerTeams[authId] : "Red";
+            // saglaba inviduālos komandu datus katram spēlētājiem
             PlayerPrefs.SetString($"PlayerTeam_{authId}", team);
             Debug.Log($"LobbyManager: Stored individual team choice - {authId} -> {team}");
         }
@@ -1361,27 +1422,31 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogError($"LobbyManager: Error storing local player team: {e.Message}");
         }
-        
+        // parliecinās vai visi dati ir fiziski ierakstīti ierīce
         PlayerPrefs.Save();
         Debug.Log($"LobbyManager: ✓ ALL TEAM DATA SAVED SUCCESSFULLY");
         Debug.Log($"====================================================");
     }
 
-    // Klienta pieslēgšanās Unity Relay, izmantojot pievienošanās kodu
+    
+    /// Klienta pieslēgšanās Unity Relay, izmantojot pievienošanās kodu.
+    /// Konfigurē UnityTransport komponenti ar klienta releju datiem.
+    
     public async Task JoinRelay(string joinCode)
     {
+        // ja spēlētājs ir host tiek izvadīts brīdinājums un metode tiek pārtraukta
         if (IsLobbyHost())
         {
             Debug.LogWarning("[LobbyManager] Host should never join relay as client!");
             return;
         }
         Debug.Log($"[Relay] Client PlayerId: {AuthenticationService.Instance.PlayerId}, JoinCode: {joinCode}");
-
+        // ja netiek padots relay kods tiek izmesta kļūda
         if (string.IsNullOrEmpty(joinCode))
         {
             throw new System.Exception("Join code is null or empty");
         }
-
+        // Maksimāli 3 mēģinājumi pievienoties relay
         int maxRetries = 3;
         int retryCount = 0;
         while (retryCount < maxRetries)
@@ -1389,12 +1454,14 @@ public class LobbyManager : MonoBehaviour
             try
             {
                 Debug.Log($"[LobbyManager] JoinRelay attempt {retryCount + 1}: Joining allocation with code {joinCode}");
+                // Iegūst relay servera informāciju kas vajadzīga lai pieslēgots kā klients
                 JoinAllocation allocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
                 if (allocation == null)
                 {
                     throw new System.Exception("Join allocation returned null");
                 }
                 
+                // tiek iegūts transporta komponents no networkmanager - nepieciešams, lai konfigurētu savieonojumu ar releju
                 var transport = NetworkManager.Singleton?.GetComponent<UnityTransport>();
                 if (transport == null)
                 {
@@ -1402,6 +1469,7 @@ public class LobbyManager : MonoBehaviour
                 }
                 
                 Debug.Log($"[LobbyManager] JoinRelay attempt {retryCount + 1}: Setting client relay data");
+                // te ir visi dati kas nepieciešami lai pieslēgotos relay serverim
                 transport.SetClientRelayData(
                     allocation.RelayServer.IpV4,
                     (ushort)allocation.RelayServer.Port,
@@ -1417,13 +1485,14 @@ public class LobbyManager : MonoBehaviour
           
                 Debug.Log($"[LobbyManager] JoinRelay attempt {retryCount + 1}: Validating transport configuration");
                 Debug.Log($"  Protocol: {transport.Protocol}");
-                
+                // ja transporta protokols nav iestaitts uz relay režimu tiek izmesta kļuda
                 if (transport.Protocol != Unity.Netcode.Transports.UTP.UnityTransport.ProtocolType.RelayUnityTransport)
                 {
                     throw new System.Exception($"Transport protocol not set to relay after SetClientRelayData. Current: {transport.Protocol}");
                 }
                 
                 Debug.Log($"[LobbyManager] JoinRelay attempt {retryCount + 1}: SUCCESS - relay configured");
+                // ja viss ir veiksmīgi tad tiek atzīmēts, ka relay savienojums ir veiksmīģi konfigurēts
                 relayConfiguredForClient = true;
                 return;
             }
@@ -1447,10 +1516,14 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Izveido Player objektu Unity Lobby servisam
+    
+    /// Izveido Player objektu Unity Lobby servisam
+    
     private Unity.Services.Lobbies.Models.Player GetLobbyPlayer()
     {
+        // katram Unity lietotājam ir unikāls ID
         string playerId = AuthenticationService.Instance.PlayerId;
+        // ja ir setingsmanager izmanto taja definēto lietotājvārdu
         string playerName = SettingsManager.Instance != null ?
             SettingsManager.Instance.PlayerName :
             $"Player{UnityEngine.Random.Range(1000, 9999)}";
@@ -1458,14 +1531,16 @@ public class LobbyManager : MonoBehaviour
    
         playerName = EnsureUniquePlayerName(playerName, playerId);
         
-        // Vienmer parbauda vai lobija irs peletaji pirms izveido speletajus
+        // Vārdnības glabā visu spēlētāju stāvokli 
         if (playerNames == null) playerNames = new Dictionary<string, string>();
         if (playerTeams == null) playerTeams = new Dictionary<string, string>();
         if (playerReadyStates == null) playerReadyStates = new Dictionary<string, bool>();
+        // Noklusējuma komanda ir "Red", ja nav norādīta un gatavības statuss false
         playerNames[playerId] = playerName;
         playerTeams[playerId] = "Red";
         playerReadyStates[playerId] = false;
         Debug.Log($"GetLobbyPlayer: ENSURED lobby player data - Name: {playerName}, Team: Red, ID: {playerId}");
+        // Tiek atgriezts ka Unity player objekts ko nosūta uz lobby
         return new Unity.Services.Lobbies.Models.Player
         {
             Data = new Dictionary<string, PlayerDataObject>
@@ -1481,26 +1556,32 @@ public class LobbyManager : MonoBehaviour
     public event System.Action OnClientReadyForGame;
 
 
-    // Karogs, kas norāda, vai klienta relejs ir konfigurēts
+    // bool mainīgais kas pārbauda vai klients ir konfigurēts ar releju
     private bool relayConfiguredForClient = false;
 
-
-    // Pārbauda, vai klients ir gatavs pievienoties spēlei
+    
+    /// Pārbauda, vai klients ir gatavs pievienoties spēlei.
+    /// Veic papildu validāciju, lai pārliecinātos, ka transports ir pareizi konfigurēts.
+    
+    /// true, ja klients ir gatavs pievienoties spēlei, citādi false
     public bool IsClientReadyForGame()
     {
+        // mainīga vētība tiks iestatīta pēc veiksmīgas releja konfigurācijas
         if (!relayConfiguredForClient)
         {
             return false;
         }
         
-        // Double-check transport is actually configured
+        // unity transport komponente instance kas ir atbildīga par tīkla savienojumu 
         var transport = NetworkManager.Singleton?.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>();
+        // notikums ja nav konfigurēts networkmanager vai transporta kompenente nav piesaistīta
         if (transport == null)
         {
             Debug.LogWarning("[LobbyManager] IsClientReadyForGame: Transport is null");
             return false;
         }
         
+        // tiek pārbaudīts vai tīkla savienojums izmanto tieši relay protokolu
         bool isReady = transport.Protocol == Unity.Netcode.Transports.UTP.UnityTransport.ProtocolType.RelayUnityTransport;
         
         if (!isReady)
@@ -1513,15 +1594,17 @@ public class LobbyManager : MonoBehaviour
         return isReady;
     }
 
-    // Atgriež pašreizējo lobija objektu
+    
+    /// Atgriež pašreizējo lobija objektu.
+    
     public Lobby GetCurrentLobby()
     {
         return currentLobby;
     }
 
-
-
-    // Pārbauda, vai pašreizējais spēlētājs ir lobija resursdators
+    
+    /// Pārbauda, vai pašreizējais spēlētājs ir lobija resursdators (host).
+    
     public bool IsLobbyHost()
     {
    
@@ -1530,14 +1613,20 @@ public class LobbyManager : MonoBehaviour
         return AuthenticationService.Instance.PlayerId == currentLobby.HostId;
     }
 
-    // Atjauno spēlētāju saraksta UI
+    
+    /// Atjauno spēlētāju saraksta UI ar jaunākajiem datiem.
+    /// Pārbūvē UI un atjaunina pogu stāvokļus.
+    
     public void RefreshPlayerList()
     {
         UpdatePlayerListUI();
         UpdateStartButtonState();
     }
 
-    // Pārslēdz spēlētāja gatavības statusu
+    
+    /// Pārslēdz spēlētāja gatavības statusu.
+    /// Ja visi spēlētāji ir gatavi un izpildīti citi nosacījumi, resursdators var automātiski sākt spēli.
+    
     public void SetPlayerReady(string playerId)
     {
         bool currentState = IsPlayerReady(playerId);
@@ -1587,38 +1676,54 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Pārbauda, vai spēlētājs ir atzīmējis gatavību
+    
+    /// Pārbauda, vai spēlētājs ir atzīmējis gatavību.
+   
     public bool IsPlayerReady(string playerId)
     {
         return playerReadyStates.ContainsKey(playerId) && playerReadyStates[playerId];
     }
 
-    // Pārbauda, vai spēlētājs ir zilajā komandā
+    
+    /// Pārbauda, vai spēlētājs ir zilajā komandā.
+    
+ 
     public bool IsPlayerBlueTeam(string playerId)
     {
         return playerTeams.ContainsKey(playerId) && playerTeams[playerId] == "Blue";
     }
 
-    // Sāk spēli (paredzēts saukšanai no UI)
+    
+    /// Sāk spēli (paredzēts saukšanai no UI).
+    /// Publiska metode, ko var izsaukt no UI pogām.
+    
     public void StartMatch()
     {
         StartMatchAsync();
     }
 
-    // Asinhronā versija spēles sākšanai
+    
+    /// Asinhronā versija spēles sākšanai.
+    /// Nodrošina, ka spēles sākšanas process notiek asinhronā kontekstā.
+    
     private async void StartMatchAsync()
     {
         await StartMatchInternal();
     }
 
-    // Iekšējā implementācija spēles sākšanai
+    
+    /// Iekšējā implementācija spēles sākšanai.
+    
     private async Task StartMatchInternal()
     {
 
         ForceStartMatch();
     }
 
-    // Pievieno jaunu tērzēšanas ziņu
+    
+    /// Pievieno jaunu tērzēšanas ziņu.
+    /// Uztur maksimālo ziņu skaitu, noņemot vecākās ziņas, ja nepieciešams.
+
     public void AddChatMessage(string message)
     {
         if (chatMessages.Count >= MAX_CHAT_MESSAGES)
@@ -1627,21 +1732,28 @@ public class LobbyManager : MonoBehaviour
        
     }
 
-    // Iestata izvēlēto spēles režīmu
+    
+    /// Iestata izvēlēto spēles režīmu.
+   
     public void SetGameMode(GameMode mode)
     {
         selectedGameMode = mode;
         Debug.Log($"Game mode set to: {mode}");
     }
 
-    // Atgriež vārdnīcu ar spēlētāja ID un komandu kartējumu
+    
+    /// Atgriež vārdnīcu ar spēlētāja ID un komandu kartējumu.
+
     public Dictionary<string, string> GetAuthIdToTeamMapping()
     {
   
         return new Dictionary<string, string>(playerTeams);
     }
 
-    // Atrod vai izveido NetworkManager komponenti
+    
+    /// Atrod vai izveido NetworkManager komponenti.
+    /// Vispirms meklē esošu NetworkManager vai izveido jaunu, ja nepieciešams.
+
     public NetworkManager FindOrCreateNetworkManager()
     {
 
@@ -1670,7 +1782,10 @@ public class LobbyManager : MonoBehaviour
         return networkManager;
     }
 
-    // Atjaunina spēlētāju saraksta UI ar jaunākajiem datiem
+    
+    /// Atjaunina spēlētāju saraksta UI ar jaunākajiem datiem.
+    /// Izveido LobbyPlayerData objektus un nodod tos UI atjaunināšanai.
+    
     public void UpdatePlayerListUI()
     {
         // izveidot speletaju ui
@@ -1725,8 +1840,10 @@ public class LobbyManager : MonoBehaviour
 
     }
 
-
-    // Īpašība, kas norāda, vai resursdators var sākt spēli
+    
+    /// Īpašība, kas norāda, vai resursdators var sākt spēli.
+    /// Pārbauda, vai ir pietiekams spēlētāju skaits, vai visi ir gatavi un vai komandu sadalījums ir pareizs.
+    
     public bool CanForceStart
     {
         get
@@ -1760,13 +1877,19 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Atjaunina sākšanas pogas stāvokli atkarībā no spēlētāju gatavības
+    
+    /// Atjaunina sākšanas pogas stāvokli atkarībā no spēlētāju gatavības.
+    /// Iespējo vai atspējo sākšanas pogu, pamatojoties uz CanForceStart stāvokli.
+    
     public void UpdateStartButtonState()
     {
 
     }
 
-    // Izsaukts, kad lietotājs nospiež piespiedu sākšanas pogu
+    
+    /// Izsaukts, kad lietotājs nospiež piespiedu sākšanas pogu.
+    /// Pārbauda, vai lietotājs ir resursdators, un sāk spēli.
+    
     public void ForceStartButtonPressed()
     {
         if (IsLobbyHost())
@@ -1776,7 +1899,11 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Inicializē Unity Services un autentifikāciju
+    
+    /// Inicializē Unity Services un autentifikāciju.
+    /// Nodrošina, ka Unity servisi ir inicializēti un lietotājs ir autentificēts.
+    
+    /// <returns>Task, kas atspoguļo asinhronās operācijas izpildi</returns>
     public async Task InitializeUnityServices()
     {
         if (!UnityServices.State.Equals(ServicesInitializationState.Initialized))
@@ -1793,7 +1920,11 @@ public class LobbyManager : MonoBehaviour
     }
 
 
-    // Atiestata visu lobija stāvokli, ejot atpakaļ uz galveno izvēlni vai sākot jaunu spēli
+    
+    /// Atiestata visu lobija stāvokli.
+    /// Tiek izsaukts, ejot atpakaļ uz galveno izvēlni vai sākot jaunu spēli.
+    /// Notīra visus datu vārdnīcas un atiestata konfigurācijas.
+    
     public void ResetLobbyState()
     {
         // reseto visus lobija datus un stāvokli sis ir lai ejot atpakal uz galveno izvēlni vai sākot jaunu spēli

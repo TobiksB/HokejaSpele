@@ -3,31 +3,68 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+using Unity.Netcode;
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+
+/// Pārvalda spēles tīklošanas funkcionalitāti.
+/// Nodrošina spēlētāju objektu radīšanu, komandu sadalīšanu un tīkla savienojumu pārvaldību.
+/// Koordinē darbības starp spēles scenām un tīkla resursiem.
+
 public class GameNetworkManager : MonoBehaviour
 {
+    
+    /// Statiskā instance, kas nodrošina vieglu piekļuvi no citām klasēm.
+    
     public static GameNetworkManager Instance { get; private set; }
 
+    
+    /// Prefabs, kuru piešķirt NetworkManager.NetworkConfig.
+    
     private GameObject prefabToAssign;
 
+    
+    /// Spēlētāja prefaba atsauce, ko izmantot tīklotajā spēlē.
+    /// Pārveidots par publisku, lai LobbyManager varētu tam piekļūt.
+    
     [Header("Prefabi")]
     [SerializeField] public GameObject playerPrefabReference; // Pārveidots par publisku, lai labotu LobbyManager piekļuvi
 
+    
+    /// Tīkla iestatījumu konfigurācija.
+    
     [Header("Tīkla iestatījumi")]
     [SerializeField] private float sceneLoadTimeout = 30f; // Ainas ielādes noilgums sekundēs
     [SerializeField] private float hostStartDelay = 1f; // Aizkave pirms hosta sākšanas
 
+    
+    /// Spēlētāju komandu parādīšanās punkti.
+    
     [Header("Spēlētāju parādīšanās punkti")]
     [SerializeField] private Transform[] redTeamSpawns; // Sarkanās komandas parādīšanās punkti
     [SerializeField] private Transform[] blueTeamSpawns; // Zilās komandas parādīšanās punkti
+    
+    
+    
     private bool isLoadingScene = false;
     private string pendingSceneName = "";
 
-    // Seko parādīšanās punktu izmantošanai secīgai spēlētāju izvietošanai
+    
+    /// Seko parādīšanās punktu izmantošanai secīgai spēlētāju izvietošanai.
+    
     private Dictionary<string, int> teamSpawnCounters = new Dictionary<string, int>();
 
-    // Vārdnīca, lai saglabātu klientu autentifikācijas ID savienojuma apstiprināšanas laikā
+    
+    /// Vārdnīca, lai saglabātu klientu autentifikācijas ID savienojuma apstiprināšanas laikā.
+    
     private Dictionary<ulong, string> clientAuthIds = new Dictionary<ulong, string>();
 
+    
+    /// Inicializē un konfigurē GameNetworkManager.
+    /// Iestata NetworkManager, savienojuma apstiprināšanas loģiku un pārbauda parādīšanās punktus.
+    
     private void Awake()
     {
         // Pārbauda, vai šī ir vienīgā GameNetworkManager instance, un iestata to kā Singleton
@@ -114,11 +151,14 @@ public class GameNetworkManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        //  NetworkSpawnManager nav nepieciešams, jo ConnectionApprovalCheck pārvalda radīšanu
     }
 
  
 
+    
+    /// Atrod īsto NetworkManager instanci no DontDestroyOnLoad.
+    /// Nodrošina pareizās NetworkManager instances iegūšanu, pat ja scenā ir vairākas.
+    
     private NetworkManager GetTrueNetworkManager()
     {
         // Vienmēr atgriež īsto DontDestroyOnLoad instanci
@@ -132,9 +172,12 @@ public class GameNetworkManager : MonoBehaviour
         return NetworkManager.Singleton;
     }
 
+    
+    /// Sāk spēli norādītajā scēnā, konfigurējot tīkla lomu (hosts vai klients).
+    /// Pārvalda scēnas ielādi un tīkla savienojumu izveidi vai pievienošanos.
+    
     public void StartGame(string sceneName)
     {
-        //  Only allow host to call StartGame directly, but allow client if relay is ready and IsClientReadyForGame ---
         //  Atļauj tikai hostam tiešā veidā izsaukt StartGame, bet atļauj arī klientam, ja relejs ir gatavs un IsClientReadyForGame
         if (LobbyManager.Instance != null && !LobbyManager.Instance.IsLobbyHost())
         {
@@ -152,7 +195,6 @@ public class GameNetworkManager : MonoBehaviour
 
         Debug.LogWarning($"[GameNetworkManager] StartGame CALLED on {(NetworkManager.Singleton?.IsHost == true ? "HOST" : "CLIENT")} with scene: {sceneName}, isLoadingScene={isLoadingScene}, IsClient={NetworkManager.Singleton?.IsClient}, IsHost={NetworkManager.Singleton?.IsHost}");
         
-        // Validate we're not trying to start networking in MainMenu
         // Pārbauda, vai nemēģinām sākt tīklošanu MainMenu scenā
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (currentScene == "MainMenu" && NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
@@ -175,7 +217,6 @@ public class GameNetworkManager : MonoBehaviour
 
         pendingSceneName = sceneName;
 
-        // Check if NetworkManager exists and is properly configured
         //  Pārbaudam, vai NetworkManager eksistē un ir pareizi konfigurēts
         if (NetworkManager.Singleton == null)
         {
@@ -184,7 +225,6 @@ public class GameNetworkManager : MonoBehaviour
             return;
         }
 
-        // Ensure host never tries to start as client ---
         //   Nodrošina, ka hosts nekad nemēģina sākt kā klients
         bool shouldBeHost = ShouldStartAsHost();
         if (shouldBeHost)
@@ -205,12 +245,10 @@ public class GameNetworkManager : MonoBehaviour
             Debug.Log("[GameNetworkManager] Client detected, will only start as client");
         }
 
-        //  For client, ensure relay is configured before starting client ---
         //   Klientam jāpārliecinās, ka relejs ir konfigurēts pirms klienta sākšanas
         if (!shouldBeHost)
         {
-            //  Check relay transport is configured before starting client ---
-            //  JĀPIEVIENO ŠĪ AIZSARDZĪBA: Pārbaudīt, vai releja transports ir konfigurēts pirms klienta sākšanas
+            //   Pārbaudīt, vai releja transports ir konfigurēts pirms klienta sākšanas
             var transport = NetworkManager.Singleton.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>();
             if (transport == null || transport.Protocol != Unity.Netcode.Transports.UTP.UnityTransport.ProtocolType.RelayUnityTransport)
             {
@@ -236,7 +274,6 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
 
-        //  Always start fresh - shutdown any existing connection first
         // Vienmēr sākam no jauna - vispirms aizveram jebkuru esošo savienojumu
         if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)
         {
@@ -251,14 +288,12 @@ public class GameNetworkManager : MonoBehaviour
             
             NetworkManager.Singleton.Shutdown();
             
-            // Wait for shutdown to complete, then start fresh
             //  Gaidām, kamēr aizvēršana pabeidzas, tad sākam no jauna
             StartCoroutine(WaitForShutdownThenStart(shouldBeHost, sceneName));
             return;
         }
 
         bool shouldLoadScene = false;
-        // Start fresh connection
         //  Sākam jaunu savienojumu
         if (shouldBeHost)
         {
@@ -288,6 +323,10 @@ public class GameNetworkManager : MonoBehaviour
             StartCoroutine(LoadSceneThenStartHost(sceneName));
         }
     }
+
+    
+    /// Gaida, kamēr NetworkManager aizveras, un pēc tam sāk jaunu savienojumu.
+    /// Nodrošina tīru NetworkManager restartēšanu pirms jaunas spēles sākšanas.
 
     private System.Collections.IEnumerator WaitForShutdownThenStart(bool shouldBeHost, string sceneName)
     {
@@ -333,7 +372,10 @@ public class GameNetworkManager : MonoBehaviour
     }
 
  
-    // Pievienota aizkavētā sākuma metode, lai apstrādātu aizvēršanas laiku
+    
+    /// Atliek spēles sākšanu par vienu kadru.
+    /// Nodrošina, ka NetworkManager aizvēršana pabeidzas pirms jaunas spēles sākšanas.
+
     private System.Collections.IEnumerator DelayedGameStart(string sceneName)
     {
         yield return null; // Wait one frame for shutdown
@@ -344,6 +386,10 @@ public class GameNetworkManager : MonoBehaviour
         StartGame(sceneName);
     }
 
+    
+    /// Nosaka, vai spēli jāsāk kā hostam vai klientam.
+    /// Pamatojas uz LobbyManager lomu un citiem faktoriem.
+    
     private bool ShouldStartAsHost()
     {
 
@@ -362,8 +408,10 @@ public class GameNetworkManager : MonoBehaviour
         return false;
     }
 
-    //  Update helper method to use stored scene name
-    // Atjauninām palīgmetodi, lai izmantotu saglabāto scēnas nosaukumu
+    
+    /// Izsauc StartClient pēc tam, kad relejs ir gatavs.
+    /// Tiek piesaistīts LobbyManager.OnClientReadyForGame notikumam.
+    
     private void StartClientAfterRelayReady()
     {
         if (LobbyManager.Instance != null)
@@ -374,7 +422,7 @@ public class GameNetworkManager : MonoBehaviour
         // Relejs gatavs, sākam klientu...
         
         // Use the stored scene name
-        //  LABOTS: Izmantojam saglabāto scēnas nosaukumu
+        // Izmantojam saglabāto scēnas nosaukumu
         if (!string.IsNullOrEmpty(pendingSceneName))
         {
             Debug.Log($"GameNetworkManager: Using pending scene name: {pendingSceneName}");
@@ -384,6 +432,10 @@ public class GameNetworkManager : MonoBehaviour
         StartCoroutine(StartClientAndWaitForScene());
     }
 
+    
+    /// Sāk spēlētāju kā klientu un gaida scēnas ielādi no servera.
+    /// Konfigurē klienta savienojuma datus un sāk savienojumu ar hostu.
+    
     private IEnumerator StartClientAndWaitForScene()
     {
         isLoadingScene = true;
@@ -514,6 +566,11 @@ public class GameNetworkManager : MonoBehaviour
         isLoadingScene = false;
     }
 
+    
+    /// Sāk spēlētāju kā resursdatoru (host) un ielādē norādīto scēnu.
+    /// Konfigurē NetworkManager un gaida klientu pievienošanos.
+    
+
     private IEnumerator StartHostAndLoadScene(string sceneName)
     {
         isLoadingScene = true;
@@ -591,9 +648,13 @@ public class GameNetworkManager : MonoBehaviour
     }
 
 
+    
+    /// Nosaka sagaidāmo spēlētāju skaitu spēlē.
+    /// Izmanto datus no LobbyManager vai noklusējuma vērtību minimālai spēlei.
+    
     private int GetExpectedPlayerCount()
     {
-        int expectedPlayers = 1; // Host always counts as 1
+        int expectedPlayers = 1; 
         
         if (LobbyManager.Instance != null)
         {
@@ -625,7 +686,6 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        // Ensure minimum of 2 players for multiplayer
         if (expectedPlayers < 2)
         {
             Debug.LogWarning($"GameNetworkManager: Expected players ({expectedPlayers}) less than 2, setting to 2");
@@ -635,6 +695,10 @@ public class GameNetworkManager : MonoBehaviour
         return expectedPlayers;
     }
 
+    
+    /// Ielādē scēnu kā serveris, izmantojot NetworkManager scēnu pārvaldību.
+    /// Izsauc MonitorSceneLoad, lai sekotu līdzi scēnas ielādes statusam.
+    
     private void LoadSceneAsServer(string sceneName)
     {
         if (!NetworkManager.Singleton.IsServer)
@@ -673,6 +737,10 @@ public class GameNetworkManager : MonoBehaviour
         }
     }
 
+    
+    /// Uzrauga scēnas ielādes progresu un izsauc OnSceneLoadComplete, kad pabeigts.
+    /// Nodrošina scēnas ielādes pabeigšanu noteiktā laika periodā vai ziņo par kļūdu.
+    
     private IEnumerator MonitorSceneLoad(string sceneName)
     {
         float timeElapsed = 0f;
@@ -699,14 +767,16 @@ public class GameNetworkManager : MonoBehaviour
         }
     }
 
+    
+    /// Apstrādā darbības pēc scēnas ielādes pabeigšanas.
+    /// Atjauno PlayerPrefab piešķīrumus un manuāli rada visus savienotos spēlētājus.
+    
     private void OnSceneLoadComplete(string sceneName)
     {
         Debug.Log($"GameNetworkManager: Scene {sceneName} fully loaded, network game ready");
 
-        //  Reset spawn counters for new game
         ResetSpawnCounters();
 
-        // Re-assign PlayerPrefab after scene load
         if (prefabToAssign != null)
         {
             NetworkManager.Singleton.NetworkConfig.PlayerPrefab = prefabToAssign;
@@ -737,37 +807,34 @@ public class GameNetworkManager : MonoBehaviour
             Debug.Log("GameNetworkManager: Reassigned ConnectionApprovalCallback after scene load");
         }
 
-        // Clear single player mode
         PlayerPrefs.SetInt("SinglePlayerMode", 0);
         PlayerPrefs.Save();
         
         Debug.Log("GameNetworkManager: Scene load complete - manually spawning all players at inspector spawn points");
         
-        //  Manually spawn all connected players at correct positions after scene load
         if (NetworkManager.Singleton.IsServer)
         {
             StartCoroutine(ManuallySpawnAllPlayers());
         }
     }
 
-    // Missing ManuallySpawnAllPlayers method
+    
+    /// Manuāli rada visus savienotos spēlētājus pēc scēnas ielādes.
+    /// Iterē caur visiem savienotajiem klientiem un izsauc ManuallySpawnPlayer katram.
+    
     private IEnumerator ManuallySpawnAllPlayers()
     {
         Debug.Log("GameNetworkManager: Starting manual spawn process for all connected players");
         
-        // Wait a moment for scene to fully load
         yield return new WaitForSeconds(1f);
         
-        // Get all connected client IDs
         var connectedClients = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
         Debug.Log($"GameNetworkManager: Found {connectedClients.Count} connected clients to spawn");
         
-        // Spawn each client manually
         foreach (ulong clientId in connectedClients)
         {
             Debug.Log($"GameNetworkManager: Attempting to spawn client {clientId}");
             
-            // Check if client already has a player object
             if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var clientData))
             {
                 if (clientData.PlayerObject != null)
@@ -776,19 +843,19 @@ public class GameNetworkManager : MonoBehaviour
                     continue;
                 }
             }
-            
-            // Manually spawn the player
+            // manuali nospawno speletaju pec klienta ID
             ManuallySpawnPlayer(clientId);
             
-            // Small delay between spawns to avoid overwhelming the network
             yield return new WaitForSeconds(0.2f);
         }
         
         Debug.Log("GameNetworkManager: Manual spawn process completed for all players");
     }
 
-    //  GetTeamForClient method with improved auth ID matching and better fallbacks
-    //  Make public for GoalTrigger and other scripts
+    
+    /// Nosaka komandu klientam, pamatojoties uz saglabātajiem datiem vai determiniskiem algoritmiem.
+    /// Meklē komandas informāciju vairākos avotos un izmanto atkāpšanās mehānismus.
+
     public string GetTeamForClient(ulong clientId)
     {
         Debug.Log($"========== GET TEAM FOR CLIENT {clientId} ==========");
@@ -804,7 +871,7 @@ public class GameNetworkManager : MonoBehaviour
             catch { }
         }
 
-        // Method 1:  - Get from stored team data using auth ID matching
+        // 1. meginat lasit informaciju no PlayerPrefs
         try
         {
             string teamData = PlayerPrefs.GetString("AllPlayerTeams", "");
@@ -823,14 +890,14 @@ public class GameNetworkManager : MonoBehaviour
 
                         Debug.Log($"GameNetworkManager: Checking entry - Name: {playerName}, Team: {team}, AuthId: {authId}");
 
-                        // For local client, match local authId
+                        // lokaliem klientiem meginat atrast vinu authId
                         if (!string.IsNullOrEmpty(localAuthId) && clientId == NetworkManager.Singleton.LocalClientId && localAuthId == authId)
                         {
                             Debug.Log($"GameNetworkManager: ✓ LOCAL AUTH ID MATCH for client {clientId}: {team}");
                             return team;
                         }
 
-                        // For server, match stored mapping
+                        // prieks servera, meginam atrast atbilstibu
                         string clientAuthId = GetAuthIdForClient(clientId);
                         if (!string.IsNullOrEmpty(clientAuthId) && clientAuthId == authId)
                         {
@@ -850,8 +917,8 @@ public class GameNetworkManager : MonoBehaviour
         {
             Debug.LogWarning($"GameNetworkManager: Error reading team data: {e.Message}");
         }
-        
-        // Method 2: Try individual team choice backup for local client only
+
+        // 2. mēģināt izmantot atsevišķu komandas izvēles rezerves variantu tikai lokālajam klientam
         try
         {
             if (clientId == NetworkManager.Singleton.LocalClientId)
@@ -868,8 +935,8 @@ public class GameNetworkManager : MonoBehaviour
         {
             Debug.LogWarning($"GameNetworkManager: Error reading fallback team: {e.Message}");
         }
-        
-        // Method 3:  - Deterministic assignment based on client ID for consistency
+
+        // 3. meginat izmantot pieskirsanu balstoties uz klienta ID
         var allClientIds = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
         allClientIds.Sort(); // Sort to ensure consistent ordering across all clients
         
@@ -877,7 +944,6 @@ public class GameNetworkManager : MonoBehaviour
         if (clientIndex == -1)
         {
             Debug.LogWarning($"GameNetworkManager: Client {clientId} not found in connected clients list!");
-            // Fallback: use client ID modulo for consistency
             clientIndex = (int)(clientId % 2);
         }
         
@@ -894,6 +960,11 @@ public class GameNetworkManager : MonoBehaviour
     }
 
     
+    
+    /// Iegūst spēlētāja parādīšanās pozīciju, pamatojoties uz inspektorā definētajiem punktiem.
+    /// Izvēlas pareizo komandas parādīšanās punktu masīvu un validē visas vērtības.
+    
+
     public Vector3 GetSpawnPositionFromInspector(ulong clientId, string team)
     {
         Debug.Log($"========== GET SPAWN POSITION FROM INSPECTOR ==========");
@@ -921,32 +992,31 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        // : Better spawn point validation
+    
         if (teamSpawns == null || teamSpawns.Length == 0)
         {
             Debug.LogError($"GameNetworkManager: ✗ NO {team} TEAM SPAWN TRANSFORMS ASSIGNED!");
             Debug.LogError("Please assign spawn points in the GameNetworkManager inspector!");
             
-            // ENHANCED: Better emergency fallback positions based on team
             Vector3 fallback;
             if (team == "Blue")
             {
-                fallback = new Vector3(8f, 0.71f, 0f); // Blue side (right side of rink)
+                fallback = new Vector3(8f, 0.71f, 0f); // zila komanda (labā puse no ledus)
             }
             else
             {
-                fallback = new Vector3(-8f, 0.71f, 0f); // Red side (left side of rink)
+                fallback = new Vector3(-8f, 0.71f, 0f); // sarkana komanda (kreisā puse no ledus)
             }
             
             Debug.LogError($"Using emergency fallback position for {team} team: {fallback}");
             return fallback;
         }
-        
-        // : Sequential spawn assignment with better error handling
+
+        // spawnosanas tiek pieksirts secigi 
         int spawnIndex = GetNextSpawnIndexForTeam(team, teamSpawns.Length);
         Debug.Log($"Sequential spawn index for {team} team: {spawnIndex}");
-        
-        // : Validate spawn index is within bounds
+
+        // parbaude vai indekkss ir derīgs
         if (spawnIndex < 0 || spawnIndex >= teamSpawns.Length)
         {
             Debug.LogError($"GameNetworkManager: Invalid spawn index {spawnIndex} for team {team} (max: {teamSpawns.Length - 1})");
@@ -959,7 +1029,7 @@ public class GameNetworkManager : MonoBehaviour
         {
             Debug.LogError($"GameNetworkManager: ✗ {team} team spawn transform at index {spawnIndex} is NULL!");
             
-            // Find first valid transform
+            // atrast atbilstosu transform poziciju (spawn)
             for (int i = 0; i < teamSpawns.Length; i++)
             {
                 if (teamSpawns[i] != null)
@@ -978,8 +1048,8 @@ public class GameNetworkManager : MonoBehaviour
             Debug.LogError($"Using final emergency fallback: {fallback}");
             return fallback;
         }
-        
-        // : Use exact transform position with validation
+
+        // izmantot konkretu transformācijas pozīciju ar validāciju
         Vector3 spawnPos = spawnTransform.position;
         
         // : Validate spawn position is reasonable
@@ -1001,7 +1071,10 @@ public class GameNetworkManager : MonoBehaviour
         return spawnPos;
     }
 
-    // Manually spawn a player with better error handling and validation
+    
+    /// Manuāli rada spēlētāja objektu klientam pareizajā pozīcijā un ar pareizo komandu.
+    /// Veic kļūdu pārbaudes un validāciju visos soļos.
+    
     private void ManuallySpawnPlayer(ulong clientId)
     {
         Debug.Log($"========== MANUAL SPAWN PLAYER {clientId} ==========");
@@ -1018,8 +1091,8 @@ public class GameNetworkManager : MonoBehaviour
             Debug.LogError("GameNetworkManager: Cannot spawn player - PlayerPrefab is null");
             return;
         }
-        
-        //  Check if player is already spawned
+
+        // parbauda vai lietotajs jau nav nospawnots
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var clientData))
         {
             if (clientData.PlayerObject != null)
@@ -1029,15 +1102,15 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        // Get team assignment with extensive logging
+        // iegut komandu sadali ar logging
         string team = GetTeamForClient(clientId);
         Debug.Log($"GameNetworkManager: Client {clientId} assigned to team: {team}");
         
-        //  Get spawn position from inspector transforms only
+        //  iegut spawnosanas poziciju no inspektora
         Vector3 spawnPos = GetSpawnPositionFromInspector(clientId, team);
         Debug.Log($"GameNetworkManager: Client {clientId} spawn position: {spawnPos}");
         
-        // Team-specific rotation with validation
+        // konkreti norote speletajus lai tie skatitos uz centru
         Quaternion spawnRot;
         if (team == "Blue")
         {
@@ -1052,7 +1125,6 @@ public class GameNetworkManager : MonoBehaviour
         
         try
         {
-            // Instantiate player object at EXACT position
             GameObject playerObject = Instantiate(NetworkManager.Singleton.NetworkConfig.PlayerPrefab, spawnPos, spawnRot);
             
             if (playerObject == null)
@@ -1061,21 +1133,21 @@ public class GameNetworkManager : MonoBehaviour
                 return;
             }
             
-            //  Force position and rotation immediately after instantiation
+            //  piespiez spēlētāja objektu pareizajā pozīcijā un rotācijā
             playerObject.transform.position = spawnPos;
             playerObject.transform.rotation = spawnRot;
             
             Debug.Log($"GameNetworkManager: Instantiated player object at {playerObject.transform.position} with rotation {playerObject.transform.rotation.eulerAngles}");
             
-            // Get NetworkObject component and spawn it for the specific client
+            // iegut networkobject komponenti un piespiest spawnot to kā spēlētāja objektu
             var networkObject = playerObject.GetComponent<Unity.Netcode.NetworkObject>();
             if (networkObject != null)
             {
-                //  Spawn as player object for the specific client
+                //  nospawno speletaju ka konkretu objektu
                 networkObject.SpawnAsPlayerObject(clientId);
                 Debug.Log($"GameNetworkManager: Spawned NetworkObject for client {clientId}");
                 
-                //  Wait a frame for network spawn to complete
+                //  gaida briid lidz spawnosanas notiek
                 StartCoroutine(FinalizePlayerSpawn(playerObject, clientId, team, spawnPos, spawnRot));
             }
             else
@@ -1092,10 +1164,13 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log($"================================================");
     }
 
-    //  Finalize player spawn with better position synchronization
+    
+    /// Pabeidz spēlētāja parādīšanās procesu ar precīzu pozīcijas un komandas iestatīšanu.
+    /// Nodrošina, ka spēlētājs tiek pareizi inicializēts tīklā ar visiem nepieciešamajiem datiem.
+    
     private IEnumerator FinalizePlayerSpawn(GameObject playerObject, ulong clientId, string team, Vector3 spawnPos, Quaternion spawnRot)
     {
-        yield return null; // Wait one frame for network spawn to complete
+        yield return null; // gaidit mazu bridi lidz spēlētājs ir pilnībā inicializēts/nospawnots
         
         if (playerObject == null)
         {
@@ -1105,14 +1180,14 @@ public class GameNetworkManager : MonoBehaviour
         
         Debug.Log($"GameNetworkManager: Finalizing spawn for client {clientId}");
         
-        //  Multiple position enforcement attempts
+        //  vairaku meginajumu nodrošināšana, lai spēlētājs būtu precīzā pozīcijā
         for (int i = 0; i < 3; i++)
         {
-            // Force position and rotation
+            // piespiezt spēlētāja objektu uz precīzu pozīciju un rotāciju
             playerObject.transform.position = spawnPos;
             playerObject.transform.rotation = spawnRot;
             
-            // Reset physics to exact position
+            // reseto rigidbody lai butu precīza pozīcija un rotācija
             var rigidbody = playerObject.GetComponent<Rigidbody>();
             if (rigidbody != null)
             {
@@ -1122,11 +1197,10 @@ public class GameNetworkManager : MonoBehaviour
                 rigidbody.angularVelocity = Vector3.zero;
             }
             
-            //  Update network position if player has PlayerMovement
-            var pm = playerObject.GetComponent<PlayerMovement>(); // renamed from playerMovement to pm
+            //  atjaunot speletaja poziciju tikla ja tam ir playermovement
+            var pm = playerObject.GetComponent<PlayerMovement>(); 
             if (pm != null && pm.IsServer)
             {
-                // Use reflection to access NetworkPosition since it might be private
                 var networkPosField = typeof(PlayerMovement).GetField("NetworkPosition", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 
@@ -1144,7 +1218,6 @@ public class GameNetworkManager : MonoBehaviour
                     }
                 }
                 
-                // Also try direct method if available
                 try
                 {
                     var setNetworkPosMethod = typeof(PlayerMovement).GetMethod("SetNetworkPosition", 
@@ -1164,11 +1237,10 @@ public class GameNetworkManager : MonoBehaviour
             
             Debug.Log($"GameNetworkManager: Position enforcement attempt {i + 1}: {playerObject.transform.position}");
             
-            // Wait between attempts
             if (i < 2) yield return new WaitForSeconds(0.2f);
         }
         
-        // Set team on the PlayerMovement script using the enum
+        // iestatit speletaja komandu izmantojot enum vertibu
         var playerMovement = playerObject.GetComponent<PlayerMovement>();
         if (playerMovement != null && NetworkManager.Singleton.IsServer)
         {
@@ -1176,19 +1248,19 @@ public class GameNetworkManager : MonoBehaviour
             playerMovement.SetTeamServerRpc(teamEnum);
         }
 
-        //  Sync team visuals on all clients after team assignment ---
+        //  sinhronizēt komandas vizuālos elementus visiem klientiem
         var netObj = playerObject.GetComponent<Unity.Netcode.NetworkObject>();
         if (netObj != null && NetworkManager.Singleton.IsServer)
         {
             SyncTeamVisualsClientRpc(netObj.NetworkObjectId, team);
         }
 
-        //  Setup camera for local player with delay
+        //  uzstada kameru prieks lokala klienta
         if (clientId == NetworkManager.Singleton.LocalClientId)
         {
             Debug.Log($"GameNetworkManager: Setting up camera for local client {clientId}");
             
-            // Wait a bit more for position to stabilize
+            // mazliet uzgaida lidz pozicija nostabilizejas
             yield return new WaitForSeconds(0.5f);
             
             var pmLocal = playerObject.GetComponent<PlayerMovement>();
@@ -1205,7 +1277,10 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log($"  Network Object ID: {netObj?.NetworkObjectId}");
     }
 
-    //  ClientRpc to sync team visuals after spawn/team assignment
+    
+    /// Sinhronizē komandas vizuālos elementus visiem klientiem, izmantojot ClientRpc.
+    /// Nodrošina konsistentu komandas vizuālo attēlojumu visiem spēlētājiem.
+   
     [Unity.Netcode.ClientRpc]
     private void SyncTeamVisualsClientRpc(ulong networkObjectId, string team)
     {
@@ -1229,6 +1304,11 @@ public class GameNetworkManager : MonoBehaviour
         }
     }
 
+    
+    /// Pielieto komandas krāsu spēlētāja objektam un sinhronizē to visiem klientiem.
+    /// Nodrošina, ka komandas krāsas tiek pareizi pielietotas un redzamas visiem spēlētājiem.
+    
+
     private void ApplyTeamColorWithSync(GameObject playerObject, string team, ulong clientId)
     {
         Debug.Log($"GameNetworkManager: Applying team color for {team} team with FORCED client sync");
@@ -1246,6 +1326,11 @@ public class GameNetworkManager : MonoBehaviour
         }
     }
 
+    
+    /// Atkārto komandas krāsas sinhronizācijas mēģinājumus, lai nodrošinātu pareizu piemērošanu.
+    /// Dažādos laika intervālos izsauc ForceTeamColorClientRpc, lai maksimizētu veiksmes iespējas.
+    
+ 
     private IEnumerator ForceTeamColorSyncRepeated(ulong networkObjectId, string team)
     {
         yield return new WaitForSeconds(0.05f);
@@ -1265,6 +1350,10 @@ public class GameNetworkManager : MonoBehaviour
         
         Debug.Log($"GameNetworkManager: Completed 6 team color sync attempts for {team} team");
     }
+
+    
+    /// Piespiedu kārtā iestata komandas krāsu klienta pusē, izmantojot ClientRpc.
+    /// Izsauc ForceTeamColorOnClient, lai pielietotu krāsu ar maksimālu prioritāti.
 
     [Unity.Netcode.ClientRpc]
     private void ForceTeamColorClientRpc(ulong networkObjectId, string team)
@@ -1297,6 +1386,11 @@ public class GameNetworkManager : MonoBehaviour
         }
     }
 
+    
+    /// Agresīvi mēģina atrast un nokrāsot spēlētāja objektu klienta pusē.
+    /// Vairākkārt mēģina līdz noteiktam mēģinājumu skaitam, lai nodrošinātu veiksmīgu piemērošanu.
+    
+  
     private IEnumerator AggressiveClientColorRetry(ulong networkObjectId, string team)
     {
         int maxAttempts = 20;
@@ -1324,6 +1418,11 @@ public class GameNetworkManager : MonoBehaviour
         Debug.LogError($"GameNetworkManager: [ClientRetry] COMPLETE FAILURE - Could not apply {team} color after {maxAttempts} attempts");
     }
 
+    
+    /// Piespiedu kārtā pielieto komandas krāsu objektam klienta pusē.
+    /// Izmanto dažādas stratēģijas, lai maksimizētu veiksmes iespējas dažādos Unity renderētājos.
+    
+
     private bool ForceTeamColorOnClient(GameObject playerObject, string team)
     {
         if (playerObject == null) return false;
@@ -1346,7 +1445,6 @@ public class GameNetworkManager : MonoBehaviour
         allRenderers.AddRange(playerObject.GetComponentsInChildren<Renderer>(true));
         allRenderers.AddRange(playerObject.GetComponents<Renderer>());
         
-        // Also check parent and siblings if any
         if (playerObject.transform.parent != null)
         {
             allRenderers.AddRange(playerObject.transform.parent.GetComponentsInChildren<Renderer>(true));
@@ -1365,11 +1463,9 @@ public class GameNetworkManager : MonoBehaviour
                 {
                     if (materials[i] != null)
                     {
-                        // Create new material with team color
                         Material newMat = new Material(materials[i]);
                         newMat.color = teamColor;
                         
-                        // Apply to ALL possible color properties
                         string[] colorProps = { "_Color", "_BaseColor", "_MainColor", "_TintColor", "_Albedo", "_DiffuseColor", "_EmissionColor" };
                         foreach (string prop in colorProps)
                         {
@@ -1405,6 +1501,11 @@ public class GameNetworkManager : MonoBehaviour
         return success;
     }
 
+    
+    /// Iegūst autentifikācijas ID klientam no saglabātajiem datiem.
+    /// Izmanto clientAuthIds vārdnīcu vai lokālo AuthenticationService instanci.
+    
+   
     private string GetAuthIdForClient(ulong clientId)
     {
         if (clientId == NetworkManager.Singleton.LocalClientId)
@@ -1425,13 +1526,17 @@ public class GameNetworkManager : MonoBehaviour
         return "";
     }
 
+    
+    /// Pārbauda un validē parādīšanās punktu masīvus inspektorā.
+    /// Izdod brīdinājumus, ja parādīšanās punkti nav iestatīti vai ir null.
+    
     private void ValidateSpawnPoints()
     {
         Debug.Log("========== VALIDATING SPAWN POINTS ==========");
         
         bool hasErrors = false;
         
-        // Check Red team spawns
+        // parbauda sarkanas komandas spawns
         if (redTeamSpawns == null || redTeamSpawns.Length == 0)
         {
             Debug.LogError("GameNetworkManager: RED TEAM SPAWNS not assigned in inspector!");
@@ -1450,7 +1555,7 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        // Check Blue team spawns
+        // parbauda zilas komandas spawns
         if (blueTeamSpawns == null || blueTeamSpawns.Length == 0)
         {
             Debug.LogError("GameNetworkManager: BLUE TEAM SPAWNS not assigned in inspector!");
@@ -1482,6 +1587,11 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log("===============================================");
     }
 
+    
+    /// Vispirms ielādē scēnu un pēc tam sāk hostu.
+    /// Izmantojama, kad resursdatoram jāmaina aina pirms tīkla spēles sākšanas.
+    
+ 
     private IEnumerator LoadSceneThenStartHost(string sceneName)
     {
         isLoadingScene = true;
@@ -1489,7 +1599,7 @@ public class GameNetworkManager : MonoBehaviour
         
         UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
 
-        // Wait for scene to load
+        // gaida lidz aina ieladesies
         float timeout = 20f;
         float elapsed = 0f;
         while (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != sceneName && elapsed < timeout)
@@ -1509,6 +1619,10 @@ public class GameNetworkManager : MonoBehaviour
         StartCoroutine(StartHostAndLoadScene(sceneName));
     }
 
+    
+    /// Iegūst nākamo parādīšanās punkta indeksu komandai.
+    /// Nodrošina secīgu parādīšanās punktu izmantošanu, lai izvairītos no pārklāšanās.
+ 
     private int GetNextSpawnIndexForTeam(string team, int maxSpawns)
     {
         if (!teamSpawnCounters.ContainsKey(team))
@@ -1525,6 +1639,10 @@ public class GameNetworkManager : MonoBehaviour
         return spawnIndex;
     }
 
+    
+    /// Atiestata parādīšanās punktu skaitītājus jaunai spēlei.
+    /// Nodrošina, ka parādīšanās punktu piešķiršana sākas no nulles katrai jaunai spēlei.
+    
     private void ResetSpawnCounters()
     {
         teamSpawnCounters["Red"] = 0;
@@ -1532,6 +1650,11 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log("GameNetworkManager: Reset spawn counters for new game");
     }
 
+    
+    /// Apstiprina vai noraida klienta pievienošanās pieprasījumu un iestatīta savienojuma parametrus.
+    /// Saglabā autentifikācijas ID no savienojuma datiem un pārvalda spēlētāju radīšanas loģiku.
+    
+  
     private void ConnectionApprovalCheck(Unity.Netcode.NetworkManager.ConnectionApprovalRequest request, Unity.Netcode.NetworkManager.ConnectionApprovalResponse response)
     {
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
@@ -1542,8 +1665,8 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log($"Is Server: {NetworkManager.Singleton.IsServer}");
         Debug.Log($"Is Host: {NetworkManager.Singleton.IsHost}");
         Debug.Log($"PlayerPrefab assigned: {NetworkManager.Singleton.NetworkConfig.PlayerPrefab != null}");
-        
-        // CRITICAL: Store auth ID from connection data for team assignment
+
+        // saglaba auth ID no savienojuma datiem, lai izmantotu komandas piešķiršanai
         if (request.Payload != null && request.Payload.Length > 0)
         {
             try
@@ -1553,8 +1676,7 @@ public class GameNetworkManager : MonoBehaviour
                 {
                     clientAuthIds[request.ClientNetworkId] = authId;
                     Debug.Log($"GameNetworkManager: ✓ Stored auth ID '{authId}' for client {request.ClientNetworkId}");
-                    
-                    // ADDED: Immediately validate stored team data for this auth ID
+
                     string teamData = PlayerPrefs.GetString("AllPlayerTeams", "");
                     if (!string.IsNullOrEmpty(teamData))
                     {
@@ -1619,14 +1741,19 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log($"GameNetworkManager: ✓ MANUAL SPAWNING will handle all positioning and team assignment");
         
         response.Approved = true;
-        response.CreatePlayerObject = false; // CRITICAL: No automatic spawning
-        response.Position = Vector3.zero; // Ignored since CreatePlayerObject = false
-        response.Rotation = Quaternion.identity; // Ignored since CreatePlayerObject = false
+        response.CreatePlayerObject = false; // izslegts lai netiku automatiski spawnots 
+        response.Position = Vector3.zero; 
+        response.Rotation = Quaternion.identity; 
         
         Debug.Log($"GameNetworkManager: ✓ CONNECTION APPROVED - manual spawn will handle client {request.ClientNetworkId}");
         Debug.Log($"===============================================");
     }
 
+    
+    /// Atrod spēlētāja objektu pēc tīkla ID.
+    /// Izmanto dažādas meklēšanas stratēģijas, lai maksimizētu atrašanas veiksmes iespējas.
+    
+    
     private GameObject FindPlayerObjectByNetworkId(ulong networkObjectId)
     {
         // Method 1: SpawnedObjects (fastest)
@@ -1638,7 +1765,7 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        // Method 2: Search all NetworkObjects in scene
+        // mekle visus network objectus, speles aina
         var allNetworkObjects = FindObjectsByType<Unity.Netcode.NetworkObject>(FindObjectsSortMode.None);
         foreach (var obj in allNetworkObjects)
         {
@@ -1648,7 +1775,7 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        // Method 3: Search connected clients
+        // mekle pievienojosos klientus
         foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
         {
             if (kvp.Value.PlayerObject != null && kvp.Value.PlayerObject.NetworkObjectId == networkObjectId)
@@ -1659,6 +1786,11 @@ public class GameNetworkManager : MonoBehaviour
         
         return null;
     }
+
+    
+    /// Pielieto komandas krāsu spēlētāja objektam tiešā veidā.
+    /// Veic vizuālo elemetu manipulāciju, lai piešķirtu pareizo komandas izskatu.
+    
 
     private bool ApplyTeamColorDirectly(GameObject playerObject, string team)
     {
@@ -1695,7 +1827,6 @@ public class GameNetworkManager : MonoBehaviour
             
             try
             {
-                // FIXED: Create new material instances for each renderer
                 Material[] originalMaterials = renderer.materials;
                 Material[] newMaterials = new Material[originalMaterials.Length];
                 bool rendererModified = false;
