@@ -1,17 +1,15 @@
 using UnityEngine;
 
 public class PuckFollower : MonoBehaviour
-{
-    [Header("Follow Settings")]
-    [SerializeField] private float followSpeed = 20f; // Increased for more responsive following
-    [SerializeField] private float positionThreshold = 0.1f; // Stop following when close enough
+{    [Header("Follow Settings")]
+    [SerializeField] private float followSpeed = 20f; // Palielināts labākai atsaucībai sekošanas laikā
+    [SerializeField] private float positionThreshold = 0.1f; // Pārtrauc sekošanu, kad ir pietiekami tuvu
     
     private Transform targetTransform;
     private Vector3 offsetPosition;
     private bool isFollowing = false;
-    
-    [Header("Debug")]
-    [SerializeField] private bool enableDebugLogs = false; // Reduced spam
+      [Header("Debug")]
+    [SerializeField] private bool enableDebugLogs = false; // Samazināts paziņojumu skaits
     
     private Rigidbody puckRigidbody;
     
@@ -23,11 +21,10 @@ public class PuckFollower : MonoBehaviour
     private void FixedUpdate()
     {
         if (isFollowing && targetTransform != null)
-        {
-            // Calculate target position with offset
+        {            // Aprēķina mērķa pozīciju ar nobīdi
             Vector3 targetPosition = targetTransform.position + targetTransform.TransformDirection(offsetPosition);
             
-            // Check if we're close enough to stop following
+            // Pārbauda, vai esam pietiekami tuvu, lai pārtrauktu sekošanu
             float distance = Vector3.Distance(transform.position, targetPosition);
             if (distance < positionThreshold)
             {
@@ -41,13 +38,11 @@ public class PuckFollower : MonoBehaviour
                 transform.rotation = targetTransform.rotation;
                 return;
             }
-            
-            // Move towards target using transform (not physics to avoid bouncing)
+              // Pārvietojas uz mērķi, izmantojot transform (nevis fiziku, lai izvairītos no atlēkšanas)
             Vector3 newPosition = Vector3.MoveTowards(transform.position, targetPosition, followSpeed * Time.fixedDeltaTime);
             transform.position = newPosition;
             transform.rotation = Quaternion.Slerp(transform.rotation, targetTransform.rotation, followSpeed * Time.fixedDeltaTime);
-            
-            // Keep physics still while following
+              // Saglabā fiziku nekustīgu sekošanas laikā
             if (puckRigidbody != null)
             {
                 puckRigidbody.linearVelocity = Vector3.zero;
@@ -56,7 +51,7 @@ public class PuckFollower : MonoBehaviour
                 puckRigidbody.rotation = transform.rotation;
             }
             
-            if (enableDebugLogs && Time.fixedTime % 1f < Time.fixedDeltaTime) // Log every second
+            if (enableDebugLogs && Time.fixedTime % 1f < Time.fixedDeltaTime) // Ieraksta žurnālā reizi sekundē
             {
                 Debug.Log($"PuckFollower: Following {targetTransform.name} - Distance: {distance:F2}");
             }

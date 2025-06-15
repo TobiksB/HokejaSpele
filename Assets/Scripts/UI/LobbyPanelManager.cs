@@ -3,16 +3,16 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using Unity.Services.Authentication;
-using Unity.Netcode; // Add this for networking
-using System.Linq; // Add this for FirstOrDefault
-using Unity.Collections; // Add this for FixedString512Bytes
+using Unity.Netcode; // Pievienots tīklojumam
+using System.Linq; // Pievienots FirstOrDefault izmantošanai
+using Unity.Collections; // Pievienots FixedString512Bytes izmantošanai
 
 namespace HockeyGame.UI
 {
-    // Make LobbyPanelManager a NetworkBehaviour so it can own a NetworkList and sync across network
+    // Padaram LobbyPanelManager par NetworkBehaviour, lai tas varētu uzturēt NetworkList un sinhronizēt tīklā
     public class LobbyPanelManager : NetworkBehaviour
     {
-        // IMPROVED: Make static Instance property more resilient
+        //  Padarām statisko Instance īpašību izturīgāku
         private static LobbyPanelManager _instance;
         public static LobbyPanelManager Instance 
         { 
@@ -23,13 +23,13 @@ namespace HockeyGame.UI
                     _instance = FindFirstObjectByType<LobbyPanelManager>();
                     if (_instance == null)
                     {
-                        // Try to find any lobby panel to attach to
+                        // Mēģinām atrast jebkuru lobija paneli, kam piesaistīties
                         var lobbyPanel = FindObjectsByType<GameObject>(FindObjectsSortMode.None)
                             .FirstOrDefault(go => go.name.ToLower().Contains("lobby") && 
                                             go.name.ToLower().Contains("panel"));
                         if (lobbyPanel != null)
                         {
-                            Debug.Log($"Creating LobbyPanelManager on existing panel: {lobbyPanel.name}");
+                            Debug.Log($"Izveidojam LobbyPanelManager uz esošā paneļa: {lobbyPanel.name}");
                             _instance = lobbyPanel.AddComponent<LobbyPanelManager>();
                             _instance.ForceInitialize();
                         }
@@ -43,45 +43,44 @@ namespace HockeyGame.UI
             }
         }
 
-        [Header("Panel References")]
+        [Header("Paneļu atsauces")]
         [SerializeField] private RectTransform mainPanel;
 
-        [Header("Lobby Code")]
+        [Header("Lobija kods")]
         [SerializeField] private TMP_Text lobbyCodeText;
         [SerializeField] private Button copyCodeButton;
 
-        [Header("Player List")]
+        [Header("Spēlētāju saraksts")]
         [SerializeField] private ScrollRect playerListScrollRect;
         [SerializeField] private RectTransform playerListContent;
-        [SerializeField] private PlayerListItem playerListItemPrefab; // Remove UI.prefix
+        [SerializeField] private PlayerListItem playerListItemPrefab; // Noņemts UI prefikss
 
-        [Header("Team Selection")]
+        [Header("Komandas izvēle")]
         [SerializeField] private Button blueTeamButton;
         [SerializeField] private Button redTeamButton;
         [SerializeField] private Image blueTeamIndicator;
         [SerializeField] private Image redTeamIndicator;
 
-        [Header("Chat")]
+        [Header("Tērzēšana")]
         [SerializeField] private ScrollRect chatScrollRect;
         [SerializeField] private RectTransform chatContent;
         [SerializeField] private TMP_InputField chatInput;
         [SerializeField] private Button sendButton;
         [SerializeField] private TMP_Text chatText;
 
-        [Header("Game Control")]
+        [Header("Spēles kontrole")]
         [SerializeField] private Button startMatchButton;
         [SerializeField] private Button readyButton;
         [SerializeField] private Image readyIndicator;
 
-        // --- REMOVE: NetworkList for chat messages ---
-        // private NetworkList<FixedString512Bytes> networkChatMessages;
+  
 
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
 
-            // Subscribe to changes (all clients, including host)
-            // Remove all manual NetworkList creation from Awake
+            // Pierakstāmies uz izmaiņām (visi klienti, ieskaitot resursdatoru)
+            // Noņemam visu manuālo NetworkList izveidi no Awake
             VerifyReferences();
         }
 
@@ -92,43 +91,43 @@ namespace HockeyGame.UI
 
         private void Awake()
         {
-            Debug.Log($"UI.LobbyPanelManager.Awake on {gameObject.name}, already have instance: {_instance != null}");
+            Debug.Log($"UI.LobbyPanelManager.Awake uz {gameObject.name}, jau ir instance: {_instance != null}");
             if (_instance == null)
             {
                 _instance = this;
                 VerifyReferences();
-                Debug.Log($"UI.LobbyPanelManager set as Instance, gameObject: {gameObject.name}, active: {gameObject.activeInHierarchy}");
+                Debug.Log($"UI.LobbyPanelManager iestatīts kā Instance, gameObject: {gameObject.name}, aktīvs: {gameObject.activeInHierarchy}");
             }
             else if (_instance != this)
             {
-                Debug.LogWarning($"Multiple UI.LobbyPanelManager instances found. Destroying duplicate ({gameObject.name}).");
+                Debug.LogWarning($"Atrastas vairākas UI.LobbyPanelManager instances. Iznīcinām dublējumu ({gameObject.name}).");
                 Destroy(gameObject);
                 return;
             }
 
-            // Remove all manual NetworkList creation from Awake
+            // Noņemam visu manuālo NetworkList izveidi no Awake
             VerifyReferences();
         }
         
         private void OnEnable()
         {
-            Debug.Log($"UI.LobbyPanelManager.OnEnable on {gameObject.name}");
+            Debug.Log($"UI.LobbyPanelManager.OnEnable uz {gameObject.name}");
             
-            // Ensure this is the active instance when enabled
+            // Nodrošinām, ka šī ir aktīvā instance, kad tā ir iespējota
             if (_instance != this)
             {
                 _instance = this;
-                Debug.Log($"UI.LobbyPanelManager.OnEnable reassigned instance to {gameObject.name}");
+                Debug.Log($"UI.LobbyPanelManager.OnEnable pārpiešķir instanci uz {gameObject.name}");
             }
             
             SetupScrollViews();
             SetupButtons();
             
-            // FIXED: Don't immediately refresh - wait for lobby creation to complete
-            // Only refresh if LobbyManager already has players
+            //  Neatjauninām uzreiz - gaidām, līdz lobija izveide ir pabeigta
+            // Atsvaidzinām tikai tad, ja LobbyManager jau ir spēlētāji
             if (LobbyManager.Instance != null)
             {
-                // Check if lobby manager actually has player data before refreshing
+                // Pārbaudām, vai lobija pārvaldniekam ir spēlētāju dati pirms atsvaidzināšanas
                 var hasPlayers = LobbyManager.Instance.GetType().GetField("playerNames", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (hasPlayers != null)
@@ -136,22 +135,22 @@ namespace HockeyGame.UI
                     var playerNamesDict = hasPlayers.GetValue(LobbyManager.Instance) as Dictionary<string, string>;
                     if (playerNamesDict != null && playerNamesDict.Count > 0)
                     {
-                        Debug.Log($"UI.LobbyPanelManager.OnEnable: Found {playerNamesDict.Count} existing players, refreshing...");
+                        Debug.Log($"UI.LobbyPanelManager.OnEnable: Atrasti {playerNamesDict.Count} esoši spēlētāji, notiek atsvaidzināšana...");
                         LobbyManager.Instance.RefreshPlayerList();
                     }
                     else
                     {
-                        Debug.Log("UI.LobbyPanelManager.OnEnable: No existing players found, skipping refresh");
+                        Debug.Log("UI.LobbyPanelManager.OnEnable: Nav atrasti esoši spēlētāji, izlaižam atsvaidzināšanu");
                     }
                 }
             }
 
-            // Subscribe to chat updates
+            // Pierakstāmies uz tērzēšanas atjauninājumiem
             if (HockeyGame.UI.LobbyChatManager.Instance != null)
             {
                 HockeyGame.UI.LobbyChatManager.Instance.OnChatUpdated -= OnChatUpdated;
                 HockeyGame.UI.LobbyChatManager.Instance.OnChatUpdated += OnChatUpdated;
-                // Initial sync
+                // Sākotnējā sinhronizācija
                 OnChatUpdated(HockeyGame.UI.LobbyChatManager.Instance.GetAllMessages());
             }
         }
@@ -179,44 +178,44 @@ namespace HockeyGame.UI
             // Try to find references if they're missing
             if (!playerListContent || !playerListItemPrefab)
             {
-                Debug.LogWarning("UI.LobbyPanelManager: Missing references for player list - attempting to find them");
+                Debug.LogWarning("UI.LobbyPanelManager: Trūkst atsauču spēlētāju sarakstam - mēģinām tās atrast");
                 VerifyReferences();
             }
             
             if (!playerListContent)
             {
-                Debug.LogError("UI.LobbyPanelManager: playerListContent is still null after verification!");
-                // Try to find any ScrollRect to use
+                Debug.LogError("UI.LobbyPanelManager: playerListContent joprojām ir null pēc verifikācijas!");
+                // Mēģinām atrast jebkuru ScrollRect, ko izmantot
                 var scrollRect = GetComponentInChildren<ScrollRect>(true);
                 if (scrollRect != null && scrollRect.content != null)
                 {
                     playerListContent = scrollRect.content;
-                    Debug.Log("UI.LobbyPanelManager: Found content in child ScrollRect");
+                    Debug.Log("UI.LobbyPanelManager: Atrasta saturs bērnu ScrollRect");
                 }
                 else
                 {
-                    return; // Cannot proceed without content
+                    return; // Nevar turpināt bez satura
                 }
             }
             
             if (!playerListItemPrefab)
             {
-                Debug.LogError("UI.LobbyPanelManager: playerListItemPrefab is still null after verification!");
-                // Try to find PlayerListItem in project resources
+                Debug.LogError("UI.LobbyPanelManager: playerListItemPrefab joprojām ir null pēc verifikācijas!");
+                // Mēģinām atrast PlayerListItem projekta resursos
                 playerListItemPrefab = Resources.Load<PlayerListItem>("Prefabs/UI/PlayerListItem");
                 
                 if (!playerListItemPrefab)
                 {
-                    // Try creating a basic one
+                    // Mēģinām izveidot pamata vienu
                     GameObject tempObj = new GameObject("TempPlayerListItem");
                     playerListItemPrefab = tempObj.AddComponent<PlayerListItem>();
-                    Debug.Log("UI.LobbyPanelManager: Created temporary PlayerListItem");
+                    Debug.Log("UI.LobbyPanelManager: Izveidots pagaidu PlayerListItem");
                 }
             }
 
             try
             {
-                // Clear existing items
+                // Notīrām esošos vienumus
                 foreach (Transform child in playerListContent)
                 {
                     Destroy(child.gameObject);
@@ -224,14 +223,14 @@ namespace HockeyGame.UI
 
                 if (players == null || players.Count == 0)
                 {
-                    Debug.LogWarning("UI.LobbyPanelManager: No players to display");
+                    Debug.LogWarning("UI.LobbyPanelManager: Nav spēlētāju, ko attēlot");
                     return;
                 }
 
-                // Add player items
+                // Pievienojam spēlētāju vienumus
                 foreach (var player in players)
                 {
-                    Debug.Log($"UI.LobbyPanelManager: Creating item for {player.PlayerName}");
+                    Debug.Log($"UI.LobbyPanelManager: Izveidojam vienumu {player.PlayerName}");
                     try
                     {
                         var item = Instantiate(playerListItemPrefab, playerListContent);
@@ -243,25 +242,25 @@ namespace HockeyGame.UI
                             itemRT.sizeDelta = new Vector2(0, 50);
                             
                             item.SetPlayerInfo(player.PlayerName, player.IsBlueTeam, player.IsReady);
-                            Debug.Log($"UI.LobbyPanelManager: ✓ Successfully created item for {player.PlayerName}");
+                            Debug.Log($"UI.LobbyPanelManager: ✓ Veiksmīgi izveidots vienums {player.PlayerName}");
                         }
                     }
                     catch (System.Exception e)
                     {
-                        Debug.LogError($"UI.LobbyPanelManager: ✗ Error creating item: {e.Message}");
+                        Debug.LogError($"UI.LobbyPanelManager: ✗ Kļūda, izveidojot vienumu: {e.Message}");
                     }
                 }
 
-                // Force layout update
+                // Spiediena izkārtojuma atjaunināšana
                 Canvas.ForceUpdateCanvases();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(playerListContent);
 
-                Debug.Log($"UI.LobbyPanelManager: ✓ Successfully updated player list with {players.Count} items");
+                Debug.Log($"UI.LobbyPanelManager: ✓ Veiksmīgi atjaunināts spēlētāju saraksts ar {players.Count} vienumiem");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"Error in UI.LobbyPanelManager.UpdatePlayerList: {e.Message}");
-                Debug.LogError($"Stack trace: {e.StackTrace}");
+                Debug.LogError($"Kļūda UI.LobbyPanelManager.UpdatePlayerList: {e.Message}");
+                Debug.LogError($"Kļūdas steka izsekošana: {e.StackTrace}");
             }
         }
 
@@ -269,29 +268,29 @@ namespace HockeyGame.UI
         {
             if (playerListContent == null)
             {
-                Debug.LogError("UI.LobbyPanelManager: playerListContent is missing!");
+                Debug.LogError("UI.LobbyPanelManager: playerListContent trūkst!");
                 playerListContent = GetComponentInChildren<ScrollRect>()?.content as RectTransform;
             }
 
             if (playerListItemPrefab == null)
             {
-                Debug.LogError("UI.LobbyPanelManager: playerListItemPrefab is missing!");
-                // Look for the PlayerListItem in the scene or resources
+                Debug.LogError("UI.LobbyPanelManager: playerListItemPrefab trūkst!");
+                // Meklējam PlayerListItem ainā vai resursos
                 var foundPrefab = Object.FindFirstObjectByType<PlayerListItem>();
                 if (foundPrefab != null)
                 {
                     playerListItemPrefab = foundPrefab;
-                    Debug.Log("UI.LobbyPanelManager: Found PlayerListItem in scene.");
+                    Debug.Log("UI.LobbyPanelManager: Atrasts PlayerListItem ainā.");
                 }
                 else
                 {
                     playerListItemPrefab = Resources.Load<PlayerListItem>("Prefabs/UI/PlayerListItem");
                     if (playerListItemPrefab != null)
-                        Debug.Log("UI.LobbyPanelManager: Loaded PlayerListItem from Resources.");
+                        Debug.Log("UI.LobbyPanelManager: Ielādēts PlayerListItem no Resursiem.");
                 }
             }
 
-            Debug.Log($"UI.LobbyPanelManager: References - Content: {playerListContent != null}, Prefab: {playerListItemPrefab != null}");
+            Debug.Log($"UI.LobbyPanelManager: Atsauces - Saturs: {playerListContent != null}, Prefabs: {playerListItemPrefab != null}");
         }
 
         private void SetupButtons()
@@ -313,8 +312,8 @@ namespace HockeyGame.UI
         {
             if (lobbyCodeText != null)
             {
-                lobbyCodeText.text = $"Lobby Code: {code}";
-                Debug.Log($"Set lobby code to: {code}");
+                lobbyCodeText.text = $"Lobija kods: {code}";
+                Debug.Log($"Iestatīts lobija kods uz: {code}");
             }
         }
 
@@ -329,31 +328,31 @@ namespace HockeyGame.UI
                     string playerId = AuthenticationService.Instance.PlayerId;
                     LobbyManager.Instance.SetPlayerTeam(playerId, team);
 
-                    // Update visual indicators with better feedback
+                    // Atjauninām vizuālos rādītājus ar labāku atsauksmi
                     if (blueTeamIndicator != null && redTeamIndicator != null)
                     {
                         blueTeamIndicator.gameObject.SetActive(team == "Blue");
                         redTeamIndicator.gameObject.SetActive(team == "Red");
                         
-                        // Add color feedback
+                        // Pievienojam krāsas atsauksmi
                         if (team == "Blue")
                         {
-                            blueTeamIndicator.color = new Color(0.2f, 0.4f, 1f, 1f); // Bright blue
+                            blueTeamIndicator.color = new Color(0.2f, 0.4f, 1f, 1f); // Spilgti zila
                         }
                         else
                         {
-                            redTeamIndicator.color = new Color(1f, 0.2f, 0.2f, 1f); // Bright red
+                            redTeamIndicator.color = new Color(1f, 0.2f, 0.2f, 1f); // Spilgti sarkana
                         }
                     }
 
-                    // Force UI refresh
+                    // Spiediena UI atsvaidzināšana
                     LobbyManager.Instance.RefreshPlayerList();
                     
-                    Debug.Log($"Selected team: {team} for 2v2 game - Need 4 players (2 per team) or minimum 2 for testing!");
+                    Debug.Log($"Izvēlēta komanda: {team} 2v2 spēlei - nepieciešami 4 spēlētāji (2 uz katru komandu) vai vismaz 2 testēšanai!");
                 }
                 else
                 {
-                    Debug.LogError("LobbyManager instance is null!");
+                    Debug.LogError("LobbyManager instance ir null!");
                 }
             }
         }
@@ -363,20 +362,20 @@ namespace HockeyGame.UI
             if (LobbyManager.Instance != null)
             {
                 LobbyManager.Instance.StartMatch();
-                Debug.Log("Starting match...");
+                Debug.Log("Sākam spēli...");
             }
             else
             {
-                Debug.LogError("LobbyManager instance is null!");
+                Debug.LogError("LobbyManager instance ir null!");
             }
         }
 
         private void SetupScrollViews()
         {
-            // Setup player list scroll view
+            // Iestatām spēlētāju saraksta ritināšanas skatu
             if (playerListContent)
             {
-                // Set RectTransform anchors and sizing
+                // Iestatām RectTransform enkura un izmēra iestatījumus
                 RectTransform rt = playerListContent.GetComponent<RectTransform>();
                 rt.anchorMin = new Vector2(0, 0);
                 rt.anchorMax = new Vector2(1, 1);
@@ -386,7 +385,7 @@ namespace HockeyGame.UI
                 var vlg = playerListContent.GetComponent<VerticalLayoutGroup>();
                 if (!vlg) vlg = playerListContent.gameObject.AddComponent<VerticalLayoutGroup>();
                 vlg.spacing = 5f;
-                vlg.padding = new RectOffset(10, 10, 10, 10); // Increased padding
+                vlg.padding = new RectOffset(10, 10, 10, 10); // Palielināta iekšējā atstarpe
                 vlg.childAlignment = TextAnchor.UpperCenter;
                 vlg.childControlWidth = true;
                 vlg.childControlHeight = true;
@@ -399,7 +398,7 @@ namespace HockeyGame.UI
                 csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             }
 
-            // Setup chat content
+            // Iestatām tērzēšanas saturu
             if (chatContent)
             {
                 var vlg = chatContent.GetComponent<VerticalLayoutGroup>();
@@ -416,7 +415,7 @@ namespace HockeyGame.UI
             }
         }
 
-        // --- Networked chat send via LobbyChatManager ---
+        // --- Tīklota tērzēšanas sūtīšana caur LobbyChatManager ---
         private void SendMessage()
         {
             if (string.IsNullOrWhiteSpace(chatInput.text)) return;
@@ -452,7 +451,7 @@ namespace HockeyGame.UI
             chatInput.ActivateInputField();
         }
 
-        // --- UI update callback for chat ---
+        // --- UI atjaunināšanas atsaukums tērzēšanai ---
         private void OnChatUpdated(List<string> messages)
         {
             Debug.Log($"LobbyPanelManager: OnChatUpdated called with {messages?.Count ?? 0} messages");
@@ -505,22 +504,22 @@ namespace HockeyGame.UI
                     string playerId = AuthenticationService.Instance.PlayerId;
                     LobbyManager.Instance.SetPlayerReady(playerId);
                     
-                    // Update ready indicator with better visual feedback
+                    // Atjauninām gatavības rādītāju ar labāku vizuālo atsauksmi
                     if (readyIndicator != null)
                     {
                         bool isReady = LobbyManager.Instance.IsPlayerReady(playerId);
                         readyIndicator.color = isReady ? new Color(0.2f, 1f, 0.2f) : new Color(0.5f, 0.5f, 0.5f, 0.3f);
                         
-                        // Update ready button text if it has a text component - FIXED: Remove checkmark
+                        // Atjauninām gatavības pogas tekstu, ja tai ir teksta komponents - FIXED: Noņemam atzīmi
                         var buttonText = readyButton?.GetComponentInChildren<TMPro.TMP_Text>();
                         if (buttonText != null)
                         {
-                            buttonText.text = isReady ? "READY!" : "READY";
+                            buttonText.text = isReady ? "GATAVS!" : "GATAVS";
                             buttonText.color = isReady ? Color.green : Color.white;
                         }
                     }
                     
-                    Debug.Log($"Player ready state: {LobbyManager.Instance.IsPlayerReady(playerId)} - 2v2 needs 4 players (2 per team) or minimum 2 for testing!");
+                    Debug.Log($"Spēlētāja gatavības stāvoklis: {LobbyManager.Instance.IsPlayerReady(playerId)} - 2v2 nepieciešami 4 spēlētāji (2 uz katru komandu) vai vismaz 2 testēšanai!");
                 }
             }
         }
@@ -531,28 +530,28 @@ namespace HockeyGame.UI
             {
                 startMatchButton.interactable = IsHost() && canStart;
                 
-                // Better visual feedback for start button
+                // Labāka vizuālā atsauksme sākšanas pogai
                 var buttonText = startMatchButton.GetComponentInChildren<TMPro.TMP_Text>();
                 if (buttonText != null)
                 {
                     if (canStart && IsHost())
                     {
-                        buttonText.text = "START MATCH (TESTING)";
+                        buttonText.text = "SĀKT SPĒLI (TESTĒŠANA)";
                         buttonText.color = Color.green;
                     }
                     else if (!IsHost())
                     {
-                        buttonText.text = "WAITING FOR HOST...";
+                        buttonText.text = "GAIDĪT RESURSDATORU...";
                         buttonText.color = Color.gray;
                     }
                     else
                     {
-                        buttonText.text = "PICK TEAM & READY UP";
+                        buttonText.text = "IZVĒLIES KOMANDU UN GATAVOJIES!";
                         buttonText.color = Color.yellow;
                     }
                 }
                 
-                // Update button colors
+                // Atjauninām pogas krāsas
                 ColorBlock colors = startMatchButton.colors;
                 colors.normalColor = canStart ? new Color(0.2f, 1f, 0.2f, 1f) : new Color(0.5f, 0.5f, 0.5f, 0.5f);
                 colors.highlightedColor = canStart ? new Color(0.3f, 1f, 0.3f, 1f) : new Color(0.6f, 0.6f, 0.6f, 0.6f);
@@ -585,11 +584,11 @@ namespace HockeyGame.UI
                 if (existingManager != null)
                 {
                     Instance = existingManager;
-                    Debug.Log("Found existing LobbyPanelManager");
+                    Debug.Log("Atrasta esošais LobbyPanelManager");
                 }
                 else
                 {
-                    Debug.LogError("No LobbyPanelManager found in scene!");
+                    Debug.LogError("Ainā nav atrasts nevienas LobbyPanelManager!");
                 }
             }
         }
@@ -597,32 +596,32 @@ namespace HockeyGame.UI
         private void ValidateUIComponents()
         {
             if (!lobbyCodeText)
-                Debug.LogError("Lobby code text is missing!");
+                Debug.LogError("Lobija koda teksts trūkst!");
             if (!playerListContent)
-                Debug.LogError("Player list content is missing!");
+                Debug.LogError("Spēlētāju saraksta saturs trūkst!");
             if (!playerListScrollRect)
-                Debug.LogError("Player list scroll rect is missing!");
+                Debug.LogError("Spēlētāju saraksta ritināšanas taisnstūris trūkst!");
             if (!chatContent)
-                Debug.LogError("Chat content is missing!");
+                Debug.LogError("Tērzēšanas saturs trūkst!");
             if (!chatScrollRect)
-                Debug.LogError("Chat scroll rect is missing!");
+                Debug.LogError("Tērzēšanas ritināšanas taisnstūris trūkst!");
             if (!chatInput)
-                Debug.LogError("Chat input is missing!");
+                Debug.LogError("Tērzēšanas ievades lauks trūkst!");
             if (!blueTeamButton)
-                Debug.LogError("Blue team button is missing!");
+                Debug.LogError("Zilās komandas poga trūkst!");
             if (!redTeamButton)
-                Debug.LogError("Red team button is missing!");
+                Debug.LogError("Sarkanās komandas poga trūkst!");
             if (!startMatchButton)
-                Debug.LogError("Start match button is missing!");
+                Debug.LogError("Sākt spēles poga trūkst!");
             if (!readyButton)
-                Debug.LogError("Ready button is missing!");
+                Debug.LogError("Gatavības poga trūkst!");
         }
 
-        // Add this method to fix missing 'ForceInitialize' errors
+        // Pievienojam šo metodi, lai novērstu trūkstošu 'ForceInitialize' kļūdas
         public void ForceInitialize()
         {
-            Debug.Log("LobbyPanelManager.ForceInitialize called");
-            // Optionally, re-run initialization logic if needed
+            Debug.Log("LobbyPanelManager.ForceInitialize izsaukta");
+            // Pēc izvēles atkārtoti izpildām inicializācijas loģiku, ja nepieciešams
             VerifyReferences();
             SetupScrollViews();
             SetupButtons();

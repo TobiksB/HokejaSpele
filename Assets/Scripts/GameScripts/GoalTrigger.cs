@@ -3,26 +3,26 @@ using Unity.Netcode;
 
 namespace HockeyGame.Game
 {
+    // Klase, kas atbild par vārtu trigeršanas zonu un punktu skaitīšanu
     public class GoalTrigger : NetworkBehaviour
-    {
-        [Header("Goal Configuration")]
-        [SerializeField] private bool isBlueTeamGoal = false; // true if this is Blue team's goal (Red scores here)
-        [SerializeField] private string goalName = "Goal"; // For debugging
+    {        [Header("Vārtu konfigurācija")]
+        [SerializeField] private bool isBlueTeamGoal = false; // true, ja šie ir Zilās komandas vārti (Sarkanā komanda gūs punktus šeit)
+        [SerializeField] private string goalName = "Goal"; // Atkļūdošanai
 
-        [Header("Effects")]
-        [SerializeField] private ParticleSystem goalEffect;
-        [SerializeField] private AudioSource goalSound;
+        [Header("Efekti")]
+        [SerializeField] private ParticleSystem goalEffect; // Daļiņu efekts, kas tiks atskaņots, kad tiek gūti vārti
+        [SerializeField] private AudioSource goalSound; // Skaņa, kas tiks atskaņota, kad tiek gūti vārti
 
-        [Header("Debug")]
-        [SerializeField] private bool enableDebugLogs = true;
+        [Header("Atkļūdošana")]
+        [SerializeField] private bool enableDebugLogs = true; // Iespējot papildu žurnāla ziņojumus
 
-        private bool goalScored = false;
-        private float goalCooldown = 2f;
-        private float lastGoalTime = 0f;
-
+        private bool goalScored = false; // Norāda, vai vārti tikko gūti
+        private float goalCooldown = 2f; // Laiks sekundēs starp pieļaujamiem vārtiem
+        private float lastGoalTime = 0f; // Pēdējo vārtu laiks        
+        
         private void Awake()
         {
-            // Ensure this has a trigger collider - don't create if already exists
+            // Nodrošina, ka šim ir trigera sadursmes detektors - neveido, ja jau eksistē
             var collider = GetComponent<Collider>();
             if (collider != null)
             {
@@ -30,61 +30,63 @@ namespace HockeyGame.Game
 
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"GoalTrigger {goalName}: Found existing collider of type {collider.GetType().Name}");
+                    Debug.Log($"GoalTrigger {goalName}: Atrasts esošs sadursmes detektors ar tipu {collider.GetType().Name}");
                     if (collider is BoxCollider boxCollider)
                     {
-                        Debug.Log($"  Box size: {boxCollider.size}, Center: {boxCollider.center}");
+                        Debug.Log($"  Kastes izmērs: {boxCollider.size}, Centrs: {boxCollider.center}");
                     }
                 }
             }
             else
             {
-                Debug.LogWarning($"GoalTrigger {goalName}: No collider found! Please assign a collider in the scene.");
+                Debug.LogWarning($"GoalTrigger {goalName}: Nav atrasts sadursmes detektors! Lūdzu, piešķiriet sadursmes detektoru skatā.");
             }
 
-            // Ensure proper tag and layer
+            // Nodrošina pareizu tagu un slāni
             if (!gameObject.CompareTag("Goal"))
             {
                 gameObject.tag = "Goal";
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"GoalTrigger {goalName}: Set tag to 'Goal'");
+                    Debug.Log($"GoalTrigger {goalName}: Iestatīts tags uz 'Goal'");
                 }
             }
 
-            // Set goal layer if exists
+            // Iestata vārtu slāni, ja tāds eksistē
             int goalLayer = LayerMask.NameToLayer("Goal");
             if (goalLayer != -1)
             {
                 gameObject.layer = goalLayer;
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"GoalTrigger {goalName}: Set layer to 'Goal'");
+                    Debug.Log($"GoalTrigger {goalName}: Iestatīts slānis uz 'Goal'");
                 }
             }
 
             if (enableDebugLogs)
             {
-                Debug.Log($"GoalTrigger {goalName}: Initialized. IsBlueGoal: {isBlueTeamGoal}");
+                Debug.Log($"GoalTrigger {goalName}: Inicializēts. VaiZilieVārti: {isBlueTeamGoal}");
             }
         }
 
+        // Izsaucas, kad kaut kas ienāk vārtu trigera zonā
         private void OnTriggerEnter(Collider other)
         {
-            if (!IsServer) return;
-            if (goalScored || (Time.time - lastGoalTime) < goalCooldown) return;
+            if (!IsServer) return; // Darbojas tikai uz servera
+            if (goalScored || (Time.time - lastGoalTime) < goalCooldown) return; // Ignorē, ja nesen gūti vārti
 
             if (enableDebugLogs)
             {
-                Debug.Log($"GoalTrigger: Object entered goal: {other.name}");
+                Debug.Log($"GoalTrigger: Objekts iegājis vārtos: {other.name}");
             }
 
             if (other.CompareTag("Puck"))
             {
-                HandleGoalScored(other.gameObject);
+                HandleGoalScored(other.gameObject); // Apstrādā vārtu gūšanu, ja tas ir ripa
             }
         }
 
+        // Apstrādā vārtu gūšanu
         private void HandleGoalScored(GameObject puck)
         {
             if (!IsServer) return;
@@ -92,10 +94,11 @@ namespace HockeyGame.Game
             goalScored = true;
             lastGoalTime = Time.time;
 
+            // Nosaka, kura komanda guva vārtus
             string scoringTeam = isBlueTeamGoal ? "Red" : "Blue";
-            Debug.Log($"GoalTrigger: GOAL! {scoringTeam} team scored in {goalName}!");
+            Debug.Log($"GoalTrigger: VĀRTI! {scoringTeam} komanda guva punktus vārtos {goalName}!");
 
-            // ADD: Update score
+            // PIEVIENOTS: Atjaunina rezultātu
             var scoreManager = ScoreManager.Instance;
             if (scoreManager != null)
             {
@@ -106,22 +109,23 @@ namespace HockeyGame.Game
             }
             else
             {
-                Debug.LogWarning("GoalTrigger: ScoreManager.Instance is null, cannot update score!");
+                Debug.LogWarning("GoalTrigger: ScoreManager.Instance ir null, nevar atjaunināt rezultātu!");
             }
 
-            // Play effects on all clients
+            // Atskaņo efektus visiem klientiem
             PlayGoalEffectsClientRpc();
 
-            // Reset all players to their correct team spawn positions
+            // Atjauno visu spēlētāju pozīcijas atbilstoši viņu komandām
             RespawnAllPlayersAfterGoal();
 
-            // Reset puck using the working coroutine
+            // Atjauno ripas pozīciju, izmantojot strādājošo koroutīnu
             StartCoroutine(ResetPuckAfterGoal(puck, scoringTeam));
 
-            // Reset goal cooldown after a delay
+            // Atjauno vārtu dzesēšanas laiku pēc aizkaves
             StartCoroutine(ResetGoalCooldown());
         }
 
+        // Klienta RPC metode, kas atskaņo efektus visiem klientiem
         [ClientRpc]
         private void PlayGoalEffectsClientRpc()
         {
@@ -129,15 +133,17 @@ namespace HockeyGame.Game
             if (goalSound != null) goalSound.Play();
         }
 
+        // Atjauno visu spēlētāju pozīcijas pēc vārtiem
         private void RespawnAllPlayersAfterGoal()
         {
             var gameNetMgr = GameNetworkManager.Instance;
             if (gameNetMgr == null)
             {
-                Debug.LogError("GoalTrigger: GameNetworkManager.Instance is null!");
+                Debug.LogError("GoalTrigger: GameNetworkManager.Instance ir null!");
                 return;
             }
 
+            // Atjauno katru pievienoto spēlētāju
             foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
             {
                 ulong clientId = client.ClientId;
@@ -147,16 +153,18 @@ namespace HockeyGame.Game
                 var playerObj = client.PlayerObject != null ? client.PlayerObject.gameObject : null;
                 if (playerObj == null)
                 {
-                    Debug.LogWarning($"GoalTrigger: No player object for client {clientId}");
+                    Debug.LogWarning($"GoalTrigger: Nav spēlētāja objekta klientam {clientId}");
                     continue;
                 }
 
+                // Atjauno spēlētāja pozīciju un rotāciju
                 var rb = playerObj.GetComponent<Rigidbody>();
                 playerObj.transform.position = spawnPos;
                 playerObj.transform.rotation = team == "Blue"
                     ? Quaternion.Euler(0, 90, 0)
                     : Quaternion.Euler(0, -90, 0);
 
+                // Atjauno arī fizisko ķermeni, ja tas pastāv
                 if (rb != null)
                 {
                     rb.position = spawnPos;
@@ -165,17 +173,20 @@ namespace HockeyGame.Game
                     rb.angularVelocity = Vector3.zero;
                 }
 
-                Debug.Log($"GoalTrigger: Reset player {clientId} ({team} team) to {spawnPos}");
+                Debug.Log($"GoalTrigger: Atjaunots spēlētājs {clientId} ({team} komanda) uz {spawnPos}");
             }
         }
 
+        // Koroutīna, kas atjauno ripas pozīciju pēc vārtiem
         private System.Collections.IEnumerator ResetPuckAfterGoal(GameObject puck, string goalType)
         {
+            // Nogaida nelielu laiku, lai atskaņotu efektus
             yield return new WaitForSeconds(1.5f);
             
+            // Ja ripa kaut kā kļuvusi null, mēģina atrast to skatā
             if (puck == null)
             {
-                Debug.LogWarning("GoalTrigger: Puck became null during reset, finding puck in scene");
+                Debug.LogWarning("GoalTrigger: Ripa kļuva null atiestatīšanas laikā, meklē ripu skatā");
                 var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
                 if (allPucks.Length > 0)
                 {
@@ -187,13 +198,13 @@ namespace HockeyGame.Game
             {
                 var puckComponent = puck.GetComponent<Puck>();
                 
-                // CRITICAL: Ensure puck is completely free before reset
+                // KRITISKS: Nodrošina, ka ripa ir pilnīgi brīva pirms atiestatīšanas
                 if (puckComponent != null)
                 {
-                    // Force clear all held states
+                    // Piespiedu kārtā notīra visus turēšanas stāvokļus
                     puckComponent.SetHeld(false);
                     
-                    // Clear from any player still holding it
+                    // Notīra no jebkura spēlētāja, kas joprojām tur ripu
                     var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
                     foreach (var player in allPlayers)
                     {
@@ -202,13 +213,13 @@ namespace HockeyGame.Game
                             player.ForceReleasePuckForSteal();
                             if (enableDebugLogs)
                             {
-                                Debug.Log($"GoalTrigger: Cleared remaining reference from {player.name}");
+                                Debug.Log($"GoalTrigger: Notīrīta atlikušā atsauce no {player.name}");
                             }
                         }
                     }
                 }
                 
-                // Stop any PuckFollower components
+                // Aptur jebkādas PuckFollower komponentes
                 var puckFollower = puck.GetComponent<PuckFollower>();
                 if (puckFollower != null)
                 {
@@ -216,12 +227,13 @@ namespace HockeyGame.Game
                     puckFollower.enabled = false;
                 }
                 
-                // FIXED: Proper puck reset to center
+                // LABOTS: Pareiza ripas atiestatīšana uz centru
                 Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
                 puck.transform.SetParent(null);
                 puck.transform.position = centerPos;
                 puck.transform.rotation = Quaternion.identity;
                 
+                // Atjauno ripas fizikas īpašības
                 var rb = puck.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
@@ -229,16 +241,17 @@ namespace HockeyGame.Game
                     rb.useGravity = true;
                     rb.linearVelocity = Vector3.zero;
                     rb.angularVelocity = Vector3.zero;
-                    rb.position = centerPos; // Force rigidbody position too
+                    rb.position = centerPos; // Piespiedu kārtā iestata arī fizikas pozīciju
                 }
                 
+                // Iespējo sadursmes detektoru
                 var col = puck.GetComponent<Collider>();
                 if (col != null)
                 {
                     col.enabled = true;
                 }
                 
-                // ADDED: Use Puck's ResetToCenter method if available (for network sync)
+                // PIEVIENOTS: Izmanto Puck.ResetToCenter metodi, ja tā ir pieejama (tīkla sinhronizācijai)
                 if (puckComponent != null && puckComponent.IsServer)
                 {
                     try
@@ -249,31 +262,32 @@ namespace HockeyGame.Game
                             resetMethod.Invoke(puckComponent, null);
                             if (enableDebugLogs)
                             {
-                                Debug.Log("GoalTrigger: Used Puck.ResetToCenter() method for network sync");
+                                Debug.Log("GoalTrigger: Izmantota Puck.ResetToCenter() metode tīkla sinhronizācijai");
                             }
                         }
                     }
                     catch (System.Exception e)
                     {
-                        Debug.LogWarning($"GoalTrigger: Failed to use Puck.ResetToCenter(): {e.Message}");
+                        Debug.LogWarning($"GoalTrigger: Neizdevās izmantot Puck.ResetToCenter(): {e.Message}");
                     }
                 }
                 
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"GoalTrigger: Puck reset to center after {goalType} goal at position {centerPos}");
+                    Debug.Log($"GoalTrigger: Ripa atiestatīta uz centru pēc {goalType} vārtiem pozīcijā {centerPos}");
                 }
             }
             else
             {
-                Debug.LogError("GoalTrigger: Could not find puck to reset!");
+                Debug.LogError("GoalTrigger: Nevarēja atrast ripu, ko atiestatīt!");
             }
         }
 
+        // Koroutīna, kas atjauno vārtu dzesēšanas laiku
         private System.Collections.IEnumerator ResetGoalCooldown()
         {
             yield return new WaitForSeconds(goalCooldown);
-            goalScored = false;
+            goalScored = false; // Atkal atļauj skaitīt vārtus
         }
     }
 }

@@ -1,31 +1,33 @@
 using UnityEngine;
-using System.Collections; // Add this for WaitForSeconds
+using System.Collections; // Pievienojam šo, lai izmantotu WaitForSeconds
 
 namespace HockeyGame.Game
 {
+    // Klase atbild par treniņa režīma pārvaldību hokeja spēlē
+    // Tā uztur spēlētāju, ripu un kameras iestatīšanu ārpus tīkla spēles režīma
     public class TrainingModeManager : MonoBehaviour
     {
-        [Header("Training Mode Settings")]
-        [SerializeField] private GameObject playerPrefab;
-        [SerializeField] private GameObject puckPrefab;
-        [SerializeField] private Transform playerSpawnPoint;
-        [SerializeField] private Transform puckSpawnPoint;
+        [Header("Treniņa režīma iestatījumi")]
+        [SerializeField] private GameObject playerPrefab; // Spēlētāja prefabs, ko instantizēt treniņa ainā
+        [SerializeField] private GameObject puckPrefab; // Ripas prefabs, ko instantizēt treniņa ainā
+        [SerializeField] private Transform playerSpawnPoint; // Vieta, kur spēlētājs parādīsies
+        [SerializeField] private Transform puckSpawnPoint; // Vieta, kur ripa parādīsies
         
-        [Header("UI")]
-        [SerializeField] private GameObject pauseMenuPrefab;
+        [Header("Lietotāja saskarne")]
+        [SerializeField] private GameObject pauseMenuPrefab; // Pauzes izvēlnes prefabs
         
-        [Header("Camera Settings")]
-        [SerializeField] private GameObject cameraPrefab; // Use the same camera prefab as in game scenes
-        [SerializeField] private Vector3 cameraOffset = new Vector3(0f, 6f, -10f); // Default offset
-        [SerializeField] private float cameraSmoothing = 0.1f; // Default smoothing value
+        [Header("Kameras iestatījumi")]
+        [SerializeField] private GameObject cameraPrefab; // Izmanto to pašu kameras prefabu, kas spēles ainās
+        [SerializeField] private Vector3 cameraOffset = new Vector3(0f, 6f, -10f); // Noklusējuma nobīde
+        [SerializeField] private float cameraSmoothing = 0.1f; // Noklusējuma izlīdzināšanas vērtība
 
-        private GameObject currentPlayer;
-        private GameObject currentPuck;
-        private PauseMenuManager pauseMenu;
+        private GameObject currentPlayer; // Atsauce uz pašreizējo spēlētāju
+        private GameObject currentPuck; // Atsauce uz pašreizējo ripu
+        private PauseMenuManager pauseMenu; // Atsauce uz pauzes izvēlnes pārvaldnieku
         
         private void Awake()
         {
-            // Create pause menu if not assigned
+            // Izveido pauzes izvēlni, ja tā nav piešķirta
             if (pauseMenuPrefab == null)
             {
                 var pauseMenuGO = new GameObject("PauseMenu");
@@ -42,23 +44,23 @@ namespace HockeyGame.Game
                 }
             }
             
-            // Ensure Time.timeScale is normal
+            // Nodrošina, ka Time.timeScale ir normāls
             Time.timeScale = 1f;
         }
         
         private void Start()
         {
-            SpawnPlayer();
-            SetupPlayerCamera();
-            SpawnPuck();
-            SetupGoalTriggers();
+            SpawnPlayer(); // Izvedo spēlētāju
+            SetupPlayerCamera(); // Iestata kameru, kas seko spēlētājam
+            SpawnPuck(); // Izveido ripu
+            SetupGoalTriggers(); // Iestata vārtu trigeru notikumus
             
-            Debug.Log("TrainingModeManager: Training mode initialized");
+            Debug.Log("TrainingModeManager: Treniņa režīms inicializēts");
         }
         
         private void SpawnPlayer()
         {
-            // Default spawn position if not set
+            // Noklusējuma parādīšanās pozīcija, ja nav iestatīta
             Vector3 spawnPos = playerSpawnPoint != null 
                 ? playerSpawnPoint.position 
                 : new Vector3(0f, 0.71f, -5f);
@@ -71,22 +73,22 @@ namespace HockeyGame.Game
             {
                 currentPlayer = Instantiate(playerPrefab, spawnPos, spawnRot);
                 
-                // Disable any NetworkObject components
+                // Atspējo visas NetworkObject komponentes
                 var networkComponents = currentPlayer.GetComponentsInChildren<Unity.Netcode.NetworkBehaviour>();
                 foreach (var comp in networkComponents)
                 {
-                    Debug.Log($"TrainingModeManager: Disabling network component {comp.GetType().Name}");
+                    Debug.Log($"TrainingModeManager: Atspējo tīkla komponenti {comp.GetType().Name}");
                     Destroy(comp);
                 }
 
                 var networkObjects = currentPlayer.GetComponentsInChildren<Unity.Netcode.NetworkObject>();
                 foreach (var netObj in networkObjects)
                 {
-                    Debug.Log($"TrainingModeManager: Removing NetworkObject component");
+                    Debug.Log($"TrainingModeManager: Noņem NetworkObject komponenti");
                     Destroy(netObj);
                 }
                 
-                // Remove existing scripts that require networking
+                // Noņem esošos skriptus, kuriem nepieciešama tīklošana
                 var existingPlayerMovement = currentPlayer.GetComponent<PlayerMovement>();
                 if (existingPlayerMovement != null)
                 {
@@ -105,12 +107,12 @@ namespace HockeyGame.Game
                     Destroy(existingPlayerShooting);
                 }
                 
-                // Add training-specific components with auto-reset disabled
+                // Pievieno treniņam specifiskus komponentus ar atspējotu automātisku atiestatīšanu
                 var trainingMovement = currentPlayer.AddComponent<TrainingPlayerMovement>();
                 currentPlayer.AddComponent<TrainingPuckPickup>();
                 var shooting = currentPlayer.AddComponent<TrainingPlayerShooting>();
                 
-                // Disable auto-reset to prevent constant respawning
+                // Atspējo automātisko atiestatīšanu, lai novērstu pastāvīgu respawnošanu
                 if (shooting != null)
                 {
                     var field = shooting.GetType().GetField("enableAutoReset", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
@@ -118,15 +120,15 @@ namespace HockeyGame.Game
                         field.SetValue(shooting, false);
                 }
                 
-                // Store initial position for manual resets
+                // Saglabā sākotnējo pozīciju manuālām atiestatīšanām
                 Vector3 initialPos = spawnPos;
                 initialPos.y = 0.71f;
                 
-                // Set the properties after they are added to TrainingPlayerMovement
+                // Iestata īpašības pēc tam, kad tās ir pievienotas TrainingPlayerMovement
                 trainingMovement.initialPosition = initialPos;
                 trainingMovement.initialRotation = spawnRot;
                 
-                // Make sure physics still works
+                // Pārliecinās, ka fizika joprojām darbojas
                 var rb = currentPlayer.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
@@ -135,17 +137,17 @@ namespace HockeyGame.Game
                     rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
                 }
                 
-                Debug.Log($"TrainingModeManager: Player spawned at {spawnPos} with training mode components");
+                Debug.Log($"TrainingModeManager: Spēlētājs izvietots pozīcijā {spawnPos} ar treniņa režīma komponentēm");
             }
             else
             {
-                Debug.LogError("TrainingModeManager: Player prefab not assigned!");
+                Debug.LogError("TrainingModeManager: Nav piešķirts spēlētāja prefabs!");
             }
         }
         
         private void SpawnPuck()
         {
-            // Default spawn position if not set
+            // Noklusējuma parādīšanās pozīcija, ja nav iestatīta
             Vector3 spawnPos = puckSpawnPoint != null 
                 ? puckSpawnPoint.position 
                 : new Vector3(0f, 0.71f, 0f);
@@ -154,11 +156,11 @@ namespace HockeyGame.Game
             {
                 currentPuck = Instantiate(puckPrefab, spawnPos, Quaternion.identity);
                 
-                // Add Puck component if it doesn't exist
+                // Pievieno Puck komponenti, ja tā nav
                 if (currentPuck.GetComponent<Puck>() == null)
                     currentPuck.AddComponent<Puck>();
                 
-                // Ensure it has a rigidbody
+                // Nodrošina, ka tai ir rigidbody
                 var rb = currentPuck.GetComponent<Rigidbody>();
                 if (rb == null)
                 {
@@ -168,7 +170,7 @@ namespace HockeyGame.Game
                     rb.useGravity = true;
                 }
                 
-                // Ensure it has a collider
+                // Nodrošina, ka tai ir sadursmes detektors
                 if (currentPuck.GetComponent<Collider>() == null)
                 {
                     var col = currentPuck.AddComponent<SphereCollider>();
@@ -176,65 +178,68 @@ namespace HockeyGame.Game
                     col.material = CreateIcyPhysicMaterial();
                 }
                 
-                Debug.Log($"TrainingModeManager: Puck spawned at {spawnPos}");
+                Debug.Log($"TrainingModeManager: Ripa izvietota pozīcijā {spawnPos}");
             }
             else
             {
-                Debug.LogError("TrainingModeManager: Puck prefab not assigned!");
+                Debug.LogError("TrainingModeManager: Nav piešķirts ripas prefabs!");
             }
         }
         
+        // Izveido ledainu fizikas materiālu ripai
         private PhysicsMaterial CreateIcyPhysicMaterial()
         {
             PhysicsMaterial material = new PhysicsMaterial("IcyPuck");
-            material.dynamicFriction = 0.1f;
-            material.staticFriction = 0.1f;
-            material.bounciness = 0.3f;
-            material.frictionCombine = PhysicsMaterialCombine.Minimum;
-            material.bounceCombine = PhysicsMaterialCombine.Average;
+            material.dynamicFriction = 0.1f; // Zema berze kustībā
+            material.staticFriction = 0.1f; // Zema berze miera stāvoklī
+            material.bounciness = 0.3f; // Vidēja atlēkšana
+            material.frictionCombine = PhysicsMaterialCombine.Minimum; // Izmanto mazāko berzi no abiem objektiem
+            material.bounceCombine = PhysicsMaterialCombine.Average; // Izmanto vidējo atlēkšanu no abiem objektiem
             return material;
         }
         
+        // Iestata vārtu trigeru notikumus
         private void SetupGoalTriggers()
         {
-            // Find existing goal triggers in the scene
+            // Atrod esošos vārtu trigerus ainā
             var goalTriggers = FindObjectsByType<TrainingModeGoalTrigger>(FindObjectsSortMode.None);
             
             if (goalTriggers.Length == 0)
             {
-                Debug.LogWarning("TrainingModeManager: No TrainingModeGoalTrigger found in scene. Goals won't work!");
+                Debug.LogWarning("TrainingModeManager: Aināī nav atrasts neviens TrainingModeGoalTrigger. Vārti nedarbosies!");
             }
             
-            // Make sure all goal triggers have OnGoalScored events wired up
+            // Pārliecinās, ka visiem vārtu trigeriem ir pieslēgti OnGoalScored notikumi
             foreach (var trigger in goalTriggers)
             {
                 trigger.OnGoalScored += ResetPuckAfterGoal;
             }
             
-            Debug.Log($"TrainingModeManager: Set up {goalTriggers.Length} goal triggers");
+            Debug.Log($"TrainingModeManager: Iestatīti {goalTriggers.Length} vārtu trigeri");
         }
         
-        // Called when a goal is scored
+        // Tiek izsaukts, kad tiek gūti vārti
         private void ResetPuckAfterGoal(string teamName)
         {
             if (currentPuck == null)
             {
-                Debug.LogWarning("TrainingModeManager: Cannot reset null puck!");
+                Debug.LogWarning("TrainingModeManager: Nevar atiestatīt neeksistējošu ripu!");
                 return;
             }
             
             StartCoroutine(DelayedPuckReset());
         }
         
+        // Atiestatīt ripu pēc nelielas aizkaves
         private IEnumerator DelayedPuckReset()
         {
-            // Wait a moment for goal effects
+            // Pagaida brīdi vārtu efektiem
             yield return new WaitForSeconds(1.5f);
             
-            // Get puck component
+            // Iegūst ripas komponenti
             var puckComponent = currentPuck.GetComponent<Puck>();
             
-            // Stop following if it's being followed
+            // Aptur sekošanu, ja tā notiek
             var puckFollower = currentPuck.GetComponent<PuckFollower>();
             if (puckFollower != null)
             {
@@ -242,13 +247,13 @@ namespace HockeyGame.Game
                 puckFollower.enabled = false;
             }
             
-            // Reset puck state
+            // Atiestata ripas stāvokli
             if (puckComponent != null)
             {
                 puckComponent.SetHeld(false);
             }
             
-            // Reset puck physics
+            // Atiestata ripas fiziku
             var rb = currentPuck.GetComponent<Rigidbody>();
             if (rb != null)
             {
@@ -258,7 +263,7 @@ namespace HockeyGame.Game
                 rb.angularVelocity = Vector3.zero;
             }
             
-            // Reset position
+            // Atiestata pozīciju
             Vector3 resetPos = puckSpawnPoint != null 
                 ? puckSpawnPoint.position 
                 : new Vector3(0f, 0.71f, 0f);
@@ -266,9 +271,10 @@ namespace HockeyGame.Game
             currentPuck.transform.position = resetPos;
             currentPuck.transform.rotation = Quaternion.identity;
             
-            Debug.Log($"TrainingModeManager: Puck reset to {resetPos}");
+            Debug.Log($"TrainingModeManager: Ripa atiestatīta uz {resetPos}");
         }
         
+        // Publiska metode treniņa atiestatīšanai
         public void ResetTraining()
         {
             if (currentPuck != null)
@@ -281,40 +287,42 @@ namespace HockeyGame.Game
             }
         }
 
+        // Iestata kameru, kas sekos spēlētājam
         private void SetupPlayerCamera()
         {
             if (currentPlayer == null)
             {
-                Debug.LogError("TrainingModeManager: Cannot set up camera - player is null!");
+                Debug.LogError("TrainingModeManager: Nevar iestatīt kameru - spēlētājs ir null!");
                 return;
             }
             
-            // Try to use provided camera prefab (same as game scenes)
+            // Mēģina izmantot piešķirto kameras prefabu (tas pats, kas spēles ainās)
             if (cameraPrefab != null)
             {
                 GameObject cameraObj = Instantiate(cameraPrefab, currentPlayer.transform.position + cameraOffset, Quaternion.identity);
                 
-                // Try to get and setup CameraFollow component
+                // Mēģina iegūt un iestatīt CameraFollow komponenti
                 CameraFollow cameraFollow = cameraObj.GetComponent<CameraFollow>();
                 if (cameraFollow != null)
                 {
                     cameraFollow.SetTarget(currentPlayer.transform);
                     cameraFollow.SetOffset(cameraOffset);
-                    Debug.Log("TrainingModeManager: Set up game camera from prefab");
+                    Debug.Log("TrainingModeManager: Iestatīta spēles kamera no prefaba");
                 }
                 else
                 {
-                    Debug.LogWarning("TrainingModeManager: Camera prefab doesn't have CameraFollow component");
+                    Debug.LogWarning("TrainingModeManager: Kameras prefabam nav CameraFollow komponentes");
                     SetupFallbackCamera();
                 }
             }
-            // Fallback to creating our own camera
+            // Rezerves variants - izveido savu kameru
             else
             {
                 SetupFallbackCamera();
             }
         }
         
+        // Izveido vienkāršu rezerves kameru, ja prefabs nav pieejams
         private void SetupFallbackCamera()
         {
             GameObject cameraObj = new GameObject("Training Camera");
@@ -324,26 +332,26 @@ namespace HockeyGame.Game
             camera.nearClipPlane = 0.3f;
             camera.farClipPlane = 1000f;
             
-            // Add audio listener
+            // Pievieno audio klausītāju
             cameraObj.AddComponent<AudioListener>();
             
-            // Add CameraFollow script
+            // Pievieno CameraFollow skriptu
             CameraFollow cameraFollow = cameraObj.AddComponent<CameraFollow>();
             cameraFollow.SetTarget(currentPlayer.transform);
             cameraFollow.SetOffset(cameraOffset);
             
-            Debug.Log("TrainingModeManager: Created fallback camera with CameraFollow");
+            Debug.Log("TrainingModeManager: Izveidota rezerves kamera ar CameraFollow");
         }
         
-        // Add a public method for manual reset (can be called from UI buttons)
+        // Publiska metode manuālai atiestatīšanai (var izsaukt no UI pogām)
         public void ResetPlayerAndPuck()
         {
             if (currentPlayer != null && currentPlayer.GetComponent<TrainingPlayerMovement>() != null)
             {
                 var movement = currentPlayer.GetComponent<TrainingPlayerMovement>();
                 
-                // Reset player position
-                if (movement.initialPosition != Vector3.zero) // Only if we have a valid initial position
+                // Atiestata spēlētāja pozīciju
+                if (movement.initialPosition != Vector3.zero) // Tikai ja mums ir derīga sākotnējā pozīcija
                 {
                     currentPlayer.transform.position = movement.initialPosition;
                     currentPlayer.transform.rotation = movement.initialRotation;
@@ -359,7 +367,7 @@ namespace HockeyGame.Game
                 }
             }
             
-            // Also reset the puck
+            // Arī atiestata ripu
             ResetTraining();
         }
     }

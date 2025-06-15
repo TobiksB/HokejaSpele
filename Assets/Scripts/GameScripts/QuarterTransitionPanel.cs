@@ -87,7 +87,6 @@ namespace HockeyGame.Game
             }
         }
 
-        // FIXED: Add missing ShowTransition method
         public void ShowTransition(int nextQuarter)
         {
             if (panel != null)

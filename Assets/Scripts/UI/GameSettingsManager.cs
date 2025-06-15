@@ -5,17 +5,16 @@ public class GameSettingsManager : MonoBehaviour
 {
     public static GameSettingsManager Instance { get; private set; }
 
-    [Header("Settings")]
+    [Header("Iestatījumi")]
     [Range(0.1f, 10f)]
     public float mouseSensitivity = 1.0f;
     [Range(0f, 1f)]
     public float gameVolume = 1.0f;
     public bool isFullscreen = true;
 
-    [Header("Audio")]
-    [SerializeField] private AudioMixer masterMixer; // Assign your master mixer in inspector
+    [Header("Audio")]    [SerializeField] private AudioMixer masterMixer; // Piesaisti savu galveno mikseri inspektorā
 
-    // Store available resolutions
+    // Saglabā pieejamās izšķirtspējas
     public Resolution[] AvailableResolutions { get; private set; }
     public int CurrentResolutionIndex { get; private set; }
 
@@ -24,9 +23,7 @@ public class GameSettingsManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            // Populate available resolutions and set current index
+            DontDestroyOnLoad(gameObject);            // Aizpilda pieejamās izšķirtspējas un iestata pašreizējo indeksu
             AvailableResolutions = Screen.resolutions;
             CurrentResolutionIndex = GetCurrentResolutionIndex();
 
@@ -44,21 +41,21 @@ public class GameSettingsManager : MonoBehaviour
         PlayerPrefs.SetFloat("MouseSensitivity", value);
         PlayerPrefs.Save();
 
-        Debug.Log($"GameSettingsManager: Mouse sensitivity set to {value}");
+        Debug.Log($"GameSettingsManager: Peles jutība iestatīta uz {value}");
     }
 
     public void SetGameVolume(float volume)
     {
         gameVolume = Mathf.Clamp01(volume);
         
-        // Use AudioManager if available
+        // Izmantot AudioManager, ja pieejams
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.SetMasterVolume(gameVolume);
         }
         else
         {
-            // Fallback to AudioListener
+            // Rezerves variants ar AudioListener
             AudioListener.volume = gameVolume;
         }
         
@@ -66,7 +63,7 @@ public class GameSettingsManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    // Set resolution by index from dropdown
+    // Iestata izšķirtspēju pēc indeksa no nolaižamās izvēlnes
     public void SetResolution(int resolutionIndex, bool applyFullscreen = true)
     {
         if (AvailableResolutions == null || AvailableResolutions.Length == 0)
@@ -82,7 +79,7 @@ public class GameSettingsManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    // Returns a string array for populating a dropdown with available resolutions
+    // Atgriež teksta masīvu nolaižamās izvēlnes aizpildīšanai ar pieejamajām izšķirtspējām
     public string[] GetResolutionOptions()
     {
         if (AvailableResolutions == null || AvailableResolutions.Length == 0)
@@ -97,7 +94,7 @@ public class GameSettingsManager : MonoBehaviour
         return options;
     }
 
-    // Returns the index of the current screen resolution in the AvailableResolutions array
+    // Atgriež pašreizējās ekrāna izšķirtspējas indeksu AvailableResolutions masīvā
     public int GetCurrentResolutionDropdownIndex()
     {
         if (AvailableResolutions == null || AvailableResolutions.Length == 0)
@@ -116,7 +113,7 @@ public class GameSettingsManager : MonoBehaviour
         return 0;
     }
 
-    // Helper to get the current resolution index
+    // Palīgmetode, lai iegūtu pašreizējās izšķirtspējas indeksu
     private int GetCurrentResolutionIndex()
     {
         if (AvailableResolutions == null || AvailableResolutions.Length == 0)
@@ -139,14 +136,14 @@ public class GameSettingsManager : MonoBehaviour
     {
         isFullscreen = fullscreen;
         
-        // CRITICAL: Use SetResolution instead of just Screen.fullScreen
+        //  Izmantot SetResolution nevis tikai Screen.fullScreen
         Resolution currentRes = Screen.currentResolution;
         Screen.SetResolution(currentRes.width, currentRes.height, fullscreen);
         
         PlayerPrefs.SetInt("Fullscreen", fullscreen ? 1 : 0);
         PlayerPrefs.Save();
         
-        Debug.Log($"GameSettingsManager: Fullscreen set to {fullscreen} using SetResolution");
+        Debug.Log($"GameSettingsManager: Pilnekrāna režīms iestatīts uz {fullscreen} izmantojot SetResolution");
     }
 
     public void ToggleFullscreen()
@@ -169,14 +166,14 @@ public class GameSettingsManager : MonoBehaviour
 
     public void ResetToDefaults()
     {
-        Debug.Log("GameSettingsManager: Resetting to default values...");
+        Debug.Log("GameSettingsManager: Atiestatīt uz noklusējuma vērtībām...");
         
-        // Reset to default values
+        // Atiestatīt uz noklusējuma vērtībām
         mouseSensitivity = 1.0f;
         gameVolume = 1.0f;
         isFullscreen = false;
         
-        // Reset resolution to native screen resolution
+        // Atiestatīt izšķirtspēju uz ekrāna iedzimto izšķirtspēju
         Resolution nativeRes = Screen.currentResolution;
         int nativeIndex = 0;
         var resolutions = Screen.resolutions;
@@ -190,14 +187,14 @@ public class GameSettingsManager : MonoBehaviour
         }
         CurrentResolutionIndex = nativeIndex;
         
-        // Apply defaults immediately
+        // Nekavējoties piemērot noklusējuma iestatījumus
         Screen.SetResolution(nativeRes.width, nativeRes.height, false);
         AudioListener.volume = gameVolume;
         
-        // Save defaults
+        // Saglabāt noklusējuma iestatījumus
         SaveSettings();
     
-        Debug.Log($"GameSettingsManager: Reset complete - Resolution: {nativeRes.width}x{nativeRes.height}, Sensitivity: {mouseSensitivity}, Volume: {gameVolume}, Fullscreen: {isFullscreen}");
+        Debug.Log($"GameSettingsManager: Atiestatīšana pabeigta - Izšķirtspēja: {nativeRes.width}x{nativeRes.height}, Jutība: {mouseSensitivity}, Skaņa: {gameVolume}, Pilnekrāna režīms: {isFullscreen}");
     }
 
     public void SaveSettings()
@@ -208,6 +205,6 @@ public class GameSettingsManager : MonoBehaviour
         PlayerPrefs.SetInt("ResolutionIndex", CurrentResolutionIndex);
         PlayerPrefs.Save();
         
-        Debug.Log("GameSettingsManager: Settings saved to PlayerPrefs");
+        Debug.Log("GameSettingsManager: Iestatījumi saglabāti PlayerPrefs");
     }
 }

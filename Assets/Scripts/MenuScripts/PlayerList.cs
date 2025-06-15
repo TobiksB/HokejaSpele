@@ -10,10 +10,10 @@ public class PlayerList : MonoBehaviour
 
     public void UpdatePlayerList(List<LobbyPlayerData> players)
     {
-        // Clear existing items
+        // Notīrīt esošos elementus
         ClearList();
 
-        // Create new items for each player
+        // Izveidot jaunus elementus katram spēlētājam
         foreach (var player in players)
         {
             PlayerListItem item = Instantiate(playerItemPrefab, contentPanel);

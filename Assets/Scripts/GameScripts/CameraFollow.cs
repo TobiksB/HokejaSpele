@@ -5,13 +5,13 @@ public class CameraFollow : MonoBehaviour
 {
     [Header("Follow Settings")]
     [SerializeField] private Transform target;
-    [SerializeField] private Vector3 offset = new Vector3(0f, 1.1f, -0.8f); // Extremely close third-person
+    [SerializeField] private Vector3 offset = new Vector3(0f, 1.1f, -0.8f); // Ļoti tuva trešās personas perspektīva
     [SerializeField] private float followSpeed = 8f;
     [SerializeField] private float rotationSpeed = 8f;
 
     [Header("Look Settings")]
     [SerializeField] private bool lookAtTarget = true;
-    [SerializeField] private Vector3 lookOffset = new Vector3(0f, 1.2f, 0f); // Look at upper body
+    [SerializeField] private Vector3 lookOffset = new Vector3(0f, 1.2f, 0f); // Skatās uz augšējo ķermeņa daļu
 
     [Header("Smoothing")]
     [SerializeField] private bool smoothFollow = true;
@@ -23,7 +23,7 @@ public class CameraFollow : MonoBehaviour
 
     private bool isFreeLook = false;
     private float yaw = 0f;
-    private float pitch = 10f; // Slight downward angle
+    private float pitch = 10f; // Neliels leņķis uz leju
 
     private Camera cam;
 

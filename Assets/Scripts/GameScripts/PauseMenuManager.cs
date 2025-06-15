@@ -6,32 +6,36 @@ using Unity.Netcode;
 
 namespace HockeyGame.Game
 {
+    // Klase, kas pārvalda pauzes izvēlni hokeja spēlē.
+    // Nodrošina spēles pauzēšanu un atsākšanu, piekļuvi iestatījumiem, iespēju atgriezties galvenajā izvēlnē, un spēles aizvēršanu.
     public class PauseMenuManager : MonoBehaviour
     {
-        [Header("Pause Menu")]
-        [SerializeField] private GameObject pausePanel;
-        [SerializeField] private Button resumeButton;
-        [SerializeField] private Button settingsButton;
-        [SerializeField] private Button mainMenuButton;
-        [SerializeField] private Button exitButton;
+        [Header("Pauzes izvēlne")]
+        [SerializeField] private GameObject pausePanel; // Pauzes paneļa ietvars
+        [SerializeField] private Button resumeButton; // Poga spēles turpināšanai
+        [SerializeField] private Button settingsButton; // Poga iestatījumu atvēršanai
+        [SerializeField] private Button mainMenuButton; // Poga atgriešanai uz galveno izvēlni
+        [SerializeField] private Button exitButton; // Poga spēles aizvēršanai
 
-        [Header("Settings Panel")]
-        [SerializeField] private GameObject settingsPanel;
-        [SerializeField] private Slider mouseSensitivitySlider;
-        [SerializeField] private Slider volumeSlider;
-        [SerializeField] private Toggle fullscreenToggle;
-        [SerializeField] private TMP_Dropdown resolutionDropdown;
-        [SerializeField] private Button settingsBackButton;
+        [Header("Iestatījumu panelis")]
+        [SerializeField] private GameObject settingsPanel; // Iestatījumu paneļa ietvars
+        [SerializeField] private Slider mouseSensitivitySlider; // Peles jutības slīdnis
+        [SerializeField] private Slider volumeSlider; // Skaļuma slīdnis
+        [SerializeField] private Toggle fullscreenToggle; // Pilnekrāna režīma pārslēgs
+        [SerializeField] private TMP_Dropdown resolutionDropdown; // Izšķirtspējas izvelne
+        [SerializeField] private Button settingsBackButton; // Poga atgriešanai uz pauzes izvēlni
 
-        private bool isPaused = false;
-        private float previousTimeScale;
+        private bool isPaused = false; // Norāda, vai spēle ir pauzēta
+        private float previousTimeScale; // Saglabā iepriekšējo laika mērogu pirms pauzes
 
         private void Awake()
         {
+            // Ja nav pauzes paneļa, izveido vienkāršu versiju
             if (pausePanel == null)
             {
                 CreateBasicPauseMenu();
             }
+            // Sākumā paslēpj iestatījumu paneli
             if (settingsPanel != null)
             {
                 settingsPanel.SetActive(false);
@@ -40,14 +44,16 @@ namespace HockeyGame.Game
 
         private void Start()
         {
+            // Nodrošina, ka laika mērogs ir normāls
             EnsureTimeScaleIsNormal();
 
+            // Sākumā paslēpj pauzes paneli
             if (pausePanel != null)
             {
                 pausePanel.SetActive(false);
             }
 
-            // Setup pause panel buttons
+            // Iestata pauzes paneļa pogu klausītājus
             if (resumeButton != null)
                 resumeButton.onClick.AddListener(ResumeGame);
 
@@ -60,30 +66,33 @@ namespace HockeyGame.Game
             if (exitButton != null)
                 exitButton.onClick.AddListener(ExitGame);
 
-            // Setup settings panel
+            // Iestata iestatījumu paneļa pogas
             if (settingsBackButton != null)
                 settingsBackButton.onClick.AddListener(CloseSettings);
 
-            // --- FORCE POPULATE SETTINGS PANEL UI ON START ---
-            // Do NOT set up listeners here, only populate values
+            // --- PIESPIEDU KĀRTĀ AIZPILDA IESTATĪJUMU PANEĻA UI UZ STARTA ---
+            // Šeit NEIESTATĪT klausītājus, tikai aizpildīt vērtības
             ForcePopulateSettingsPanelUI();
         }
 
         private void Update()
         {
-            // Open/close pause menu with Escape
+            // Atver/aizver pauzes izvēlni ar Escape taustiņu
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                // Ja iestatījumu panelis ir atvērts, aizver to
                 if (settingsPanel != null && settingsPanel.activeSelf)
                 {
                     CloseSettings();
                 }
                 else
                 {
+                    // Citādi pārslēdz pauzes režīmu
                     TogglePause();
                 }
             }
 #if UNITY_EDITOR
+            // Unity redaktorā nodrošina, ka laika mērogs ir normāls, ja spēle nav pauzēta
             if (!isPaused && Time.timeScale != 1f)
             {
                 EnsureTimeScaleIsNormal();
@@ -91,9 +100,10 @@ namespace HockeyGame.Game
 #endif
         }
 
+        // Izveido vienkāršu pauzes izvēlni, ja tā nav iestatīta inspekorā
         private void CreateBasicPauseMenu()
         {
-            // Create basic pause menu
+            // Izveido pamata pauzes izvēlni
             pausePanel = new GameObject("PausePanel");
             pausePanel.transform.SetParent(transform);
 
@@ -106,9 +116,10 @@ namespace HockeyGame.Game
 
             pausePanel.SetActive(false);
 
-            Debug.Log("Created basic pause menu");
+            Debug.Log("Izveidota pamata pauzes izvēlne");
         }
 
+        // Turpina spēli pēc pauzes
         public void ResumeGame()
         {
             if (!isPaused) return;
@@ -122,9 +133,10 @@ namespace HockeyGame.Game
             if (settingsPanel != null)
                 settingsPanel.SetActive(false);
 
-            Debug.Log("PauseMenuManager: Game resumed");
+            Debug.Log("PauseMenuManager: Spēle turpināta");
         }
 
+        // Pauzē spēli
         public void PauseGame()
         {
             previousTimeScale = Time.timeScale;
@@ -137,9 +149,10 @@ namespace HockeyGame.Game
             if (settingsPanel != null)
                 settingsPanel.SetActive(false);
 
-            Debug.Log("PauseMenuManager: Game paused");
+            Debug.Log("PauseMenuManager: Spēle pauzēta");
         }
 
+        // Pārslēdz pauzes režīmu
         public void TogglePause()
         {
             if (isPaused)
@@ -150,12 +163,13 @@ namespace HockeyGame.Game
             {
                 PauseGame();
             }
-            Debug.Log($"PauseMenuManager: Toggle pause - isPaused: {isPaused}");
+            Debug.Log($"PauseMenuManager: Pārslēgta pauze - isPaused: {isPaused}");
         }
 
+        // Atgriežas uz galveno izvēlni (vecā metode)
         public void GoToMainMenu()
         {
-            // Shut down all networking
+            // Izslēdz visu tīklošanu
             if (Unity.Netcode.NetworkManager.Singleton != null)
             {
                 try
@@ -167,17 +181,17 @@ namespace HockeyGame.Game
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"PauseMenuManager: Error shutting down NetworkManager: {e.Message}");
+                    Debug.LogWarning($"PauseMenuManager: Kļūda izslēdzot NetworkManager: {e.Message}");
                 }
             }
 
-            // Reset lobby player list and chat
+            // Atiestata priekštelpu spēlētāju sarakstu un tērzēšanu
             if (LobbyManager.Instance != null)
             {
                 try
                 {
                     LobbyManager.Instance.StopAllCoroutines();
-                    // Use reflection to clear private dictionaries and chat
+                    // Izmanto refleksiju, lai notīrītu privātas vārdnīcas un tērzēšanu
                     var lobbyType = typeof(LobbyManager);
                     var playerNamesField = lobbyType.GetField("playerNames", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                     var playerTeamsField = lobbyType.GetField("playerTeams", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -209,12 +223,12 @@ namespace HockeyGame.Game
                     {
                         currentLobbyField.SetValue(LobbyManager.Instance, null);
                     }
-                    // ADD: Reset all internal state to allow new host/client sessions
+                    // PIEVIENOTS: Atiestata visu iekšējo stāvokli, lai atļautu jaunas resursdatora/klienta sesijas
                     LobbyManager.Instance.ResetLobbyState();
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"PauseMenuManager: Error resetting lobby player list or chat: {e.Message}");
+                    Debug.LogWarning($"PauseMenuManager: Kļūda atiestatot priekštelpas spēlētāju sarakstu vai tērzēšanu: {e.Message}");
                 }
             }
 
@@ -222,21 +236,22 @@ namespace HockeyGame.Game
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
 
+        // Atgriežas uz galveno izvēlni (uzlabota versija)
         public void ReturnToMainMenu()
         {
-            // Find and destroy GameSettingsManager to prevent duplicates when returning to MainMenu
+            // Atrod un iznīcina GameSettingsManager, lai novērstu dublikātus, kad atgriežas uz MainMenu
             var gameSettingsManager = FindObjectOfType<GameSettingsManager>();
             if (gameSettingsManager != null)
             {
-                Debug.Log("PauseMenuManager: Destroying GameSettingsManager before returning to MainMenu");
+                Debug.Log("PauseMenuManager: Iznīcina GameSettingsManager pirms atgriešanās uz MainMenu");
                 Destroy(gameSettingsManager.gameObject);
             }
             else
             {
-                Debug.Log("PauseMenuManager: No GameSettingsManager found to destroy");
+                Debug.Log("PauseMenuManager: Nav atrasts iznīcināmais GameSettingsManager");
             }
 
-            // Shutdown networking if running
+            // Izslēdz tīklošanu, ja tā darbojas
             if (Unity.Netcode.NetworkManager.Singleton != null)
             {
                 try
@@ -248,24 +263,25 @@ namespace HockeyGame.Game
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"PauseMenuManager: Error shutting down NetworkManager: {e.Message}");
+                    Debug.LogWarning($"PauseMenuManager: Kļūda izslēdzot NetworkManager: {e.Message}");
                 }
             }
 
-            // Reset time scale (in case it was paused)
+            // Atiestata laika mērogu (gadījumā, ja tas bija pauzēts)
             Time.timeScale = 1f;
 
-            // Load main menu
+            // Ielādē galveno izvēlni
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
 
+        // Iziet no spēles
         public void ExitGame()
         {
-            // Find and destroy GameSettingsManager before exiting
+            // Atrod un iznīcina GameSettingsManager pirms iziešanas
             var gameSettingsManager = FindObjectOfType<GameSettingsManager>();
             if (gameSettingsManager != null)
             {
-                Debug.Log("PauseMenuManager: Destroying GameSettingsManager before exiting game");
+                Debug.Log("PauseMenuManager: Iznīcina GameSettingsManager pirms iziešanas no spēles");
                 Destroy(gameSettingsManager.gameObject);
             }
 
@@ -277,16 +293,17 @@ namespace HockeyGame.Game
 #endif
         }
 
+        // Atver iestatījumu paneli
         private void OpenSettings()
         {
-            // Always update UI and listeners when opening settings
+            // Vienmēr atjaunina UI un klausītājus, kad atver iestatījumus
 
-            // --- SYNC FROM SettingsPanel IF IT EXISTS ---
+            // --- SINHRONIZĒ NO SettingsPanel, JA TĀ EKSISTĒ ---
             var settingsPanelObj = GameObject.FindObjectOfType<SettingsPanel>();
             bool copiedDropdown = false;
             if (settingsPanelObj != null)
             {
-                // Copy values from SettingsPanel UI to PauseMenuManager's UI
+                // Kopē vērtības no SettingsPanel UI uz PauseMenuManager UI
                 if (mouseSensitivitySlider != null && settingsPanelObj.mouseSensitivitySlider != null)
                     mouseSensitivitySlider.value = settingsPanelObj.mouseSensitivitySlider.value;
                 if (volumeSlider != null && settingsPanelObj.volumeSlider != null)
@@ -295,7 +312,7 @@ namespace HockeyGame.Game
                     fullscreenToggle.isOn = settingsPanelObj.fullscreenToggle.isOn;
                 if (resolutionDropdown != null && settingsPanelObj.resolutionDropdown != null)
                 {
-                    // --- FIX: Copy options using AddOptions with string list ---
+                    // --- LABOJUMS: Kopē opcijas, izmantojot AddOptions ar virkņu sarakstu ---
                     resolutionDropdown.ClearOptions();
                     var optionList = new System.Collections.Generic.List<string>();
                     foreach (var opt in settingsPanelObj.resolutionDropdown.options)
@@ -306,7 +323,7 @@ namespace HockeyGame.Game
                     copiedDropdown = true;
                 }
             }
-            // --- CRITICAL: Always populate dropdown from GameSettingsManager if SettingsPanel is missing or has no options ---
+            // --- KRITISKS: Vienmēr aizpilda izvēlni no GameSettingsManager, ja SettingsPanel trūkst vai tam nav opciju ---
             if (!copiedDropdown && resolutionDropdown != null && GameSettingsManager.Instance != null)
             {
                 resolutionDropdown.ClearOptions();
@@ -318,7 +335,7 @@ namespace HockeyGame.Game
                 }
                 else
                 {
-                    // Fallback: add current screen resolution if no options
+                    // Rezerves variants: pievieno pašreizējo ekrāna izšķirtspēju, ja nav opciju
                     string currentRes = $"{Screen.currentResolution.width} x {Screen.currentResolution.height}";
                     resolutionDropdown.AddOptions(new System.Collections.Generic.List<string> { currentRes });
                     resolutionDropdown.SetValueWithoutNotify(0);
@@ -327,7 +344,7 @@ namespace HockeyGame.Game
             }
 
             SetupSettingsPanelListenersAndValues();
-            // --- CRITICAL: Set up listeners for FULLSCREEN toggle and dropdown here ---
+            // --- KRITISKS: Šeit iestata klausītājus PILNEKRĀNA pārslēgam un izvēlnei ---
             if (fullscreenToggle != null)
             {
                 fullscreenToggle.onValueChanged.RemoveAllListeners();
@@ -352,33 +369,33 @@ namespace HockeyGame.Game
             }
         }
 
-        // Helper to set up listeners and values for settings panel (call ONLY when opening)
+        // Palīgmetode iestatījumu paneļa klausītāju un vērtību iestatīšanai (izsaukt TIKAI, kad atver paneli)
         private void SetupSettingsPanelListenersAndValues()
         {
             if (GameSettingsManager.Instance == null) return;
 
-            // Mouse Sensitivity
+            // Peles jutība
             if (mouseSensitivitySlider != null)
             {
                 mouseSensitivitySlider.onValueChanged.RemoveAllListeners();
                 mouseSensitivitySlider.SetValueWithoutNotify(GameSettingsManager.Instance.mouseSensitivity);
                 mouseSensitivitySlider.onValueChanged.AddListener(GameSettingsManager.Instance.SetMouseSensitivity);
             }
-            // Volume
+            // Skaļums
             if (volumeSlider != null)
             {
                 volumeSlider.onValueChanged.RemoveAllListeners();
                 volumeSlider.SetValueWithoutNotify(GameSettingsManager.Instance.gameVolume);
                 volumeSlider.onValueChanged.AddListener(GameSettingsManager.Instance.SetGameVolume);
             }
-            // Fullscreen
+            // Pilnekrāna režīms
             if (fullscreenToggle != null)
             {
                 fullscreenToggle.onValueChanged.RemoveAllListeners();
                 fullscreenToggle.SetIsOnWithoutNotify(GameSettingsManager.Instance.isFullscreen);
                 fullscreenToggle.onValueChanged.AddListener(GameSettingsManager.Instance.SetFullscreen);
             }
-            // Resolution Dropdown
+            // Izšķirtspējas izvēlne
             if (resolutionDropdown != null)
             {
                 resolutionDropdown.onValueChanged.RemoveAllListeners();
@@ -391,6 +408,7 @@ namespace HockeyGame.Game
             }
         }
 
+        // Aizver iestatījumu paneli
         private void CloseSettings()
         {
             if (settingsPanel != null)
@@ -403,12 +421,14 @@ namespace HockeyGame.Game
             }
         }
 
+        // Apstrādā izšķirtspējas izvēlnes maiņu
         private void OnResolutionChanged(int index)
         {
             if (GameSettingsManager.Instance != null)
                 GameSettingsManager.Instance.SetResolution(index, fullscreenToggle != null ? fullscreenToggle.isOn : false);
         }
 
+        // Apstrādā pilnekrāna režīma pārslēgšanu
         private void OnFullscreenToggled(bool isFullscreen)
         {
             if (GameSettingsManager.Instance != null)
@@ -423,26 +443,27 @@ namespace HockeyGame.Game
             {
                 Screen.fullScreen = isFullscreen;
             }
-            Debug.Log($"PauseMenuManager: Fullscreen toggled to {isFullscreen} using SetResolution");
+            Debug.Log($"PauseMenuManager: Pilnekrāna režīms pārslēgts uz {isFullscreen} izmantojot SetResolution");
         }
 
+        // Nodrošina, ka laika mērogs ir normāls (1.0)
         private void EnsureTimeScaleIsNormal()
         {
             if (Time.timeScale != 1f)
             {
-                Debug.LogWarning($"PauseMenuManager: Time.timeScale was {Time.timeScale}, resetting to 1");
+                Debug.LogWarning($"PauseMenuManager: Time.timeScale bija {Time.timeScale}, atiestatīts uz 1");
                 Time.timeScale = 1f;
             }
         }
 
         /// <summary>
-        /// Ensures the settings panel UI is always fully populated, even if the scene was loaded directly.
+        /// Nodrošina, ka iestatījumu paneļa UI vienmēr ir pilnībā aizpildīts, pat ja aina tiek ielādēta tieši.
         /// </summary>
         private void ForcePopulateSettingsPanelUI()
         {
             if (GameSettingsManager.Instance == null) return;
 
-            // Only set values, do not set up listeners here
+            // Tikai iestata vērtības, šeit neiestata klausītājus
             if (mouseSensitivitySlider != null)
                 mouseSensitivitySlider.SetValueWithoutNotify(GameSettingsManager.Instance.mouseSensitivity);
             if (volumeSlider != null)
@@ -461,7 +482,7 @@ namespace HockeyGame.Game
 
         private void OnEnable()
         {
-            // Ensure settings panel is always populated when this object is enabled (scene load, etc.)
+            // Nodrošina, ka iestatījumu panelis vienmēr ir aizpildīts, kad šis objekts ir iespējots (ainas ielāde utt.)
             ForcePopulateSettingsPanelUI();
         }
     }

@@ -2,17 +2,20 @@ using UnityEngine;
 
 namespace HockeyGame.Game
 {
+    // Klase, kas ļauj spēlētājam pacelt, turēt un atlaist ripu treniņa režīmā
+    // Šī ir vienkāršota versija, kas darbojas bez tīkla koda
     public class TrainingPuckPickup : MonoBehaviour
     {
-        [SerializeField] private float pickupRange = 2f;
-        [SerializeField] private Transform puckHoldPosition;
+        [SerializeField] private float pickupRange = 2f; // Attālums, kurā spēlētājs var pacelt ripu
+        [SerializeField] private Transform puckHoldPosition; // Pozīcija, kur ripa tiek turēta
         
-        private Puck currentPuck;
-        private bool hasPuck = false;
-        private bool releasedForShooting = false;
+        private Puck currentPuck; // Pašreizējā ripa, ko tur spēlētājs
+        private bool hasPuck = false; // Vai spēlētājam ir ripa
+        private bool releasedForShooting = false; // Vai ripa ir atlaista šaušanai
         
         private void Awake()
         {
+            // Ja nav iestatīta ripas turēšanas pozīcija, izveido to automātiski
             if (puckHoldPosition == null)
             {
                 GameObject holdPos = new GameObject("PuckHoldPosition");
@@ -25,22 +28,22 @@ namespace HockeyGame.Game
         
         private void Update()
         {
-            // Handle input for pickup
+            // Apstrādā ievadi ripas pacelšanai
             if (Input.GetKeyDown(KeyCode.E))
             {
                 if (hasPuck && currentPuck != null && !releasedForShooting)
                 {
-                    // Drop puck
+                    // Atlaiž ripu
                     ManualReleasePuck();
                 }
                 else if (!hasPuck)
                 {
-                    // Try to pick up puck
+                    // Mēģina pacelt ripu
                     TryPickupPuck();
                 }
             }
             
-            // Make sure puck follows correctly
+            // Nodrošina, ka ripa seko pareizi
             if (hasPuck && currentPuck != null && !releasedForShooting)
             {
                 var puckFollower = currentPuck.GetComponent<PuckFollower>();
@@ -51,9 +54,10 @@ namespace HockeyGame.Game
             }
         }
         
+        // Mēģina pacelt tuvumā esošu ripu
         public void TryPickupPuck()
         {
-            // Find nearest puck
+            // Atrod tuvāko ripu
             Puck nearestPuck = FindNearestPuck();
             
             if (nearestPuck != null)
@@ -66,7 +70,7 @@ namespace HockeyGame.Game
                     currentPuck = nearestPuck;
                     hasPuck = true;
                     
-                    // Start PuckFollower
+                    // Sāk PuckFollower, lai ripa sekotu turēšanas pozīcijai
                     var puckFollower = nearestPuck.GetComponent<PuckFollower>();
                     if (puckFollower != null)
                     {
@@ -80,7 +84,7 @@ namespace HockeyGame.Game
                         puckFollower.enabled = true;
                     }
                     
-                    // Configure physics for pickup
+                    // Konfigurē fiziku pacelšanai
                     var col = nearestPuck.GetComponent<Collider>();
                     if (col != null) col.enabled = false;
                     
@@ -98,6 +102,7 @@ namespace HockeyGame.Game
             }
         }
         
+        // Atrod tuvāko nepaceltuto ripu
         private Puck FindNearestPuck()
         {
             var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
@@ -131,13 +136,14 @@ namespace HockeyGame.Game
             return nearestPuck;
         }
         
+        // Manuāli atlaiž ripu (ar E taustiņu)
         private void ManualReleasePuck()
         {
             if (currentPuck == null) return;
             
             releasedForShooting = false;
             
-            // Stop following
+            // Aptur sekošanu
             var puckFollower = currentPuck.GetComponent<PuckFollower>();
             if (puckFollower != null)
             {
@@ -145,13 +151,14 @@ namespace HockeyGame.Game
                 puckFollower.enabled = false;
             }
             
+            // Nosaka atlaišanas pozīciju spēlētāja priekšā
             Vector3 releasePosition = transform.position + transform.forward * 2f;
             releasePosition.y = 0.71f;
             
             currentPuck.transform.position = releasePosition;
             currentPuck.transform.rotation = Quaternion.identity;
             
-            // Enable collider and physics
+            // Ieslēdz sadursmes detektoru un fiziku
             var col = currentPuck.GetComponent<Collider>();
             if (col != null) col.enabled = true;
             
@@ -170,13 +177,14 @@ namespace HockeyGame.Game
             hasPuck = false;
         }
         
+        // Atlaiž ripu šaušanai (izsauc TrainingPlayerShooting)
         public void ReleasePuckForShooting()
         {
             if (currentPuck == null) return;
             
             releasedForShooting = true;
             
-            // Stop following immediately
+            // Nekavējoties aptur sekošanu
             var puckFollower = currentPuck.GetComponent<PuckFollower>();
             if (puckFollower != null)
             {
@@ -184,12 +192,14 @@ namespace HockeyGame.Game
                 puckFollower.enabled = false;
             }
             
+            // Nosaka atlaišanas pozīciju spēlētāja priekšā
             Vector3 releasePosition = transform.position + transform.forward * 2f;
             releasePosition.y = 0.71f;
             
             currentPuck.transform.position = releasePosition;
             currentPuck.transform.rotation = Quaternion.identity;
             
+            // Ieslēdz sadursmes detektoru un fiziku
             var col = currentPuck.GetComponent<Collider>();
             if (col != null) col.enabled = true;
             
@@ -208,11 +218,13 @@ namespace HockeyGame.Game
             hasPuck = false;
         }
         
+        // Publiskās metodes stāvokļa pārbaudei
         public bool HasPuck() => hasPuck && !releasedForShooting;
         public Puck GetCurrentPuck() => releasedForShooting ? null : currentPuck;
         public Transform GetPuckHoldPosition() => puckHoldPosition;
         public bool CanShootPuck() => hasPuck && currentPuck != null && !releasedForShooting;
         
+        // Atiestata šaušanas karogu
         public void ResetShootingFlag()
         {
             releasedForShooting = false;

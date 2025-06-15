@@ -1,6 +1,5 @@
 using UnityEngine;
 
-// FIXED: Single extension class to handle goal trigger conversions
 public static class GoalTriggerExtensions
 {
     public static void ScoreGoal(this ScoreManager scoreManager, bool isBlueTeam)

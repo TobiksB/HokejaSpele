@@ -3,16 +3,15 @@ using UnityEngine;
 namespace HockeyGame.Game
 {
     public class TrainingModeGoalTrigger : MonoBehaviour
-    {
-        [Header("Goal Configuration")]
-        [SerializeField] private bool isBlueTeamGoal = false; // true if this is Blue team's goal
-        [SerializeField] private string goalName = "Goal"; // For debugging
+    {        
+        [Header("Vārtu konfigurācija")]
+        [SerializeField] private bool isBlueTeamGoal = false; // true, ja šie ir Zilās komandas vārti
+        [SerializeField] private string goalName = "Goal"; // Atkļūdošanai
 
-        [Header("Effects")]
+        [Header("Efekti")]
         [SerializeField] private ParticleSystem goalEffect;
         [SerializeField] private AudioSource goalSound;
-
-        // Event that gets fired when a goal is scored
+        // Notikums, kas tiek izsaukts, kad tiek gūti vārti
         public System.Action<string> OnGoalScored;
 
         private bool goalCooldown = false;
@@ -20,7 +19,7 @@ namespace HockeyGame.Game
 
         private void Awake()
         {
-            // Ensure this has a trigger collider
+            // Nodrošina, ka šim ir trigera sadursmes detektors
             var collider = GetComponent<Collider>();
             if (collider != null)
             {
@@ -28,10 +27,10 @@ namespace HockeyGame.Game
             }
             else
             {
-                Debug.LogWarning($"TrainingModeGoalTrigger: No collider found on {gameObject.name}! Please add a collider.");
+                Debug.LogWarning($"TrainingModeGoalTrigger: Nav atrasts sadursmes detektors objektam {gameObject.name}! Lūdzu, pievienojiet sadursmes detektoru.");
             }
 
-            // Set tag to "Goal"
+            // Iestata tagu uz "Goal"
             if (!gameObject.CompareTag("Goal"))
             {
                 gameObject.tag = "Goal";
@@ -45,19 +44,19 @@ namespace HockeyGame.Game
             if (other.CompareTag("Puck"))
             {
                 string scoringTeam = isBlueTeamGoal ? "Red" : "Blue";
-                Debug.Log($"GOAL! {scoringTeam} team scored in {goalName}!");
+                Debug.Log($"VĀRTI! {scoringTeam} komanda guva vārtus {goalName}!");
 
-                // Play effects
+                // Atskaņo efektus
                 if (goalEffect != null) goalEffect.Play();
                 if (goalSound != null) goalSound.Play();
 
-                // Invoke event
+                // Izsauc notikumu
                 OnGoalScored?.Invoke(scoringTeam);
 
-                // Reset player and puck
+                // Atiestata spēlētāju un ripu
                 StartCoroutine(ResetAfterGoal(other.gameObject));
 
-                // Set cooldown
+                // Iestata dzesēšanas laiku
                 goalCooldown = true;
                 Invoke(nameof(ResetCooldown), cooldownTime);
             }
@@ -65,20 +64,20 @@ namespace HockeyGame.Game
 
         private System.Collections.IEnumerator ResetAfterGoal(GameObject puck)
         {
-            // Wait a moment before resetting
+            // Pagaida brīdi pirms atiestatīšanas
             yield return new WaitForSeconds(1.5f);
 
-            // 1. Reset player position
+            // 1. Atiestata spēlētāja pozīciju
             var player = FindObjectOfType<TrainingPlayerMovement>();
             if (player != null)
             {
-                // Reset to initial position if available
+                // Atiestata uz sākotnējo pozīciju, ja tā ir pieejama
                 if (player.initialPosition != Vector3.zero)
                 {
                     player.transform.position = player.initialPosition;
                     player.transform.rotation = player.initialRotation;
 
-                    // Reset player physics
+                    // Atiestata spēlētāja fiziku
                     var playerRb = player.GetComponent<Rigidbody>();
                     if (playerRb != null)
                     {
@@ -88,22 +87,22 @@ namespace HockeyGame.Game
                         playerRb.rotation = player.initialRotation;
                     }
 
-                    Debug.Log($"TrainingModeGoalTrigger: Reset player to initial position {player.initialPosition}");
+                    Debug.Log($"TrainingModeGoalTrigger: Atiestatīts spēlētājs uz sākotnējo pozīciju {player.initialPosition}");
                 }
                 else
                 {
-                    Debug.LogWarning("TrainingModeGoalTrigger: Player's initial position not set!");
+                    Debug.LogWarning("TrainingModeGoalTrigger: Spēlētāja sākotnējā pozīcija nav iestatīta!");
                 }
             }
             else
             {
-                Debug.LogWarning("TrainingModeGoalTrigger: Player not found for reset!");
+                Debug.LogWarning("TrainingModeGoalTrigger: Spēlētājs nav atrasts atiestatīšanai!");
             }
 
-            // 2. Reset puck position
+            // 2. Atiestata ripas pozīciju
             if (puck != null)
             {
-                // If player was holding the puck, force release
+                // Ja spēlētājs turēja ripu, piespiedu kārtā atbrīvo
                 var puckPickup = FindObjectOfType<TrainingPuckPickup>();
                 if (puckPickup != null && puckPickup.HasPuck())
                 {
@@ -113,15 +112,15 @@ namespace HockeyGame.Game
                             System.Reflection.BindingFlags.NonPublic | 
                             System.Reflection.BindingFlags.Instance)?.Invoke(puckPickup, null);
                         
-                        Debug.Log("TrainingModeGoalTrigger: Released puck from player");
+                        Debug.Log("TrainingModeGoalTrigger: Atbrīvota ripa no spēlētāja");
                     }
                     catch (System.Exception e)
                     {
-                        Debug.LogError($"TrainingModeGoalTrigger: Error releasing puck: {e.Message}");
+                        Debug.LogError($"TrainingModeGoalTrigger: Kļūda atbrīvojot ripu: {e.Message}");
                     }
                 }
 
-                // Stop any puck follower
+                // Aptur jebkuru ripas sekotāju
                 var puckFollower = puck.GetComponent<PuckFollower>();
                 if (puckFollower != null)
                 {
@@ -129,12 +128,12 @@ namespace HockeyGame.Game
                     puckFollower.enabled = false;
                 }
 
-                // Reset puck position to center
+                // Atiestata ripas pozīciju uz centru
                 Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
                 puck.transform.position = centerPos;
                 puck.transform.rotation = Quaternion.identity;
 
-                // Reset puck physics
+                // Atiestata ripas fiziku
                 var puckRb = puck.GetComponent<Rigidbody>();
                 if (puckRb != null)
                 {
@@ -145,20 +144,20 @@ namespace HockeyGame.Game
                     puckRb.position = centerPos;
                 }
 
-                // Reset puck state
+                // Atiestata ripas stāvokli
                 var puckComponent = puck.GetComponent<Puck>();
                 if (puckComponent != null)
                 {
                     puckComponent.SetHeld(false);
                 }
 
-                Debug.Log("TrainingModeGoalTrigger: Reset puck to center position");
+                Debug.Log("TrainingModeGoalTrigger: Atiestatīta ripa uz centra pozīciju");
             }
             else
             {
-                Debug.LogWarning("TrainingModeGoalTrigger: Puck became null during reset!");
+                Debug.LogWarning("TrainingModeGoalTrigger: Ripa kļuva null atiestatīšanas laikā!");
                 
-                // Try finding puck in the scene
+                // Mēģina atrast ripu skatā
                 var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
                 if (allPucks.Length > 0)
                 {
@@ -173,14 +172,14 @@ namespace HockeyGame.Game
                         puckRb.angularVelocity = Vector3.zero;
                     }
                     
-                    Debug.Log("TrainingModeGoalTrigger: Reset alternative puck to center");
+                    Debug.Log("TrainingModeGoalTrigger: Atiestatīta alternatīvā ripa uz centru");
                 }
             }
 
             yield return new WaitForSeconds(0.5f);
 
-            // Make player automatically pick up puck after reset
-            // This makes it easy for the player to continue training
+            // Liek spēlētājam automātiski pacelt ripu pēc atiestatīšanas
+            // Tas atvieglo spēlētājam turpināt treniņu
             var pickup = FindObjectOfType<TrainingPuckPickup>();
             if (pickup != null)
             {
@@ -190,11 +189,11 @@ namespace HockeyGame.Game
                         System.Reflection.BindingFlags.Public | 
                         System.Reflection.BindingFlags.Instance)?.Invoke(pickup, null);
                     
-                    Debug.Log("TrainingModeGoalTrigger: Auto-picked up puck after reset");
+                    Debug.Log("TrainingModeGoalTrigger: Automātiski pacelta ripa pēc atiestatīšanas");
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"TrainingModeGoalTrigger: Error auto-picking up puck: {e.Message}");
+                    Debug.LogError($"TrainingModeGoalTrigger: Kļūda automātiski paceļot ripu: {e.Message}");
                 }
             }
         }

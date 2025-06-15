@@ -1,6 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
-using TMPro; // Add TMPro namespace
+using TMPro; // Pievieno TMPro namespace
 
 namespace HockeyGame.Game
 {
@@ -8,35 +8,35 @@ namespace HockeyGame.Game
     {
         public static QuarterManager Instance { get; private set; }
         
-        [Header("Game Settings")]
-        [SerializeField] private float quarterDuration = 20f; // TEST: 30 seconds per quarter
+        [Header("Spēles iestatījumi")]
+        [SerializeField] private float quarterDuration = 20f; // TESTAM: 30 sekundes ceturtdaļā
         [SerializeField] private int totalQuarters = 3;
         
-        [Header("UI References")]
+        [Header("UI atsauces")]
         [SerializeField] private TMP_Text timerText;
         [SerializeField] private QuarterDisplayUI quarterDisplayUI;
         [SerializeField] private QuarterTransitionPanel quarterTransitionPanel;
-        [SerializeField] private GameOverPanel gameOverPanel; // Add this inspector reference
+        [SerializeField] private GameOverPanel gameOverPanel; // Pievieno šo inspektora atsauci
 
         private NetworkVariable<int> currentQuarter = new NetworkVariable<int>(1);
-        private NetworkVariable<float> timeRemaining = new NetworkVariable<float>(20f); // TEST: 30 seconds initial value
+        private NetworkVariable<float> timeRemaining = new NetworkVariable<float>(20f); // TESTAM: 30 sekundes sākotnēji
         private bool isGameActive = true;
 
         private void Awake()
         {
             string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             
-            // CRITICAL: Only allow in game scenes
+            // KRITISKS: Atļaut tikai spēles ainās
             if (currentScene == "MainMenu")
             {
-                Debug.LogError($"CRITICAL ABORT: QuarterManager in MainMenu - DESTROYING IMMEDIATELY");
+                Debug.LogError($"KRITISKA APTURĒŠANA: QuarterManager MainMenu ainā - IZNĪCINA NEKAVĒJOTIES");
                 Destroy(gameObject);
                 return;
             }
             
             if (!IsGameScene(currentScene))
             {
-                Debug.LogError($"QuarterManager: Not in game scene ({currentScene}) - destroying");
+                Debug.LogError($"QuarterManager: Nav spēles ainā ({currentScene}) - iznīcina");
                 Destroy(gameObject);
                 return;
             }
@@ -44,37 +44,37 @@ namespace HockeyGame.Game
             if (Instance == null)
             {
                 Instance = this;
-                Debug.Log($"QuarterManager initialized in scene: {currentScene}");
+                Debug.Log($"QuarterManager inicializēts ainā: {currentScene}");
                 
-                // IMPROVED: Only look for dependencies if we're in an actual game scene with UI
-                if (currentScene != "TrainingMode") // Training mode might not have full UI
+                // UZLABOTS: Meklēt atkarības tikai ja esam faktiskā spēles ainā ar UI
+                if (currentScene != "TrainingMode") // Treniņa režīmam var nebūt pilna UI
                 {
                     if (quarterTransitionPanel == null)
                     {
                         quarterTransitionPanel = FindFirstObjectByType<QuarterTransitionPanel>();
                         if (quarterTransitionPanel == null)
                         {
-                            Debug.LogWarning("QuarterTransitionPanel not found, creating one now.");
+                            Debug.LogWarning("QuarterTransitionPanel nav atrasts, izveido jaunu.");
                             var go = new GameObject("QuarterTransitionPanel");
                             quarterTransitionPanel = go.AddComponent<QuarterTransitionPanel>();
                         }
                     }
                 }
                 
-                // Find QuarterDisplayUI in scene
+                // Atrast QuarterDisplayUI ainā
                 if (quarterDisplayUI == null)
                 {
                     quarterDisplayUI = FindFirstObjectByType<QuarterDisplayUI>();
                 }
 
-                // --- Show Q1 at start ---
+                // --- Parādīt 1. ceturtdaļu sākumā ---
                 if (quarterDisplayUI != null)
                 {
                     quarterDisplayUI.SetQuarter(1);
                 }
 
-                // CRITICAL: Start the timer immediately
-                Debug.Log("QuarterManager: Starting game timer automatically");
+                //  Sākt taimeri nekavējoties
+                Debug.Log("QuarterManager: Sāk spēles taimeri automātiski");
                 isGameActive = true;
                 timeRemaining.Value = quarterDuration;
             }
@@ -84,7 +84,7 @@ namespace HockeyGame.Game
             }
         }
 
-        // FIXED: Add missing IsGameScene method
+        //  Pievienota trūkstošā IsGameScene metode
         private bool IsGameScene(string sceneName)
         {
             return sceneName == "TrainingMode" || 
@@ -101,11 +101,11 @@ namespace HockeyGame.Game
                 StartQuarter();
             }
 
-            // Subscribe to changes for UI updates
+            // Abonē izmaiņas UI atjauninājumiem
             timeRemaining.OnValueChanged += OnTimeChanged;
             currentQuarter.OnValueChanged += OnQuarterChanged;
 
-            // Ensure UI is correct on spawn
+            // Nodrošina, ka UI ir pareizs aktivizējoties
             UpdateQuarterUI();
         }
 
@@ -117,7 +117,7 @@ namespace HockeyGame.Game
 
         private void Update()
         {
-            // FIXED: Countdown timer - time goes down
+            //  Atskaites taimeris - laiks iet uz leju
             if (IsServer && isGameActive && timeRemaining.Value > 0)
             {
                 timeRemaining.Value -= Time.deltaTime;
@@ -134,64 +134,64 @@ namespace HockeyGame.Game
         {
             if (!IsServer) return;
 
-            Debug.Log($"Starting Quarter {currentQuarter.Value}");
+            Debug.Log($"Sākas {currentQuarter.Value}. ceturtdaļa");
             isGameActive = true;
             timeRemaining.Value = quarterDuration;
 
-            // --- Ensure quarter display is updated at the start of each quarter ---
+            //  Nodrošināt, ka ceturtdaļas rādītājs tiek atjaunināts katras ceturtdaļas sākumā ---
             UpdateQuarterUI();
 
-            // Update UI
+            // Atjaunot UI
             UpdateTimerUI();
 
-            // --- CRITICAL: Always reset puck at start of quarter, especially Q2 and Q3 ---
+            //  Vienmēr atiestatīt ripu ceturtdaļas sākumā, īpaši 2. un 3. ceturtdaļā ---
             StartCoroutine(BruteForceResetPuck());
         }
 
-        // --- NEW: Completely reliable puck reset with clear debugging ---
+        //  Pilnīgi uzticama ripas atiestate ar skaidru atkļūdošanu ---
         private System.Collections.IEnumerator BruteForceResetPuck() 
         {
-            Debug.LogWarning($"QuarterManager: BRUTE FORCE puck reset at Q{currentQuarter.Value} start");
+            Debug.LogWarning($"QuarterManager: DRASTISKA ripas atiestate Q{currentQuarter.Value} sākumā");
             
-            // Wait for physics to stabilize
+            // Gaidīt, lai fizikas sistēma stabilizētos
             yield return new WaitForSeconds(1.0f);
             
-            // Find all pucks
+            // Atrast visas ripas
             var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
             if (allPucks.Length == 0) {
-                Debug.LogError("QuarterManager: No puck found to reset!");
+                Debug.LogError("QuarterManager: Nav atrasta ripa, ko atiestatīt!");
                 yield break;
             }
             
             GameObject puck = allPucks[0].gameObject;
-            Debug.Log($"QuarterManager: Found puck {puck.name} at position {puck.transform.position}");
+            Debug.Log($"QuarterManager: Atrasta ripa {puck.name} pozīcijā {puck.transform.position}");
             
-            // Force release from any player
+            // Piespiest atlaist ripu no visiem spēlētājiem
             var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
             foreach (var player in allPlayers) {
                 if (player.HasPuck()) {
-                    Debug.Log($"QuarterManager: Forcing player {player.name} to release puck");
+                    Debug.Log($"QuarterManager: Piespiež spēlētāju {player.name} atlaist ripu");
                     player.ForceReleasePuckForSteal();
                     yield return new WaitForSeconds(0.1f);
                 }
             }
             
-            // Clear all PuckFollower
+            // Notīrīt visus PuckFollower
             var puckFollower = puck.GetComponent<PuckFollower>();
             if (puckFollower != null) {
-                Debug.Log("QuarterManager: Stopping PuckFollower");
+                Debug.Log("QuarterManager: Aptur PuckFollower");
                 puckFollower.StopFollowing();
                 puckFollower.enabled = false;
             }
             
-            // Teleport to center
+            // Teleportēt uz centru
             Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
-            Debug.Log($"QuarterManager: Teleporting puck from {puck.transform.position} to {centerPos}");
+            Debug.Log($"QuarterManager: Teleportē ripu no {puck.transform.position} uz {centerPos}");
             
             puck.transform.position = centerPos;
             puck.transform.rotation = Quaternion.identity;
             
-            // Reset rigidbody and physics
+            // Atiestatīt fiziku un rigidbody
             var rb = puck.GetComponent<Rigidbody>();
             if (rb != null) {
                 rb.isKinematic = false;
@@ -200,50 +200,50 @@ namespace HockeyGame.Game
                 rb.angularVelocity = Vector3.zero;
                 rb.position = centerPos;
                 rb.rotation = Quaternion.identity;
-                Debug.Log($"QuarterManager: Reset puck rigidbody to {centerPos}");
+                Debug.Log($"QuarterManager: Atiestatīts ripas rigidbody uz {centerPos}");
             }
             
-            // Ensure collider is enabled
+            // Nodrošināt, ka sadursmes detektors ir ieslēgts
             var col = puck.GetComponent<Collider>();
             if (col != null) {
                 col.enabled = true;
-                Debug.Log("QuarterManager: Enabled puck collider");
+                Debug.Log("QuarterManager: Ieslēgts ripas sadursmes detektors");
             }
             
-            // Reset held state
+            // Atiestatīt turēšanas stāvokli
             var puckComponent = puck.GetComponent<Puck>();
             if (puckComponent != null) {
                 puckComponent.SetHeld(false);
-                Debug.Log("QuarterManager: Set puck held state to false");
+                Debug.Log("QuarterManager: Iestatīts ripas turēšanas stāvoklis uz false");
             }
             
-            // Tell all clients to reset puck position
+            // Paziņot visiem klientiem par ripas pozīcijas atiestatīšanu
             if (puckComponent != null && IsServer) {
                 var puckNetObj = puck.GetComponent<NetworkObject>();
                 if (puckNetObj != null) {
                     SetPuckPositionClientRpc(puckNetObj.NetworkObjectId, centerPos);
-                    Debug.Log($"QuarterManager: Sent SetPuckPositionClientRpc to clients for puck {puckNetObj.NetworkObjectId}");
+                    Debug.Log($"QuarterManager: Nosūtīts SetPuckPositionClientRpc klientiem ripai {puckNetObj.NetworkObjectId}");
                 }
             }
             
-            Debug.LogWarning($"QuarterManager: PUCK RESET COMPLETE - Now at {puck.transform.position}");
+            Debug.LogWarning($"QuarterManager: RIPAS ATIESTATĪŠANA PABEIGTA - Tagad pozīcijā {puck.transform.position}");
         }
 
         [ClientRpc]
         private void SetPuckPositionClientRpc(ulong puckNetworkId, Vector3 position)
         {
-            Debug.Log($"QuarterManager: CLIENT received SetPuckPositionClientRpc for puck {puckNetworkId}");
+            Debug.Log($"QuarterManager: KLIENTS saņēma SetPuckPositionClientRpc ripai {puckNetworkId}");
             
             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(puckNetworkId, out var netObj))
             {
                 var puck = netObj.gameObject;
-                Debug.Log($"QuarterManager: CLIENT found puck {puck.name}, setting position to {position}");
+                Debug.Log($"QuarterManager: KLIENTS atrada ripu {puck.name}, iestata pozīciju uz {position}");
                 
-                // Set position
+                // Iestatīt pozīciju
                 puck.transform.position = position;
                 puck.transform.rotation = Quaternion.identity;
                 
-                // Reset physics
+                // Atiestatīt fiziku
                 var rb = puck.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
@@ -255,7 +255,7 @@ namespace HockeyGame.Game
                     rb.rotation = Quaternion.identity;
                 }
                 
-                // End any following
+                // Pārtraukt sekošanu
                 var puckFollower = puck.GetComponent<PuckFollower>();
                 if (puckFollower != null)
                 {
@@ -263,18 +263,18 @@ namespace HockeyGame.Game
                     puckFollower.enabled = false;
                 }
                 
-                // Reset held state
+                // Atiestatīt turēšanas stāvokli
                 var puckComponent = puck.GetComponent<Puck>();
                 if (puckComponent != null)
                 {
                     puckComponent.SetHeld(false);
                 }
                 
-                Debug.LogWarning($"QuarterManager: CLIENT puck reset complete at {position}");
+                Debug.LogWarning($"QuarterManager: KLIENTA ripas atiestatīšana pabeigta pozīcijā {position}");
             }
             else
             {
-                Debug.LogError($"QuarterManager: CLIENT could not find puck with NetworkObjectId {puckNetworkId}");
+                Debug.LogError($"QuarterManager: KLIENTS nevarēja atrast ripu ar NetworkObjectId {puckNetworkId}");
             }
         }
         
@@ -284,10 +284,10 @@ namespace HockeyGame.Game
 
             isGameActive = false;
 
-            // Reset all players to spawn points at end of quarter
+            // Atiestatīt visus spēlētājus uz sākumpozīcijām ceturtdaļas beigās
             ResetAllPlayersToSpawnPoints();
 
-            // --- FINAL FIX: Use the same logic as GoalTrigger to reset the puck ---
+            //  Izmantot to pašu loģiku kā GoalTrigger, lai atiestatītu ripu ---
             ResetPuckToCenterGoalTriggerStyle();
 
             if (currentQuarter.Value >= totalQuarters)
@@ -300,7 +300,7 @@ namespace HockeyGame.Game
             }
         }
 
-        // --- FINAL: Use the exact logic as GoalTrigger for puck reset ---
+        //  Izmantot tieši to pašu loģiku kā GoalTrigger ripas atiestatīšanai ---
         private void ResetPuckToCenterGoalTriggerStyle()
         {
             StartCoroutine(ResetPuckCoroutineGoalStyle());
@@ -308,39 +308,39 @@ namespace HockeyGame.Game
 
         private System.Collections.IEnumerator ResetPuckCoroutineGoalStyle()
         {
-            yield return new WaitForSeconds(1.5f); // Wait for player resets and network sync
+            yield return new WaitForSeconds(1.5f); // Pagaidīt spēlētāju atiestatīšanu un tīkla sinhronizāciju
 
-            // ENHANCED: Multiple strategies to find the puck
+            //  Vairākas stratēģijas ripas atrašanai
             GameObject puckObject = FindPuckByAllMeans();
             
             if (puckObject == null)
             {
-                Debug.LogError("QuarterManager: No puck found after exhaustive search. Cannot reset!");
+                Debug.LogError("QuarterManager: Nav atrasta ripa pēc pilnīgas meklēšanas. Nevar atiestatīt!");
                 yield break;
             }
             
-            Debug.Log($"QuarterManager: Found puck: {puckObject.name} at position {puckObject.transform.position}");
+            Debug.Log($"QuarterManager: Atrasta ripa: {puckObject.name} pozīcijā {puckObject.transform.position}");
             
             var puckComponent = puckObject.GetComponent<Puck>();
 
-            // Ensure puck is completely free before reset
+            // Nodrošināt, ka ripa ir pilnīgi brīva pirms atiestatīšanas
             if (puckComponent != null)
             {
                 puckComponent.SetHeld(false);
 
-                // Clear from any player still holding it
+                // Notīrīt no jebkura spēlētāja, kas joprojām to tur
                 var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
                 foreach (var player in allPlayers)
                 {
                     if (player.GetCurrentPuck() == puckComponent)
                     {
                         player.ForceReleasePuckForSteal();
-                        Debug.Log($"QuarterManager: Cleared remaining reference from {player.name}");
+                        Debug.Log($"QuarterManager: Notīrīta atlikušā atsauce no {player.name}");
                     }
                 }
             }
 
-            // Stop any PuckFollower components
+            // Apturēt visas PuckFollower komponentes
             var puckFollower = puckObject.GetComponent<PuckFollower>();
             if (puckFollower != null)
             {
@@ -348,7 +348,7 @@ namespace HockeyGame.Game
                 puckFollower.enabled = false;
             }
 
-            // Proper puck reset to center (same as after goal)
+            // Pareiza ripas atiestate uz centru (tāpat kā pēc vārtiem)
             Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
             puckObject.transform.SetParent(null);
             puckObject.transform.position = centerPos;
@@ -370,7 +370,7 @@ namespace HockeyGame.Game
                 col.enabled = true;
             }
 
-            // Use Puck's ResetToCenter method if available (for network sync)
+            // Izmantot Puck.ResetToCenter metodi, ja tā ir pieejama (tīkla sinhronizācijai)
             if (puckComponent != null && puckComponent.IsServer)
             {
                 try
@@ -379,63 +379,63 @@ namespace HockeyGame.Game
                     if (resetMethod != null)
                     {
                         resetMethod.Invoke(puckComponent, null);
-                        Debug.Log("QuarterManager: Used Puck.ResetToCenter() method for network sync");
+                        Debug.Log("QuarterManager: Izmantota Puck.ResetToCenter() metode tīkla sinhronizācijai");
                     }
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"QuarterManager: Failed to use Puck.ResetToCenter(): {e.Message}");
+                    Debug.LogWarning($"QuarterManager: Neizdevās izmantot Puck.ResetToCenter(): {e.Message}");
                 }
             }
 
-            Debug.Log($"QuarterManager: Puck reset to center after quarter at position {centerPos}");
+            Debug.Log($"QuarterManager: Ripa atiestatīta uz centru pēc ceturtdaļas pozīcijā {centerPos}");
         }
         
-        // New method to find puck using multiple search strategies
+        // Jauna metode ripas atrašanai, izmantojot vairākas meklēšanas stratēģijas
         private GameObject FindPuckByAllMeans()
         {
-            Debug.Log("QuarterManager: Starting exhaustive puck search using multiple methods...");
+            Debug.Log("QuarterManager: Sāk vispusīgu ripas meklēšanu, izmantojot vairākas metodes...");
             
-            // Method 1: FindObjectsByType<Puck>
+            // 1. metode: FindObjectsByType<Puck>
             var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
             if (allPucks != null && allPucks.Length > 0)
             {
-                Debug.Log($"QuarterManager: Found {allPucks.Length} pucks using FindObjectsByType<Puck>");
+                Debug.Log($"QuarterManager: Atrastas {allPucks.Length} ripas, izmantojot FindObjectsByType<Puck>");
                 return allPucks[0].gameObject;
             }
             
-            // Method 2: FindGameObjectsWithTag
+            // 2. metode: FindGameObjectsWithTag
             var taggedObjects = GameObject.FindGameObjectsWithTag("Puck");
             if (taggedObjects != null && taggedObjects.Length > 0)
             {
-                Debug.Log($"QuarterManager: Found {taggedObjects.Length} objects with tag 'Puck'");
+                Debug.Log($"QuarterManager: Atrasti {taggedObjects.Length} objekti ar tagu 'Puck'");
                 return taggedObjects[0];
             }
             
-            // Method 3: Find objects on puck layer
+            // 3. metode: Atrast objektus ripas slānī
             var allObjects = FindObjectsOfType<GameObject>();
             foreach (var obj in allObjects)
             {
                 if (obj.layer == LayerMask.NameToLayer("Puck"))
                 {
-                    Debug.Log($"QuarterManager: Found object {obj.name} on 'Puck' layer");
+                    Debug.Log($"QuarterManager: Atrasts objekts {obj.name} 'Puck' slānī");
                     return obj;
                 }
             }
             
-            // Method 4: Find by name contains
+            // 4. metode: Atrast pēc nosaukuma satur
             foreach (var obj in allObjects)
             {
                 if (obj.name.ToLower().Contains("puck"))
                 {
-                    Debug.Log($"QuarterManager: Found object with 'puck' in name: {obj.name}");
+                    Debug.Log($"QuarterManager: Atrasts objekts ar 'puck' nosaukumā: {obj.name}");
                     return obj;
                 }
             }
             
-            // Method 5: Last resort - create a new puck
-            Debug.LogWarning("QuarterManager: No puck found! Creating a new puck at center position.");
-            var newPuck = new GameObject("EmergencyPuck");
+            // 5. metode: Pēdējā iespēja - izveidot jaunu ripu
+            Debug.LogWarning("QuarterManager: Nav atrasta ripa! Izveido jaunu ripu centra pozīcijā.");
+            var newPuck = new GameObject("ĀrkārtasRipa");
             newPuck.transform.position = new Vector3(0f, 0.71f, 0f);
             newPuck.transform.rotation = Quaternion.identity;
             newPuck.tag = "Puck";
@@ -445,7 +445,7 @@ namespace HockeyGame.Game
             rb.constraints = RigidbodyConstraints.None;
             newPuck.AddComponent<SphereCollider>().radius = 0.5f;
             
-            // Add a simple Puck component
+            // Pievienot vienkāršu Puck komponenti
             if (newPuck.GetComponent<Puck>() == null)
             {
                 newPuck.AddComponent<Puck>();
@@ -454,39 +454,39 @@ namespace HockeyGame.Game
             return newPuck;
         }
 
-        // --- Show GameOverPanel on ALL clients ---
+        // --- Parādīt GameOverPanel uz VISIEM klientiem ---
         [ClientRpc]
         private void ShowGameOverPanelClientRpc()
         {
-            Debug.Log("QuarterManager: [ClientRpc] ShowGameOverPanelClientRpc called on client");
+            Debug.Log("QuarterManager: [ClientRpc] ShowGameOverPanelClientRpc izsaukts klientā");
             
-            // Force immediate execution on main thread
+            // Piespiest tūlītēju izpildi galvenajā pavedienā
             StartCoroutine(ShowGameOverPanelCoroutine());
         }
 
         private System.Collections.IEnumerator ShowGameOverPanelCoroutine()
         {
-            yield return null; // Wait one frame
+            yield return null; // Gaidīt vienu kadru
             
-            Debug.Log("QuarterManager: [Coroutine] Starting GameOver panel search and display");
+            Debug.Log("QuarterManager: [Coroutine] Sākas GameOver paneļa meklēšana un attēlošana");
             
-            // Get scores from all possible sources
+            // Iegūt rezultātus no visiem iespējamiem avotiem
             int redScore = 0, blueScore = 0;
             var scoreManager = ScoreManager.Instance;
             if (scoreManager != null)
             {
                 redScore = scoreManager.GetRedScore();
                 blueScore = scoreManager.GetBlueScore();
-                Debug.Log($"QuarterManager: Got scores from ScoreManager - Red: {redScore}, Blue: {blueScore}");
+                Debug.Log($"QuarterManager: Iegūti rezultāti no ScoreManager - Sarkanā: {redScore}, Zilā: {blueScore}");
             }
 
-            // Try multiple ways to find the GameOverPanel
+            // Mēģināt vairākus veidus, kā atrast GameOverPanel
             GameOverPanel panelToUse = gameOverPanel;
             
             if (panelToUse == null)
             {
                 panelToUse = FindFirstObjectByType<GameOverPanel>();
-                Debug.Log($"QuarterManager: FindFirstObjectByType result: {(panelToUse != null ? panelToUse.name : "null")}");
+                Debug.Log($"QuarterManager: FindFirstObjectByType rezultāts: {(panelToUse != null ? panelToUse.name : "null")}");
             }
             
             if (panelToUse == null)
@@ -495,13 +495,13 @@ namespace HockeyGame.Game
                 if (panelGO != null)
                 {
                     panelToUse = panelGO.GetComponent<GameOverPanel>();
-                    Debug.Log($"QuarterManager: Found by GameObject.Find: {panelGO.name}");
+                    Debug.Log($"QuarterManager: Atrasts ar GameObject.Find: {panelGO.name}");
                 }
             }
             
             if (panelToUse == null)
             {
-                // Search in all canvases
+                // Meklēt visos canvas
                 var allCanvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
                 foreach (var canvas in allCanvases)
                 {
@@ -509,7 +509,7 @@ namespace HockeyGame.Game
                     if (panel != null)
                     {
                         panelToUse = panel;
-                        Debug.Log($"QuarterManager: Found GameOverPanel in canvas: {canvas.name}");
+                        Debug.Log($"QuarterManager: Atrasts GameOverPanel kanvā: {canvas.name}");
                         break;
                     }
                 }
@@ -517,27 +517,27 @@ namespace HockeyGame.Game
 
             if (panelToUse != null)
             {
-                Debug.Log($"QuarterManager: Found GameOverPanel: {panelToUse.name}, activating...");
+                Debug.Log($"QuarterManager: Atrasts GameOverPanel: {panelToUse.name}, aktivizē...");
                 
-                // Force activate the panel's game object first
+                // Vispirms piespiedu kārtā aktivizēt paneļa spēles objektu
                 panelToUse.gameObject.SetActive(true);
                 
-                // Wait a frame for activation
+                // Gaidīt kadru aktivizācijai
                 yield return null;
                 
-                // Now show the game over screen
+                // Tagad parādīt spēles beigu ekrānu
                 panelToUse.ShowGameOver(redScore, blueScore);
                 
-                Debug.Log($"QuarterManager: GameOverPanel activated and ShowGameOver called!");
+                Debug.Log($"QuarterManager: GameOverPanel aktivizēts un ShowGameOver izsaukts!");
             }
             else
             {
-                Debug.LogError("QuarterManager: Could not find GameOverPanel anywhere! Creating fallback...");
+                Debug.LogError("QuarterManager: Nevarēja atrast GameOverPanel nekur! Izveido rezerves variantu...");
                 CreateFallbackGameOverUI(redScore, blueScore);
             }
         }
 
-        // --- Create a simple fallback UI if GameOverPanel is missing ---
+        // --- Izveidot vienkāršu rezerves UI, ja GameOverPanel trūkst ---
         private void CreateFallbackGameOverUI(int redScore, int blueScore)
         {
             var tempPanel = new GameObject("FallbackGameOverPanel");
@@ -551,18 +551,23 @@ namespace HockeyGame.Game
             
             tempPanel.AddComponent<UnityEngine.UI.GraphicRaycaster>();
             
-            var background = tempPanel.AddComponent<UnityEngine.UI.Image>();
+            var background = new GameObject("Background").AddComponent<UnityEngine.UI.Image>();
+            background.transform.SetParent(tempPanel.transform);
             background.color = new Color(0, 0, 0, 0.8f);
+            var bgRect = background.GetComponent<RectTransform>();
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.sizeDelta = Vector2.zero;
             
             var text = new GameObject("GameOverText");
             text.transform.SetParent(tempPanel.transform);
             var textComponent = text.AddComponent<TMPro.TextMeshProUGUI>();
             
-            string winner = "Draw!";
-            if (redScore > blueScore) winner = "Red Team Wins!";
-            else if (blueScore > redScore) winner = "Blue Team Wins!";
+            string winner = "Neizšķirts!";
+            if (redScore > blueScore) winner = "Sarkanā komanda uzvar!";
+            else if (blueScore > redScore) winner = "Zilā komanda uzvar!";
             
-            textComponent.text = $"{winner}\nRed: {redScore} - Blue: {blueScore}\n\nGame Over";
+            textComponent.text = $"{winner}\nSarkanā: {redScore} - Zilā: {blueScore}\n\nSpēle beigusies";
             textComponent.fontSize = 48;
             textComponent.color = Color.white;
             textComponent.alignment = TMPro.TextAlignmentOptions.Center;
@@ -573,23 +578,23 @@ namespace HockeyGame.Game
             rectTransform.sizeDelta = Vector2.zero;
             rectTransform.anchoredPosition = Vector2.zero;
             
-            Debug.Log("QuarterManager: Created fallback game over UI successfully");
+            Debug.Log("QuarterManager: Veiksmīgi izveidots rezerves spēles beigu UI");
         }
 
-        // --- NEW: Reset all players to their spawn points (same as after a goal) ---
+        //  Atiestatīt visus spēlētājus uz to sākumpozīcijām (tāpat kā pēc vārtiem) ---
         private void ResetAllPlayersToSpawnPoints()
         {
             var gameNetMgr = FindFirstObjectByType<GameNetworkManager>();
             if (gameNetMgr == null)
             {
-                Debug.LogWarning("QuarterManager: GameNetworkManager not found, cannot reset player positions.");
+                Debug.LogWarning("QuarterManager: GameNetworkManager nav atrasts, nevar atiestatīt spēlētāju pozīcijas.");
                 return;
             }
 
             var players = FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None);
             if (players == null || players.Length == 0)
             {
-                Debug.LogWarning("QuarterManager: No PlayerMovement objects found to reset positions.");
+                Debug.LogWarning("QuarterManager: Nav atrasti PlayerMovement objekti, ko atiestatīt pozīcijās.");
                 return;
             }
 
@@ -597,19 +602,19 @@ namespace HockeyGame.Game
             {
                 if (player == null)
                 {
-                    Debug.LogWarning("QuarterManager: Found null PlayerMovement in players array.");
+                    Debug.LogWarning("QuarterManager: Atrasts null PlayerMovement spēlētāju masīvā.");
                     continue;
                 }
 
                 var netObj = player.GetComponent<NetworkObject>();
                 if (netObj == null)
                 {
-                    Debug.LogWarning($"QuarterManager: Player {player.name} has no NetworkObject.");
+                    Debug.LogWarning($"QuarterManager: Spēlētājam {player.name} nav NetworkObject.");
                     continue;
                 }
 
                 ulong clientId = netObj.OwnerClientId;
-                // Try to get team as string
+                // Mēģināt iegūt komandu kā tekstu
                 string team = "Red";
                 try
                 {
@@ -637,7 +642,7 @@ namespace HockeyGame.Game
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"QuarterManager: Error determining team for player {player.name}: {e.Message}");
+                    Debug.LogWarning($"QuarterManager: Kļūda nosakot komandu spēlētājam {player.name}: {e.Message}");
                 }
 
                 Vector3 spawnPos = player.transform.position;
@@ -655,14 +660,14 @@ namespace HockeyGame.Game
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"QuarterManager: Error getting spawn position for player {player.name}: {e.Message}");
+                    Debug.LogWarning($"QuarterManager: Kļūda iegūstot sākuma pozīciju spēlētājam {player.name}: {e.Message}");
                 }
 
                 Quaternion spawnRot = team == "Blue"
                     ? Quaternion.Euler(0, 90, 0)
                     : Quaternion.Euler(0, -90, 0);
 
-                // Teleport player to spawn
+                // Teleportēt spēlētāju uz sākuma pozīciju
                 player.transform.position = spawnPos;
                 player.transform.rotation = spawnRot;
                 var rb = player.GetComponent<Rigidbody>();
@@ -675,26 +680,26 @@ namespace HockeyGame.Game
                 }
             }
 
-            Debug.Log("QuarterManager: All players reset to their spawn points at end of quarter.");
+            Debug.Log("QuarterManager: Visi spēlētāji atiestatīti uz sākuma pozīcijām ceturtdaļas beigās.");
         }
 
         private System.Collections.IEnumerator TransitionToNextQuarter()
         {
-            // Show transition panel
+            // Parādīt pārejas paneli
             if (quarterTransitionPanel != null)
             {
                 quarterTransitionPanel.ShowTransition(currentQuarter.Value + 1);
             }
 
-            yield return new WaitForSeconds(3f); // 3 second transition
+            yield return new WaitForSeconds(3f); // 3 sekunžu pāreja
 
             if (IsServer)
             {
-                // --- CRITICAL: Use a ServerRpc to update quarter and timer for all clients ---
+                //  Izmantot ServerRpc, lai atjauninātu ceturtdaļu un taimeri visiem klientiem ---
                 SetNextQuarterServerRpc();
             }
 
-            // Hide transition panel
+            // Paslēpt pārejas paneli
             if (quarterTransitionPanel != null)
             {
                 quarterTransitionPanel.HideTransition();
@@ -713,17 +718,17 @@ namespace HockeyGame.Game
 
         private void EndGame()
         {
-            Debug.Log("Game ended - all quarters completed");
+            Debug.Log("Spēle beigusies - visas ceturtdaļas pabeigtas");
             isGameActive = false;
 
-            // --- NEW: Show end game panel and winner ---
+            //  Parādīt spēles beigu paneli un uzvarētāju ---
             ShowEndGamePanel();
 
-            // --- NEW: Start coroutine to return to main menu and shutdown networking ---
+            //  Sākt koroutīnu, lai atgrieztos galvenajā izvēlnē un izslēgtu tīklošanu ---
             StartCoroutine(EndGameSequence());
         }
 
-        // --- NEW: Show end game panel and winner ---
+        //  Parādīt spēles beigu paneli un uzvarētāju ---
         private void ShowEndGamePanel()
         {
             int redScore = 0, blueScore = 0;
@@ -734,43 +739,42 @@ namespace HockeyGame.Game
                 blueScore = scoreManager.GetBlueScore();
             }
 
-            string winner = "Draw!";
-            if (redScore > blueScore) winner = "Red Team Wins!";
-            else if (blueScore > redScore) winner = "Blue Team Wins!";
+            string winner = "Neizšķirts!";
+            if (redScore > blueScore) winner = "Sarkanā komanda uzvar!";
+            else if (blueScore > redScore) winner = "Zilā komanda uzvar!";
 
-            // Try to find a GameOverPanel or similar UI
+            // Mēģināt atrast GameOverPanel vai līdzīgu UI
             var gameOverPanel = FindFirstObjectByType<GameOverPanel>();
             if (gameOverPanel != null)
             {
-                // Show only winner text and buttons
+                // Parādīt tikai uzvarētāja tekstu un pogas
                 gameOverPanel.ShowWinner(winner);
             }
             else
             {
-                // Fallback: log to console
-                Debug.Log($"GAME OVER! {winner}");
+                // Rezerves variants: žurnalēt konsolē
+                Debug.Log($"SPĒLE BEIGUSIES! {winner}");
             }
         }
 
-        // --- NEW: Coroutine to return to main menu and shutdown networking ---
+        //  Koroutīna, lai atgrieztos galvenajā izvēlnē un izslēgtu tīklošanu ---
         private System.Collections.IEnumerator EndGameSequence()
         {
-            // Wait 5 seconds to show the panel
+            // Gaidīt 5 sekundes, lai parādītu paneli
             yield return new WaitForSeconds(5f);
 
-            // Shutdown host/client and return to main menu
+            // Izslēgt resursdatoru/klientu un atgriezties galvenajā izvēlnē
             if (Unity.Netcode.NetworkManager.Singleton != null)
             {
                 Unity.Netcode.NetworkManager.Singleton.Shutdown();
             }
 
-            // Wait a moment to ensure shutdown before loading scene
+            // Gaidīt brīdi, lai nodrošinātu izslēšanu pirms ainas ielādes
             yield return new WaitForSeconds(0.5f);
 
-            // --- FIX: Always load MainMenu for both host and client ---
+            //  Vienmēr ielādēt MainMenu gan resursdatoram, gan klientam ---
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
 
-            // --- Optional: If you want to be extra sure, force shutdown again after scene load ---
             if (Unity.Netcode.NetworkManager.Singleton != null)
             {
                 Unity.Netcode.NetworkManager.Singleton.Shutdown();
@@ -784,7 +788,7 @@ namespace HockeyGame.Game
 
         private void OnQuarterChanged(int previousValue, int newValue)
         {
-            // --- CRITICAL: Reset timer and activate game on all clients when quarter changes ---
+            //  Atiestatīt taimeri un aktivizēt spēli visiem klientiem, kad mainās ceturtdaļa ---
             timeRemaining.Value = quarterDuration;
             isGameActive = true;
             UpdateQuarterUI();
@@ -800,19 +804,19 @@ namespace HockeyGame.Game
                 timerText.text = $"{minutes:00}:{seconds:00}";
             }
             
-            // Also update ScoreManager if it exists
+            // Atjaunināt arī ScoreManager, ja tas eksistē
             var scoreManager = ScoreManager.Instance;
             if (scoreManager != null)
             {
-                // FIXED: Call UpdateScoreDisplay without parameters instead of with int scores
+                //  Izsaukt UpdateScoreDisplay bez parametriem, nevis ar int rezultātiem
                 scoreManager.UpdateScoreDisplay();
             }
         }
 
         private void UpdateQuarterUI()
         {
-            // Update quarter display in UI
-            Debug.Log($"Current Quarter: {currentQuarter.Value}/{totalQuarters}");
+            // Atjaunināt ceturtdaļas rādītāju UI
+            Debug.Log($"Pašreizējā ceturtdaļa: {currentQuarter.Value}/{totalQuarters}");
             if (quarterDisplayUI == null)
             {
                 quarterDisplayUI = FindFirstObjectByType<QuarterDisplayUI>();
@@ -823,7 +827,7 @@ namespace HockeyGame.Game
             }
         }
 
-        // Public methods for external access
+        // Publiskās metodes ārējai pieejai
         public int GetCurrentQuarter() => currentQuarter.Value;
         public float GetTimeRemaining() => timeRemaining.Value;
         public bool IsGameActive() => isGameActive;
@@ -841,24 +845,24 @@ namespace HockeyGame.Game
             isGameActive = true;
         }
 
-        // FIXED: Add missing EndCurrentQuarter method
+        //  Pievienot trūkstošo EndCurrentQuarter metodi
         public void EndCurrentQuarter()
         {
             if (!IsServer) return;
             
-            Debug.Log($"Manually ending current quarter {currentQuarter.Value}");
+            Debug.Log($"Manuāli beigt pašreizējo ceturtdaļu {currentQuarter.Value}");
             EndQuarter();
         }
 
         private void OnQuarterEnd()
         {
-            // Handle end of quarter logic
+            // Apstrādāt ceturtdaļas beigu loģiku
             var scoreManager = FindFirstObjectByType<ScoreManager>();
             if (scoreManager != null)
             {
-                // FIXED: Call UpdateScoreDisplay without parameters instead of with int
+                //  Izsaukt UpdateScoreDisplay bez parametriem, nevis ar int
                 scoreManager.UpdateScoreDisplay();
-                Debug.Log($"QuarterManager: Quarter {currentQuarter} ended, score display updated");
+                Debug.Log($"QuarterManager: Ceturtdaļa {currentQuarter} beigusies, rezultātu attēlojums atjaunināts");
             }
             
         }

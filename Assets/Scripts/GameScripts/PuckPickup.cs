@@ -1,33 +1,36 @@
 using UnityEngine;
 using Unity.Netcode;
 
+// Šī klase ļauj spēlētājiem pacelt, turēt un atlaist hokeja ripu, kā arī nozagt to no pretiniekiem
+// PuckPickup nodrošina gan lokālo ripas kontroli, gan tīklā sinhronizētu ripas pārvaldību vairākiem spēlētājiem
 public class PuckPickup : NetworkBehaviour
 {
-    [Header("Pickup Settings")]
-    [SerializeField] private float pickupRange = 2f;
-    [SerializeField] private Transform puckHoldPosition;
-    [SerializeField] private LayerMask puckLayer = 128;
+    [Header("Pacelšanas iestatījumi")]
+    [SerializeField] private float pickupRange = 2f; // Attālums, kurā spēlētājs var pacelt ripu
+    [SerializeField] private Transform puckHoldPosition; // Pozīcija, kur ripa tiek turēta
+    [SerializeField] private LayerMask puckLayer = 128; // Slānis ripas noteikšanai
     
-    [Header("Input")]
-    [SerializeField] private KeyCode pickupKey = KeyCode.E;
+    [Header("Ievade")]
+    [SerializeField] private KeyCode pickupKey = KeyCode.E; // Taustiņš ripas pacelšanai/atlaišanai
     
-    [Header("Debug")]
-    [SerializeField] private bool enableDebugLogs = true;
+    [Header("Atkļūdošana")]
+    [SerializeField] private bool enableDebugLogs = true; // Vai rādīt atkļūdošanas ziņojumus
     
-    [Header("Puck Stealing")]
-    [SerializeField] private float stealChance = 0.25f; // 25% chance to steal
-    [SerializeField] private float stealRange = 3f; // Range to attempt steal
-    [SerializeField] private float stealCooldown = 2f; // Cooldown between steal attempts
-    [SerializeField] private bool enableStealDebugLogs = true;
+    [Header("Ripas zagšana")]
+    [SerializeField] private float stealChance = 0.25f; // 25% iespēja nozagt
+    [SerializeField] private float stealRange = 3f; // Attālums, kurā var mēģināt nozagt
+    [SerializeField] private float stealCooldown = 2f; // Atspiešanas laiks starp zagšanas mēģinājumiem
+    [SerializeField] private bool enableStealDebugLogs = true; // Vai attēlot zagšanas atkļūdošanas ziņojumus
     
-    private Puck currentPuck;
-    private bool hasPuck = false;
-    private NetworkVariable<bool> networkHasPuck = new NetworkVariable<bool>(false);
-    private bool releasedForShooting = false;
-    private float lastStealAttemptTime = 0f;
+    private Puck currentPuck; // Pašreizējā ripa, ko tur spēlētājs
+    private bool hasPuck = false; // Vai spēlētājam ir ripa
+    private NetworkVariable<bool> networkHasPuck = new NetworkVariable<bool>(false); // Tīkla mainīgais ripas turēšanai
+    private bool releasedForShooting = false; // Vai ripa ir atlaista šaušanai
+    private float lastStealAttemptTime = 0f; // Kad pēdējo reizi mēģināja nozagt ripu
     
     private void Awake()
     {
+        // Ja nav iestatīta ripas turēšanas pozīcija, izveido to automātiski
         if (puckHoldPosition == null)
         {
             GameObject holdPos = new GameObject("PuckHoldPosition");
@@ -37,6 +40,7 @@ public class PuckPickup : NetworkBehaviour
             puckHoldPosition = holdPos.transform;
         }
         
+        // Pievieno PlayerShooting komponenti, ja tā neeksistē
         if (GetComponent<PlayerShooting>() == null)
         {
             gameObject.AddComponent<PlayerShooting>();
@@ -46,15 +50,18 @@ public class PuckPickup : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        // Pievieno klausītāju tīkla mainīgā izmaiņām
         networkHasPuck.OnValueChanged += OnNetworkHasPuckChanged;
     }
 
     public override void OnNetworkDespawn()
     {
+        // Noņem klausītāju, lai novērstu atmiņas noplūdes
         networkHasPuck.OnValueChanged -= OnNetworkHasPuckChanged;
         base.OnNetworkDespawn();
     }
 
+    // Apstrādā tīkla stāvokļa maiņu attālinātajiem spēlētājiem
     private void OnNetworkHasPuckChanged(bool oldValue, bool newValue)
     {
         if (!IsOwner)
@@ -62,66 +69,67 @@ public class PuckPickup : NetworkBehaviour
             hasPuck = newValue;
             if (enableDebugLogs)
             {
-                Debug.Log($"PuckPickup: [Remote] Network state changed - HasPuck: {hasPuck}");
+                Debug.Log($"PuckPickup: [Attālināts] Tīkla stāvoklis mainīts - HasPuck: {hasPuck}");
             }
         }
     }
 
     private void Update()
     {
-        // Only process input for the owner
+        // Apstrādā ievadi tikai īpašniekam
         if (!IsOwner) return;
 
         HandleInput();
 
-        // For the local player, ensure PuckFollower is working properly
+        // Lokālajam spēlētājam pārbauda, vai PuckFollower darbojas pareizi
         if (hasPuck && currentPuck != null && !releasedForShooting)
         {
             var puckFollower = currentPuck.GetComponent<PuckFollower>();
             if (puckFollower != null && !puckFollower.IsFollowing())
             {
-                // Restart following if it stopped
+                // Atsāk sekošanu, ja tā apstājās
                 if (puckHoldPosition != null)
                 {
                     puckFollower.StartFollowing(puckHoldPosition, Vector3.zero);
                     if (enableDebugLogs)
                     {
-                        Debug.Log("PuckPickup: Restarted PuckFollower for local player");
+                        Debug.Log("PuckPickup: Atsākta PuckFollower darbība lokālajam spēlētājam");
                     }
                 }
             }
         }
     }
 
+    // Apstrādā spēlētāja ievadi
     private void HandleInput()
     {
         if (Input.GetKeyDown(pickupKey))
         {
             if (enableDebugLogs)
             {
-                Debug.Log($"PuckPickup: E key pressed. HasPuck: {hasPuck}, ReleasedForShooting: {releasedForShooting}");
+                Debug.Log($"PuckPickup: E taustiņš nospiests. HasPuck: {hasPuck}, ReleasedForShooting: {releasedForShooting}");
             }
 
             if (hasPuck && currentPuck != null && !releasedForShooting)
             {
-                // Drop/release puck manually
+                // Atlaiž ripu manuāli
                 if (enableDebugLogs)
                 {
-                    Debug.Log("PuckPickup: Manually dropping puck via E key");
+                    Debug.Log("PuckPickup: Manuāli atlaiž ripu ar E taustiņu");
                 }
                 ManualReleasePuck();
             }
             else if (!hasPuck)
             {
-                // First try to steal puck from nearby opponent
+                // Vispirms mēģina nozagt ripu no tuvumā esoša pretinieka
                 bool stealAttempted = TryStealPuck();
                 
                 if (!stealAttempted)
                 {
-                    // If no steal attempt was made, try normal pickup
+                    // Ja zagšanas mēģinājums netika veikts, mēģina parasto pacelšanu
                     if (enableDebugLogs)
                     {
-                        Debug.Log("PuckPickup: No steal attempt, trying normal pickup");
+                        Debug.Log("PuckPickup: Nav zagšanas mēģinājuma, mēģina parasto pacelšanu");
                     }
                     TryPickupPuck();
                 }
@@ -129,9 +137,10 @@ public class PuckPickup : NetworkBehaviour
         }
     }
 
+    // Mēģina pacelt tuvumā esošu ripu
     private void TryPickupPuck()
     {
-        // Find nearest puck
+        // Atrod tuvāko ripu
         Puck nearestPuck = FindNearestPuck();
 
         if (nearestPuck != null)
@@ -140,7 +149,7 @@ public class PuckPickup : NetworkBehaviour
             
             if (enableDebugLogs)
             {
-                Debug.Log($"PuckPickup: Found puck at distance {distance:F2}m (max: {pickupRange}m)");
+                Debug.Log($"PuckPickup: Atrasta ripa attālumā {distance:F2}m (maks: {pickupRange}m)");
             }
 
             if (distance <= pickupRange)
@@ -149,7 +158,7 @@ public class PuckPickup : NetworkBehaviour
                 currentPuck = nearestPuck;
                 hasPuck = true;
 
-                // Start PuckFollower immediately for local responsiveness
+                // Uzreiz sāk PuckFollower lokālai atsaucībai
                 var puckFollower = nearestPuck.GetComponent<PuckFollower>();
                 if (puckFollower != null)
                 {
@@ -158,19 +167,19 @@ public class PuckPickup : NetworkBehaviour
                     
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"PuckPickup: Started PuckFollower for local player");
+                        Debug.Log($"PuckPickup: Sākts PuckFollower lokālajam spēlētājam");
                     }
                 }
                 else
                 {
-                    // Add PuckFollower if missing
+                    // Pievieno PuckFollower, ja tā trūkst
                     puckFollower = nearestPuck.gameObject.AddComponent<PuckFollower>();
                     puckFollower.StartFollowing(puckHoldPosition, Vector3.zero);
                     puckFollower.enabled = true;
-                    Debug.Log("PuckPickup: Added and started PuckFollower component");
+                    Debug.Log("PuckPickup: Pievienota un sākta PuckFollower komponente");
                 }
 
-                // Configure physics for pickup
+                // Konfigurē fiziku pacelšanai
                 var col = nearestPuck.GetComponent<Collider>();
                 if (col != null) col.enabled = false;
 
@@ -185,7 +194,7 @@ public class PuckPickup : NetworkBehaviour
 
                 nearestPuck.SetHeld(true);
 
-                // Send to server for network sync
+                // Nosūta serverim tīkla sinhronizācijai
                 if (NetworkManager.Singleton != null && IsSpawned)
                 {
                     var puckNetObj = nearestPuck.GetComponent<NetworkObject>();
@@ -197,12 +206,13 @@ public class PuckPickup : NetworkBehaviour
 
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"PuckPickup: Successfully picked up puck using PuckFollower!");
+                    Debug.Log($"PuckPickup: Veiksmīgi pacelta ripa, izmantojot PuckFollower!");
                 }
             }
         }
     }
 
+    // Atrod tuvāko nepaceltuto ripu
     private Puck FindNearestPuck()
     {
         var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
@@ -236,12 +246,13 @@ public class PuckPickup : NetworkBehaviour
         return nearestPuck;
     }
 
+    // ServerRpc metode ripas pacelšanai
     [ServerRpc]
     private void PickupPuckServerRpc(ulong puckNetworkId)
     {
         if (enableDebugLogs)
         {
-            Debug.Log($"PuckPickup: [ServerRpc] Processing pickup for puck {puckNetworkId}");
+            Debug.Log($"PuckPickup: [ServerRpc] Apstrādā pacelšanu ripai {puckNetworkId}");
         }
 
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(puckNetworkId, out var networkObject))
@@ -259,10 +270,10 @@ public class PuckPickup : NetworkBehaviour
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"PuckPickup: PickupByPlayer failed: {e.Message}");
+                    Debug.LogWarning($"PuckPickup: PickupByPlayer neizdevās: {e.Message}");
                 }
 
-                // Notify all clients to start following
+                // Paziņo visiem klientiem, lai sāktu sekošanu
                 StartFollowingClientRpc(puckNetworkId, NetworkObjectId);
 
                 OnPuckPickedUpClientRpc();
@@ -270,6 +281,7 @@ public class PuckPickup : NetworkBehaviour
         }
     }
 
+    // ClientRpc metode ripas sekošanas sākšanai
     [ClientRpc]
     private void StartFollowingClientRpc(ulong puckNetworkId, ulong playerNetworkId)
     {
@@ -278,7 +290,7 @@ public class PuckPickup : NetworkBehaviour
 
         if (puckObj == null || playerObj == null)
         {
-            Debug.LogWarning("PuckPickup: StartFollowingClientRpc could not find puck or player object.");
+            Debug.LogWarning("PuckPickup: StartFollowingClientRpc nevarēja atrast ripas vai spēlētāja objektu.");
             return;
         }
 
@@ -287,12 +299,12 @@ public class PuckPickup : NetworkBehaviour
 
         if (puckHold != null)
         {
-            // Start following for ALL clients using PuckFollower
+            // Sāk sekošanu VISIEM klientiem, izmantojot PuckFollower
             var puckFollower = puckObj.GetComponent<PuckFollower>();
             if (puckFollower == null)
             {
                 puckFollower = puckObj.AddComponent<PuckFollower>();
-                Debug.Log("PuckPickup: Added missing PuckFollower component");
+                Debug.Log("PuckPickup: Pievienota trūkstošā PuckFollower komponente");
             }
             
             puckFollower.StartFollowing(puckHold, Vector3.zero);
@@ -300,11 +312,11 @@ public class PuckPickup : NetworkBehaviour
             
             if (enableDebugLogs)
             {
-                Debug.Log($"PuckPickup: Started PuckFollower for {(isLocalPlayer ? "LOCAL" : "REMOTE")} player");
+                Debug.Log($"PuckPickup: Sākts PuckFollower priekš {(isLocalPlayer ? "LOKĀLĀ" : "ATTĀLINĀTĀ")} spēlētāja");
             }
         }
 
-        // Disable physics for held puck
+        // Izslēdz fiziku turētai ripai
         var col = puckObj.GetComponent<Collider>();
         if (col != null) col.enabled = false;
         var rb = puckObj.GetComponent<Rigidbody>();
@@ -316,7 +328,7 @@ public class PuckPickup : NetworkBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // Set state for local player
+        // Iestata stāvokli lokālajam spēlētājam
         if (isLocalPlayer)
         {
             var pickup = playerObj.GetComponent<PuckPickup>();
@@ -329,18 +341,19 @@ public class PuckPickup : NetworkBehaviour
         }
     }
 
+    // Manuāli atlaiž ripu (ar E taustiņu)
     private void ManualReleasePuck()
     {
         if (currentPuck == null) return;
 
         if (enableDebugLogs)
         {
-            Debug.Log("PuckPickup: Manual release puck via E key");
+            Debug.Log("PuckPickup: Manuāli atlaiž ripu ar E taustiņu");
         }
 
-        releasedForShooting = false; // This is a manual release, not for shooting
+        releasedForShooting = false; // Šī ir manuāla atlaišana, ne šaušanai
 
-        // Stop following
+        // Aptur sekošanu
         var puckFollower = currentPuck.GetComponent<PuckFollower>();
         if (puckFollower != null)
         {
@@ -348,7 +361,7 @@ public class PuckPickup : NetworkBehaviour
             puckFollower.enabled = false;
             if (enableDebugLogs)
             {
-                Debug.Log("PuckPickup: Stopped PuckFollower for manual release");
+                Debug.Log("PuckPickup: Apturēts PuckFollower manuālai atlaišanai");
             }
         }
 
@@ -358,7 +371,7 @@ public class PuckPickup : NetworkBehaviour
         currentPuck.transform.position = releasePosition;
         currentPuck.transform.rotation = Quaternion.identity;
 
-        // Enable collider and physics
+        // Ieslēdz collieru un fiziku
         var col = currentPuck.GetComponent<Collider>();
         if (col != null) col.enabled = true;
 
@@ -376,7 +389,7 @@ public class PuckPickup : NetworkBehaviour
         currentPuck = null;
         hasPuck = false;
 
-        // Send to server for network sync
+        // Nosūta serverim tīkla sinhronizācijai
         if (IsServer)
         {
             networkHasPuck.Value = false;
@@ -388,22 +401,23 @@ public class PuckPickup : NetworkBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("PuckPickup: Manual release completed");
+            Debug.Log("PuckPickup: Manuāla atlaišana pabeigta");
         }
     }
 
+    // Atlaiž ripu šaušanai (izmanto PlayerShooting)
     public void ReleasePuckForShooting()
     {
         if (currentPuck == null) return;
 
         if (enableDebugLogs)
         {
-            Debug.Log("PuckPickup: Release puck FOR SHOOTING");
+            Debug.Log("PuckPickup: Atlaiž ripu ŠAUŠANAI");
         }
 
         releasedForShooting = true;
 
-        // Stop following immediately
+        // Nekavējoties aptur sekošanu
         var puckFollower = currentPuck.GetComponent<PuckFollower>();
         if (puckFollower != null)
         {
@@ -411,29 +425,31 @@ public class PuckPickup : NetworkBehaviour
             puckFollower.enabled = false;
             if (enableDebugLogs)
             {
-                Debug.Log("PuckPickup: Stopped PuckFollower for shooting");
+                Debug.Log("PuckPickup: Apturēts PuckFollower šaušanai");
             }
         }
 
-        // --- FIX: Always call ServerRpc for shooting to ensure server-side release ---
+        // --- LABOJUMS: Vienmēr izsauc ServerRpc šaušanai, lai nodrošinātu servera puses atlaišanu ---
         if (IsOwner && NetworkManager.Singleton != null && IsSpawned)
         {
             ReleasePuckForShootingServerRpc();
         }
         else
         {
-            // Fallback for host/server
+            // Rezerves variants resursdatoram/serverim
             InternalReleasePuck();
         }
     }
 
+    // ServerRpc metode ripas atlaišanai šaušanai
     [ServerRpc(RequireOwnership = false)]
     private void ReleasePuckForShootingServerRpc(ServerRpcParams rpcParams = default)
     {
-        // Only the server should execute the release logic
+        // Tikai serveris izpilda atlaišanas loģiku
         InternalReleasePuck();
     }
 
+    // Iekšējā ripas atlaišanas metode
     private void InternalReleasePuck()
     {
         if (currentPuck == null) return;
@@ -473,6 +489,7 @@ public class PuckPickup : NetworkBehaviour
         }
     }
 
+    // ServerRpc metode ripas atlaišanai
     [ServerRpc]
     private void ReleasePuckServerRpc()
     {
@@ -486,7 +503,7 @@ public class PuckPickup : NetworkBehaviour
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning($"PuckPickup: ReleaseFromPlayer failed: {e.Message}");
+                Debug.LogWarning($"PuckPickup: ReleaseFromPlayer neizdevās: {e.Message}");
             }
             
             currentPuck = null;
@@ -495,59 +512,63 @@ public class PuckPickup : NetworkBehaviour
         }
     }
 
+    // ClientRpc metode ripas pacelšanas notifikācijai
     [ClientRpc]
     private void OnPuckPickedUpClientRpc()
     {
         if (enableDebugLogs)
         {
-            Debug.Log("PuckPickup: Puck picked up (ClientRpc)");
+            Debug.Log("PuckPickup: Ripa pacelta (ClientRpc)");
         }
     }
 
+    // ClientRpc metode ripas atlaišanas notifikācijai
     [ClientRpc]
     private void OnPuckReleasedClientRpc()
     {
         if (enableDebugLogs)
         {
-            Debug.Log("PuckPickup: Puck released (ClientRpc)");
+            Debug.Log("PuckPickup: Ripa atlaista (ClientRpc)");
         }
     }
 
-    // Public methods for other scripts
+    // Publiskās metodes citiem skriptiem
     public bool HasPuck() => hasPuck && !releasedForShooting;
     public Puck GetCurrentPuck() => releasedForShooting ? null : currentPuck;
     public Transform GetPuckHoldPosition() => puckHoldPosition;
     public bool CanShootPuck() => hasPuck && currentPuck != null && !releasedForShooting;
     
+    // Atiestata šaušanas karogu
     public void ResetShootingFlag()
     {
         releasedForShooting = false;
         if (enableDebugLogs)
         {
-            Debug.Log("PuckPickup: Reset shooting flag - ready for new pickup");
+            Debug.Log("PuckPickup: Atiestatīts šaušanas karogs - gatavs jaunai pacelšanai");
         }
     }
 
+    // Mēģina nozagt ripu no pretinieka
     private bool TryStealPuck()
     {
-        // Check cooldown
+        // Pārbauda atspiešanas laiku
         if (Time.time - lastStealAttemptTime < stealCooldown)
         {
             if (enableStealDebugLogs)
             {
-                Debug.Log($"PuckPickup: Steal attempt blocked by cooldown. Time remaining: {stealCooldown - (Time.time - lastStealAttemptTime):F1}s");
+                Debug.Log($"PuckPickup: Zagšanas mēģinājumu bloķē atspiešanas laiks. Atlikušais laiks: {stealCooldown - (Time.time - lastStealAttemptTime):F1}s");
             }
             return false;
         }
 
-        // Find nearby players with pucks
+        // Atrod tuvākos spēlētājus ar ripām
         PuckPickup targetPlayer = FindNearestPlayerWithPuck();
         
         if (targetPlayer == null)
         {
             if (enableStealDebugLogs)
             {
-                Debug.Log("PuckPickup: No nearby players with pucks found for stealing");
+                Debug.Log("PuckPickup: Nav atrasti tuvumā esoši spēlētāji ar ripām zagšanai");
             }
             return false;
         }
@@ -558,58 +579,59 @@ public class PuckPickup : NetworkBehaviour
         {
             if (enableStealDebugLogs)
             {
-                Debug.Log($"PuckPickup: Target player too far for steal attempt: {distance:F2}m (max: {stealRange}m)");
+                Debug.Log($"PuckPickup: Mērķa spēlētājs pārāk tālu zagšanas mēģinājumam: {distance:F2}m (maks: {stealRange}m)");
             }
             return false;
         }
 
-        // Record steal attempt to start cooldown
+        // Reģistrē zagšanas mēģinājumu, lai sāktu atspiešanas laiku
         lastStealAttemptTime = Time.time;
         
         if (enableStealDebugLogs)
         {
-            Debug.Log($"PuckPickup: Attempting to steal puck from player at {distance:F2}m distance");
+            Debug.Log($"PuckPickup: Mēģina nozagt ripu no spēlētāja {distance:F2}m attālumā");
         }
 
-        // Check if this is an opponent (different team)
+        // Pārbauda, vai šis ir pretinieks (cita komanda)
         if (!IsOpponent(targetPlayer))
         {
             if (enableStealDebugLogs)
             {
-                Debug.Log("PuckPickup: Cannot steal from teammate");
+                Debug.Log("PuckPickup: Nevar nozagt no komandas biedra");
             }
-            return true; // Attempt was made but blocked
+            return true; // Mēģinājums tika veikts, bet bloķēts
         }
 
-        // Roll for steal success
+        // Met kauliņu zagšanas veiksmei
         float roll = Random.Range(0f, 1f);
         bool stealSuccessful = roll <= stealChance;
         
         if (enableStealDebugLogs)
         {
-            Debug.Log($"PuckPickup: Steal roll: {roll:F3} (need ≤ {stealChance:F3}) - {(stealSuccessful ? "SUCCESS" : "FAILED")}");
+            Debug.Log($"PuckPickup: Zagšanas metiens: {roll:F3} (vajag ≤ {stealChance:F3}) - {(stealSuccessful ? "VEIKSMĪGS" : "NEIZDEVĀS")}");
         }
 
         if (stealSuccessful)
         {
-            // Successful steal - take the puck
+            // Veiksmīga zagšana - paņem ripu
             ExecutePuckSteal(targetPlayer);
         }
         else
         {
-            // Failed steal attempt
+            // Neveiksmīgs zagšanas mēģinājums
             if (enableStealDebugLogs)
             {
-                Debug.Log("PuckPickup: Steal attempt failed - puck remains with opponent");
+                Debug.Log("PuckPickup: Zagšanas mēģinājums neizdevās - ripa paliek pie pretinieka");
             }
             
-            // Optional: Show visual feedback for failed steal
+            // Neobligāti: Parāda vizuālu atgriezenisko saiti par neveiksmīgu zagšanu
             ShowStealFailedEffect();
         }
 
-        return true; // Attempt was made
+        return true; // Mēģinājums tika veikts
     }
 
+    // Atrod tuvāko spēlētāju ar ripu
     private PuckPickup FindNearestPlayerWithPuck()
     {
         var allPlayers = FindObjectsByType<PuckPickup>(FindObjectsSortMode.None);
@@ -620,7 +642,7 @@ public class PuckPickup : NetworkBehaviour
         {
             if (player == null || player == this) continue;
             
-            // Check if player has a puck
+            // Pārbauda, vai spēlētājam ir ripa
             if (!player.HasPuck()) continue;
             
             float distance = Vector3.Distance(transform.position, player.transform.position);
@@ -634,31 +656,32 @@ public class PuckPickup : NetworkBehaviour
         return nearestPlayer;
     }
 
+    // Pārbauda, vai spēlētājs ir pretinieks
     private bool IsOpponent(PuckPickup otherPlayer)
     {
-        // FIXED: Simplified and more reliable team check for both host and client
+        // LABOTS: Vienkāršots un uzticamāks komandu pārbaudes veids gan resursdatoram, gan klientam
         var myPlayerMovement = GetComponent<PlayerMovement>();
         var otherPlayerMovement = otherPlayer.GetComponent<PlayerMovement>();
         
         if (myPlayerMovement == null || otherPlayerMovement == null)
         {
-            Debug.LogWarning("PuckPickup: Could not get PlayerMovement components for team check");
-            // FIXED: For testing, assume all players are opponents if we can't determine teams
+            Debug.LogWarning("PuckPickup: Nevarēja iegūt PlayerMovement komponentes komandu pārbaudei");
+            // LABOTS: Testēšanai pieņem, ka visi spēlētāji ir pretinieki, ja nevaram noteikt komandas
             return true;
         }
         
-        // FIXED: Much simpler team check - just assume different teams for now to test stealing
+        // LABOTS: Daudz vienkāršāka komandu pārbaude - pagaidām pieņem atšķirīgas komandas testēšanai
         if (enableStealDebugLogs)
         {
-            Debug.Log($"PuckPickup: Team check - assuming players are on different teams for testing");
+            Debug.Log($"PuckPickup: Komandu pārbaude - pieņem, ka spēlētāji ir dažādās komandās testēšanai");
         }
         
-        // TEMPORARY: Always return true to test stealing mechanics
-        // TODO: Implement proper team checking once stealing works
+        // PAGAIDU: Vienmēr atgriež true, lai testētu zagšanas mehāniku
+        // TODO: Ieviest pareizu komandu pārbaudi, kad zagšana strādā
         return true;
         
         /*
-        // PROPER TEAM CHECKING CODE (disabled for testing):
+        // PAREIZS KOMANDU PĀRBAUDES KODS (izslēgts testēšanai):
         try
         {
             var myTeamField = typeof(PlayerMovement).GetField("networkTeam", 
@@ -684,7 +707,7 @@ public class PuckPickup : NetworkBehaviour
                         
                         if (enableStealDebugLogs)
                         {
-                            Debug.Log($"PuckPickup: Team check - My team: {myTeam}, Other team: {otherTeam}, Same team: {sameTeam}, Is opponent: {isOpponent}");
+                            Debug.Log($"PuckPickup: Komandu pārbaude - Mana komanda: {myTeam}, Cita komanda: {otherTeam}, Tā pati komanda: {sameTeam}, Ir pretinieks: {isOpponent}");
                         }
                         
                         return isOpponent;
@@ -696,31 +719,32 @@ public class PuckPickup : NetworkBehaviour
         {
             if (enableStealDebugLogs)
             {
-                Debug.LogWarning($"PuckPickup: Error in team check reflection: {e.Message}");
+                Debug.LogWarning($"PuckPickup: Kļūda komandu pārbaudes refleksijā: {e.Message}");
             }
         }
         
-        return true; // Fallback: assume opponent
+        return true; // Rezerves variants: pieņem pretinieku
         */
     }
 
+    // Izpilda veiksmīgu ripas zagšanu
     private void ExecutePuckSteal(PuckPickup targetPlayer)
     {
         if (enableStealDebugLogs)
         {
-            Debug.Log($"PuckPickup: Executing successful puck steal from {targetPlayer.name}");
+            Debug.Log($"PuckPickup: Izpilda veiksmīgu ripas zagšanu no {targetPlayer.name}");
         }
 
-        // --- FIX: Always get the puck reference ON THE SERVER, not on the client ---
-        // On the client, the targetPlayer's currentPuck may be null due to network sync delay.
-        // Instead, always send the ServerRpc and let the server validate and process the steal.
+        // --- LABOJUMS: Vienmēr iegūst ripas atsauci UZ SERVERA, nevis uz klienta ---
+        // Uz klienta targetPlayer.currentPuck var būt null tīkla sinhronizācijas aizkaves dēļ.
+        // Tā vietā vienmēr sūta ServerRpc un ļauj serverim validēt un apstrādāt zagšanu.
 
         if (IsLocalPlayer && NetworkManager.Singleton != null && IsSpawned)
         {
             var targetNetworkObject = targetPlayer.GetComponent<NetworkObject>();
             ulong targetPuckNetworkId = 0;
 
-            // Try to get the puck's NetworkObjectId, but if null, just send 0 (server will check)
+            // Mēģina iegūt ripas NetworkObjectId, bet ja null, vienkārši sūta 0 (serveris pārbaudīs)
             var puck = targetPlayer.GetCurrentPuck();
             if (puck != null)
             {
@@ -729,7 +753,7 @@ public class PuckPickup : NetworkBehaviour
                     targetPuckNetworkId = puckNetObj.NetworkObjectId;
             }
 
-            Debug.Log($"PuckPickup: [CLIENT] Sending ExecuteStealServerRpc from client {OwnerClientId} to server. Target: {targetNetworkObject?.NetworkObjectId}, Puck: {targetPuckNetworkId}");
+            Debug.Log($"PuckPickup: [KLIENTS] Sūta ExecuteStealServerRpc no klienta {OwnerClientId} uz serveri. Mērķis: {targetNetworkObject?.NetworkObjectId}, Ripa: {targetPuckNetworkId}");
 
             if (targetNetworkObject != null)
             {
@@ -737,103 +761,104 @@ public class PuckPickup : NetworkBehaviour
             }
             else
             {
-                Debug.LogWarning("PuckPickup: [CLIENT] Target NetworkObject is null, cannot send ServerRpc");
+                Debug.LogWarning("PuckPickup: [KLIENTS] Mērķa NetworkObject ir null, nevar nosūtīt ServerRpc");
             }
         }
         else
         {
             if (!IsLocalPlayer)
-                Debug.LogWarning("PuckPickup: [CLIENT] Not IsLocalPlayer, will not send ServerRpc for steal.");
+                Debug.LogWarning("PuckPickup: [KLIENTS] Nav IsLocalPlayer, nenosūtīs ServerRpc zagšanai.");
             if (NetworkManager.Singleton == null)
-                Debug.LogWarning("PuckPickup: [CLIENT] NetworkManager.Singleton is null, cannot send ServerRpc for steal.");
+                Debug.LogWarning("PuckPickup: [KLIENTS] NetworkManager.Singleton ir null, nevar nosūtīt ServerRpc zagšanai.");
             if (!IsSpawned)
-                Debug.LogWarning("PuckPickup: [CLIENT] Not spawned, cannot send ServerRpc for steal.");
+                Debug.LogWarning("PuckPickup: [KLIENTS] Nav izveidots, nevar nosūtīt ServerRpc zagšanai.");
         }
 
-        // Show feedback immediately for local player (optional)
+        // Nekavējoties parāda atgriezenisko saiti lokālajam spēlētājam (neobligāti)
         ShowStealSuccessEffect();
 
         if (enableStealDebugLogs)
         {
-            Debug.Log("PuckPickup: Puck steal network command sent!");
+            Debug.Log("PuckPickup: Ripas zagšanas tīkla komanda nosūtīta!");
         }
     }
 
+    // ServerRpc metode zagšanas izpildei
     [ServerRpc(RequireOwnership = false)]
     private void ExecuteStealServerRpc(ulong targetPlayerNetworkId, ulong puckNetworkId, ServerRpcParams rpcParams = default)
     {
         if (enableStealDebugLogs)
         {
-            Debug.Log($"PuckPickup: [ServerRpc] Processing steal - Stealer: {NetworkObjectId}, Target: {targetPlayerNetworkId}, Puck: {puckNetworkId}");
+            Debug.Log($"PuckPickup: [ServerRpc] Apstrādā zagšanu - Zaglis: {NetworkObjectId}, Mērķis: {targetPlayerNetworkId}, Ripa: {puckNetworkId}");
         }
 
         var targetPlayerObj = GetNetworkObjectById(targetPlayerNetworkId);
         if (targetPlayerObj == null)
         {
-            Debug.LogWarning($"PuckPickup: [ServerRpc] Could not find target player object for steal.");
+            Debug.LogWarning($"PuckPickup: [ServerRpc] Nevarēja atrast mērķa spēlētāja objektu zagšanai.");
             return;
         }
 
         var targetPuckPickup = targetPlayerObj.GetComponent<PuckPickup>();
         if (targetPuckPickup == null)
         {
-            Debug.LogWarning($"PuckPickup: [ServerRpc] Could not find PuckPickup on target player.");
+            Debug.LogWarning($"PuckPickup: [ServerRpc] Nevarēja atrast PuckPickup uz mērķa spēlētāja.");
             return;
         }
 
-        // --- FIX: Always get the puck reference ON THE SERVER ---
+        // --- LABOJUMS: Vienmēr iegūst ripas atsauci UZ SERVERA ---
         var puck = targetPuckPickup.GetCurrentPuck();
         if (puck == null)
         {
-            Debug.LogWarning("PuckPickup: [ServerRpc] Target player doesn't have a puck to steal.");
+            Debug.LogWarning("PuckPickup: [ServerRpc] Mērķa spēlētājam nav ripas, ko nozagt.");
             return;
         }
 
         var puckObj = puck.gameObject;
         if (puckObj == null)
         {
-            Debug.LogWarning("PuckPickup: [ServerRpc] Target puck object is null.");
+            Debug.LogWarning("PuckPickup: [ServerRpc] Mērķa ripas objekts ir null.");
             return;
         }
 
-        // Validate the target actually has the puck
+        // Validē, vai mērķim tiešām ir ripa
         if (!targetPuckPickup.HasPuck())
         {
-            Debug.LogWarning($"PuckPickup: [ServerRpc] Target player doesn't have the puck.");
+            Debug.LogWarning($"PuckPickup: [ServerRpc] Mērķa spēlētājam nav ripas.");
             return;
         }
 
         if (enableStealDebugLogs)
         {
-            Debug.Log($"PuckPickup: [ServerRpc] Executing steal - forcing target to release puck");
+            Debug.Log($"PuckPickup: [ServerRpc] Izpilda zagšanu - liek mērķim atlaist ripu");
         }
 
-        // Force the target player to release their puck immediately
+        // Liek mērķa spēlētājam nekavējoties atlaist ripu
         targetPuckPickup.ForceReleasePuckForSteal();
 
-        // Wait a moment for the release to process
+        // Pagaida brīdi, lai atlaišana tiktu apstrādāta
         StartCoroutine(CompleteStealAfterRelease(puck, rpcParams.Receive.SenderClientId));
     }
 
-    // Modified to accept stealerClientId
+    // Modificēts, lai pieņemtu stealerClientId
     private System.Collections.IEnumerator CompleteStealAfterRelease(Puck puck, ulong stealerClientId)
     {
-        yield return new WaitForSeconds(0.1f); // Brief delay for release to complete
+        yield return new WaitForSeconds(0.1f); // Īsa aizkave, lai atlaišana tiktu pabeigta
 
         if (puck == null)
         {
-            Debug.LogWarning("PuckPickup: [ServerRpc] Puck became null during steal completion");
+            Debug.LogWarning("PuckPickup: [ServerRpc] Ripa kļuva null zagšanas pabeigšanas laikā");
             yield break;
         }
 
-        // Find the stealer's PuckPickup by clientId
+        // Atrod zagļa PuckPickup pēc clientId
         var stealerObj = NetworkManager.Singleton.ConnectedClients.ContainsKey(stealerClientId)
             ? NetworkManager.Singleton.ConnectedClients[stealerClientId].PlayerObject?.GetComponent<PuckPickup>()
             : null;
 
         if (stealerObj == null)
         {
-            Debug.LogWarning("PuckPickup: [ServerRpc] Could not find stealer's PuckPickup component");
+            Debug.LogWarning("PuckPickup: [ServerRpc] Nevarēja atrast zagļa PuckPickup komponenti");
             yield break;
         }
 
@@ -850,38 +875,38 @@ public class PuckPickup : NetworkBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning($"PuckPickup: [ServerRpc] PickupByPlayer failed during steal: {e.Message}");
+            Debug.LogWarning($"PuckPickup: [ServerRpc] PickupByPlayer neizdevās zagšanas laikā: {e.Message}");
         }
 
         if (enableStealDebugLogs)
         {
-            Debug.Log($"PuckPickup: [ServerRpc] Steal completed on server - puck now belongs to stealer");
+            Debug.Log($"PuckPickup: [ServerRpc] Zagšana pabeigta uz servera - ripa tagad pieder zaglim");
         }
 
-        // Notify all clients about the completed steal
+        // Paziņo visiem klientiem par pabeigto zagšanu
         CompleteStealClientRpc(stealerObj.NetworkObjectId, puck.GetComponent<NetworkObject>().NetworkObjectId);
     }
 
-    // FIXED: New ClientRpc to handle steal completion
+    // LABOTS: Jauns ClientRpc zagšanas pabeigšanai
     [ClientRpc]
     private void CompleteStealClientRpc(ulong stealerNetworkId, ulong puckNetworkId)
     {
         if (enableStealDebugLogs)
         {
-            Debug.Log($"PuckPickup: [ClientRpc] Completing steal - Stealer: {stealerNetworkId}, Puck: {puckNetworkId}");
+            Debug.Log($"PuckPickup: [ClientRpc] Pabeigta zagšana - Zaglis: {stealerNetworkId}, Ripa: {puckNetworkId}");
         }
 
-        // Find the objects
+        // Atrod objektus
         var stealerObj = GetNetworkObjectById(stealerNetworkId);
         var puckObj = GetNetworkObjectById(puckNetworkId);
 
         if (stealerObj == null || puckObj == null)
         {
-            Debug.LogWarning($"PuckPickup: [ClientRpc] Could not find objects for steal completion");
+            Debug.LogWarning($"PuckPickup: [ClientRpc] Nevarēja atrast objektus zagšanas pabeigšanai");
             return;
         }
 
-        // Update local state for the stealer (if it's the local player)
+        // Atjaunina lokālo stāvokli zaglim (ja tas ir lokālais spēlētājs)
         bool isLocalStealer = stealerObj.GetComponent<NetworkObject>().IsLocalPlayer;
         if (isLocalStealer)
         {
@@ -894,12 +919,12 @@ public class PuckPickup : NetworkBehaviour
                 
                 if (enableStealDebugLogs)
                 {
-                    Debug.Log($"PuckPickup: [ClientRpc] Updated local stealer state");
+                    Debug.Log($"PuckPickup: [ClientRpc] Atjaunināts lokālā zagļa stāvoklis");
                 }
             }
         }
 
-        // Start PuckFollower for the stealer
+        // Sāk PuckFollower zaglim
         var stealerPickupComponent = stealerObj.GetComponent<PuckPickup>();
         if (stealerPickupComponent != null && stealerPickupComponent.GetPuckHoldPosition() != null)
         {
@@ -914,11 +939,11 @@ public class PuckPickup : NetworkBehaviour
             
             if (enableStealDebugLogs)
             {
-                Debug.Log($"PuckPickup: [ClientRpc] Started PuckFollower for stealer");
+                Debug.Log($"PuckPickup: [ClientRpc] Sākts PuckFollower zaglim");
             }
         }
 
-        // Configure puck physics for being held
+        // Konfigurē ripas fiziku turēšanai
         var col = puckObj.GetComponent<Collider>();
         if (col != null) col.enabled = false;
         
@@ -932,7 +957,7 @@ public class PuckPickup : NetworkBehaviour
         }
     }
 
-    // FIXED: Helper method to find NetworkObject by ID
+    // LABOTS: Palīgmetode NetworkObject atrašanai pēc ID
     private GameObject GetNetworkObjectById(ulong networkObjectId)
     {
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out var networkObject))
@@ -940,7 +965,7 @@ public class PuckPickup : NetworkBehaviour
             return networkObject.gameObject;
         }
         
-        // Fallback: search all NetworkObjects
+        // Rezerves variants: meklē visus NetworkObjects
         var allNetworkObjects = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
         foreach (var obj in allNetworkObjects)
         {
@@ -953,32 +978,34 @@ public class PuckPickup : NetworkBehaviour
         return null;
     }
 
+    // Parāda veiksmīgas zagšanas efektu
     private void ShowStealSuccessEffect()
     {
-        // Add visual/audio feedback for successful steal
-        // You can add particle effects, sound effects, etc. here
+        // Pievieno vizuālu/audio atgriezenisko saiti veiksmīgai zagšanai
+        // Šeit var pievienot daļiņu efektus, skaņas efektus utt.
         if (enableStealDebugLogs)
         {
-            Debug.Log("PuckPickup: Steal Succeeded"); // Simplified string
+            Debug.Log("PuckPickup: Zagšana Izdevās"); // Vienkāršota virkne
         }
     }
 
+    // Parāda neveiksmīgas zagšanas efektu
     private void ShowStealFailedEffect()
     {
-        // Add visual/audio feedback for failed steal attempt
-        // You can add particle effects, sound effects, etc. here
+        // Pievieno vizuālu/audio atgriezenisko saiti neveiksmīgai zagšanai
+        // Šeit var pievienot daļiņu efektus, skaņas efektus utt.
         if (enableStealDebugLogs)
         {
-            Debug.Log("PuckPickup: Steal Failed"); // Simplified string
+            Debug.Log("PuckPickup: Zagšana Neizdevās"); // Vienkāršota virkne
         }
     }
 
-    // Called by the server to force this player to release the puck for a steal
+    // Servera izsaukta metode, lai liktu šim spēlētājam atlaist ripu zagšanai
     public void ForceReleasePuckForSteal()
     {
         if (currentPuck == null) return;
 
-        // Stop following
+        // Aptur sekošanu
         var puckFollower = currentPuck.GetComponent<PuckFollower>();
         if (puckFollower != null)
         {
@@ -986,7 +1013,7 @@ public class PuckPickup : NetworkBehaviour
             puckFollower.enabled = false;
         }
 
-        // Enable collider and physics
+        // Ieslēdz collieru un fiziku
         var col = currentPuck.GetComponent<Collider>();
         if (col != null) col.enabled = true;
 
@@ -1005,14 +1032,14 @@ public class PuckPickup : NetworkBehaviour
         hasPuck = false;
         releasedForShooting = false;
 
-        // Sync network variable
+        // Sinhronizē tīkla mainīgo
         networkHasPuck.Value = false;
     }
 
-    // FIXED: Improve the PickupStolenPuck method - this method is no longer used
+    // LABOTS: Uzlabota PickupStolenPuck metode - šī metode vairs netiek izmantota
     private System.Collections.IEnumerator PickupStolenPuck(Puck puck)
     {
-        // This method is no longer needed since ExecuteStealServerRpc handles everything
+        // Šī metode vairs nav nepieciešama, jo ExecuteStealServerRpc apstrādā visu
         yield break;
     }
 }

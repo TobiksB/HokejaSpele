@@ -72,7 +72,7 @@ namespace HockeyGame.Game
             var quarterManager = FindFirstObjectByType<QuarterManager>();
             if (quarterManager != null)
             {
-                quarterManager.EndCurrentQuarter(); // Fix: Use correct method name
+                quarterManager.EndCurrentQuarter(); 
             }
         }
 
@@ -80,7 +80,6 @@ namespace HockeyGame.Game
         {
             if (HockeyGame.Game.QuarterManager.Instance != null)
             {
-                // FIXED: Use the correct method name
                 HockeyGame.Game.QuarterManager.Instance.EndCurrentQuarter();
                 Debug.Log("Timer expired - ending current quarter");
             }
@@ -120,7 +119,6 @@ namespace HockeyGame.Game
             {
                 timerText.text = timeText;
                 
-                // ENHANCED: Color coding for urgency
                 if (timeInSeconds <= 30f)
                 {
                     timerText.color = Color.red; // Last 30 seconds - red

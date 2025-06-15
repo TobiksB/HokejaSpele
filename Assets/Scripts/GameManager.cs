@@ -5,62 +5,74 @@ using System.Collections;
 
 namespace HockeyGame.Game
 {
-    // Renamed to RootGameManager to avoid conflict with GameScripts.GameManager
+   
+    /// Galvenā spēles pārvaldības klase, kas koordinē spēles gaitu, rezultātus un starpperiodu pārejas.
+    /// Izmanto NetworkBehaviour, lai nodrošinātu datu sinhronizāciju starp visiem spēlētājiem tīklā.
+   
     public class RootGameManager : NetworkBehaviour
     {
+        // Singltona instance, lai viegli piekļūtu no citām klasēm
         public static RootGameManager Instance { get; private set; }
 
-        [Header("UI References")]
-        [SerializeField] private GameUI gameUI;
-        [SerializeField] private QuarterTransitionPanel quarterTransitionPanel;
-        [SerializeField] private GameTimer gameTimer;
-        [SerializeField] private GameOverPanel gameOverPanel;
-        [SerializeField] private PauseMenuManager pauseMenuManager;
+        [Header("UI atsauces")]
+        [SerializeField] private GameUI gameUI; // Galvenā UI komponente spēles informācijas attēlošanai
+        [SerializeField] private QuarterTransitionPanel quarterTransitionPanel; // Panelis periodu pārejām
+        [SerializeField] private GameTimer gameTimer; // Spēles laika taimeris
+        [SerializeField] private GameOverPanel gameOverPanel; // Spēles beigu panelis ar rezultātiem
+        [SerializeField] private PauseMenuManager pauseMenuManager; // Pauzes izvēlnes pārvaldnieks
         
-        // FIXED: Add ScoreManager UI reference
-        [Header("Score UI")]
-        [SerializeField] private UnityEngine.UI.Text scoreDisplayText;
-        [SerializeField] private TMPro.TextMeshProUGUI scoreDisplayTMP;
+        // Rezultātu UI atsauces
+        [Header("Rezultātu UI")]
+        [SerializeField] private UnityEngine.UI.Text scoreDisplayText; // Legacy UI Text komponente rezultātu attēlošanai
+        [SerializeField] private TMPro.TextMeshProUGUI scoreDisplayTMP; // TextMeshPro komponente rezultātu attēlošanai
 
-        // Score variables
-        private NetworkVariable<int> redScore = new NetworkVariable<int>(0);
-        private NetworkVariable<int> blueScore = new NetworkVariable<int>(0);
+        // Rezultātu mainīgie, kas tiek sinhronizēti pār tīklu
+        private NetworkVariable<int> redScore = new NetworkVariable<int>(0); // Sarkanās komandas rezultāts
+        private NetworkVariable<int> blueScore = new NetworkVariable<int>(0); // Zilās komandas rezultāts
         
-        // Component references
-        private ScoreManager scoreManager;
-        private QuarterManager quarterManager;
+        // Komponenšu atsauces
+        private ScoreManager scoreManager; // Rezultātu pārvaldnieks
+        private QuarterManager quarterManager; // Periodu pārvaldnieks
 
+        /// Unity Awake funkcija, kas tiek izsaukta objekta inicializācijas laikā.
+        /// Pārbauda vai esam pareizajā scēnā un iestatām singltona instanci.
         private void Awake()
         {
+            // Pārbaudīt, vai mēs esam pareizajā scēnā
             string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             if (currentScene == "MainMenu")
             {
-                Debug.LogError($"CRITICAL ABORT: RootGameManager in MainMenu - destroying immediately");
+                Debug.LogError($"KRITISKA KĻŪDA: RootGameManager atrodas galvenajā izvēlnē - tiek iznīcināts nekavējoties");
                 Destroy(gameObject);
                 return;
             }
             
             if (!IsGameScene(currentScene))
             {
-                Debug.LogError($"RootGameManager: Not in game scene ({currentScene}) - destroying");
+                Debug.LogError($"RootGameManager: Nav spēles scēna ({currentScene}) - tiek iznīcināts");
                 Destroy(gameObject);
                 return;
             }
 
+            // Iestatīt singltona instanci
             if (Instance == null)
             {
                 Instance = this;
-                ValidateReferences();
-                Debug.Log("RootGameManager initialized successfully");
+                ValidateReferences(); // Pārbaudīt vai visas nepieciešamās komponentes ir pieejamas
+                Debug.Log("RootGameManager inicializēts veiksmīgi");
             }
             else
             {
-                Destroy(gameObject);
+                Destroy(gameObject); // Nodrošinam, ka eksistē tikai viena instance
             }
         }
 
+        /// 
+        /// Tiek izsaukta, kad spēle beidzas. Parāda rezultātus un apstādina spēli.
+        /// 
         public void OnGameEnd()
         {
+            // Mēģinām atrast ar another GameManager instance (ja tāda ir)
             var rootManager = FindFirstObjectByType<HockeyGame.Game.GameManager>();
             if (rootManager != null && rootManager != this)
             {
@@ -68,60 +80,66 @@ namespace HockeyGame.Game
             }
             else
             {
-                Debug.Log("Game ended!");
+                Debug.Log("Spēle beigusies!");
                 
-                // Show game over panel
+                // Parādīt spēles beigu paneli
                 var gameOverPanel = FindFirstObjectByType<GameOverPanel>();
                 if (gameOverPanel != null)
                 {
                     var scoreManager = FindFirstObjectByType<ScoreManager>();
                     if (scoreManager != null)
                     {
-                        // FIXED: Call UpdateScoreDisplay without parameters instead of with int
+                        // Atjaunināt rezultātu attēlojumu
                         scoreManager.UpdateScoreDisplay();
                         gameOverPanel.ShowGameOver(scoreManager.GetRedScore(), scoreManager.GetBlueScore());
                     }
                 }
                 
-                // Stop game timer
+                // Apturēt spēles taimeri
                 var gameTimer = FindFirstObjectByType<GameTimer>();
                 if (gameTimer != null)
                 {
                     gameTimer.StopTimer();
                 }
                 
-                // Disable player controls
+                // Atspējot spēlētāju kontroles
                 var players = FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None);
                 foreach (var player in players)
                 {
                     player.enabled = false;
                 }
                 
-                // Start end game sequence
+                // Sākt beigu sekvenci
                 StartCoroutine(EndGameSequence());
             }
         }
         
+        /// 
+        /// Korutīna, kas apstrādā spēles beigu sekvenci - rāda rezultātus un atgriežas galvenajā izvēlnē.
+        /// 
         private System.Collections.IEnumerator EndGameSequence()
         {
-            yield return new WaitForSeconds(5f); // Show results for 5 seconds
+            yield return new WaitForSeconds(5f); // Rādīt rezultātus 5 sekundes
             
-            // Return to main menu
+            // Atgriezties galvenajā izvēlnē
             if (IsServer)
             {
                 UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
             }
         }
         
+        /// 
+        /// Meklē un iestatām nepieciešamās komponentes, ja tās vēl nav piešķirtas.
+        /// 
         private void FindAndSetupComponents()
         {
-            // Find UI components if not assigned
+            // Atrast UI komponentes, ja tās nav piešķirtas
             if (gameUI == null)
             {
                 gameUI = FindFirstObjectByType<GameUI>();
                 if (gameUI == null)
                 {
-                    Debug.LogWarning("GameUI not found in scene");
+                    Debug.LogWarning("GameUI nav atrasts scēnā");
                 }
             }
             
@@ -130,7 +148,7 @@ namespace HockeyGame.Game
                 scoreManager = FindFirstObjectByType<ScoreManager>();
                 if (scoreManager == null)
                 {
-                    Debug.LogWarning("ScoreManager not found in scene");
+                    Debug.LogWarning("ScoreManager nav atrasts scēnā");
                 }
             }
             
@@ -139,11 +157,14 @@ namespace HockeyGame.Game
                 quarterManager = FindFirstObjectByType<QuarterManager>();
                 if (quarterManager == null)
                 {
-                    Debug.LogWarning("QuarterManager not found in scene");
+                    Debug.LogWarning("QuarterManager nav atrasts scēnā");
                 }
             }
         }
         
+        /// 
+        /// Atjaunina spēles UI ar aktuālajiem rezultātiem.
+        /// 
         private void UpdateGameUI()
         {
             if (gameUI != null)
@@ -151,7 +172,7 @@ namespace HockeyGame.Game
                 gameUI.UpdateScore(redScore.Value, blueScore.Value);
             }
             
-            // FIXED: Update score display UI directly
+            // Atjaunināt rezultātu attēlojumu UI tieši
             UpdateScoreDisplayUI(redScore.Value, blueScore.Value);
             
             if (scoreManager != null)
@@ -160,58 +181,70 @@ namespace HockeyGame.Game
             }
         }
         
-        // FIXED: Add method to update score display UI
+        /// 
+        /// Atjaunina rezultātu attēlojumu UI komponentēs.
+        /// 
+        /// <param name="redScore">Sarkanās komandas punkti</param>
+        /// <param name="blueScore">Zilās komandas punkti</param>
         private void UpdateScoreDisplayUI(int redScore, int blueScore)
         {
-            string scoreText = $"Red {redScore} - Blue {blueScore}";
+            string scoreText = $"Sarkanā {redScore} - Zilā {blueScore}";
             
-            // Update UI Text component if assigned
+            // Atjaunināt UI Text komponenti, ja tā ir piešķirta
             if (scoreDisplayText != null)
             {
                 scoreDisplayText.text = scoreText;
-                Debug.Log($"RootGameManager: Updated UI Text score display: {scoreText}");
+                Debug.Log($"RootGameManager: Atjaunināts UI Text rezultātu attēlojums: {scoreText}");
             }
             
-            // Update TextMeshPro component if assigned
+            // Atjaunināt TextMeshPro komponenti, ja tā ir piešķirta
             if (scoreDisplayTMP != null)
             {
                 scoreDisplayTMP.text = scoreText;
-                Debug.Log($"RootGameManager: Updated TMP score display: {scoreText}");
+                Debug.Log($"RootGameManager: Atjaunināts TMP rezultātu attēlojums: {scoreText}");
             }
             
-            // FIXED: Also find and update any score UI elements in the scene
+            // Atrast un atjaunināt visus rezultātu UI elementus scēnā, ja neviens nav piešķirts
             if (scoreDisplayText == null && scoreDisplayTMP == null)
             {
                 FindAndUpdateScoreUI(scoreText);
             }
         }
         
-        // FIXED: Add method to find and update score UI elements automatically
+        /// 
+        /// Meklē un atjaunina visus rezultātu UI elementus automātiski.
+        /// 
+        /// <param name="scoreText">Rezultāta teksts, ko attēlot</param>
         private void FindAndUpdateScoreUI(string scoreText)
         {
-            // Try to find UI Text components with score-related names
+            // Mēģināt atrast UI Text komponentes ar rezultātiem saistītiem nosaukumiem
             var allTexts = FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None);
             foreach (var text in allTexts)
             {
                 if (text.name.ToLower().Contains("score"))
                 {
                     text.text = scoreText;
-                    Debug.Log($"RootGameManager: Found and updated score text: {text.name}");
+                    Debug.Log($"RootGameManager: Atrasts un atjaunināts rezultātu teksts: {text.name}");
                 }
             }
             
-            // Try to find TextMeshPro components with score-related names
+            // Mēģināt atrast TextMeshPro komponentes ar rezultātiem saistītiem nosaukumiem
             var allTMPs = FindObjectsByType<TMPro.TextMeshProUGUI>(FindObjectsSortMode.None);
             foreach (var tmp in allTMPs)
             {
                 if (tmp.name.ToLower().Contains("score"))
                 {
                     tmp.text = scoreText;
-                    Debug.Log($"RootGameManager: Found and updated TMP score text: {tmp.name}");
+                    Debug.Log($"RootGameManager: Atrasts un atjaunināts TMP rezultātu teksts: {tmp.name}");
                 }
             }
         }
         
+        /// 
+        /// Pārbauda vai norādītā scēna ir spēles scēna.
+        /// 
+        /// <param name="sceneName">Scēnas nosaukums</param>
+        /// <returns>True, ja tā ir spēles scēna</returns>
         private bool IsGameScene(string sceneName)
         {
             return sceneName == "TrainingMode" || 
@@ -219,65 +252,77 @@ namespace HockeyGame.Game
                    sceneName == "GameScene4v4";
         }
 
+        /// 
+        /// Pārbauda vai visas nepieciešamās komponentes ir piešķirtas un izveidotas.
+        /// Ja komponente nav atrasta, tā tiek izveidota.
+        /// 
         private void ValidateReferences()
         {
+            // Pārbaudīt un izveidot GameUI
             if (gameUI == null)
             {
-                Debug.LogError("GameUI not found in scene! Creating basic GameUI...");
+                Debug.LogError("GameUI nav atrasts scēnā! Veidojam pamata GameUI...");
                 CreateBasicGameUI();
             }
 
+            // Pārbaudīt un izveidot QuarterTransitionPanel
             if (quarterTransitionPanel == null)
             {
-                Debug.LogWarning("QuarterTransitionPanel was not assigned, attempting to find in scene");
+                Debug.LogWarning("QuarterTransitionPanel nav piešķirts, mēģinām atrast scēnā");
                 quarterTransitionPanel = Object.FindFirstObjectByType<QuarterTransitionPanel>();
                 
                 if (quarterTransitionPanel == null)
                 {
-                    Debug.LogWarning("QuarterTransitionPanel not found in scene - creating simple one");
+                    Debug.LogWarning("QuarterTransitionPanel nav atrasts scēnā - veidojam vienkāršu");
                     CreateBasicQuarterTransitionPanel();
                 }
             }
 
+            // Pārbaudīt un izveidot GameTimer
             if (gameTimer == null)
             {
-                Debug.LogWarning("GameTimer not found in scene");
+                Debug.LogWarning("GameTimer nav atrasts scēnā");
                 gameTimer = Object.FindFirstObjectByType<GameTimer>();
                 
                 if (gameTimer == null)
                 {
-                    Debug.LogWarning("GameTimer not found - creating basic one");
+                    Debug.LogWarning("GameTimer nav atrasts - veidojam pamata");
                     CreateBasicGameTimer();
                 }
             }
 
+            // Pārbaudīt un izveidot GameOverPanel
             if (gameOverPanel == null)
             {
-                Debug.LogWarning("GameOverPanel not found in scene");
+                Debug.LogWarning("GameOverPanel nav atrasts scēnā");
                 gameOverPanel = Object.FindFirstObjectByType<GameOverPanel>();
                 
                 if (gameOverPanel == null)
                 {
-                    Debug.LogWarning("GameOverPanel not found - creating basic one");
+                    Debug.LogWarning("GameOverPanel nav atrasts - veidojam pamata");
                     CreateBasicGameOverPanel();
                 }
             }
 
+            // Pārbaudīt un izveidot PauseMenuManager
             if (pauseMenuManager == null)
             {
-                Debug.LogWarning("PauseMenuManager not found in scene");
+                Debug.LogWarning("PauseMenuManager nav atrasts scēnā");
                 pauseMenuManager = Object.FindFirstObjectByType<PauseMenuManager>();
                 
                 if (pauseMenuManager == null)
                 {
-                    Debug.LogWarning("PauseMenuManager not found - creating basic one");
+                    Debug.LogWarning("PauseMenuManager nav atrasts - veidojam pamata");
                     CreateBasicPauseMenuManager();
                 }
             }
 
-            Debug.Log("GameManager: All references validated and created if missing");
+            Debug.Log("GameManager: Visas atsauces pārbaudītas un izveidotas, ja trūka");
         }
 
+        /// 
+        /// Izveido pamata GameUI komponenti, ja tā nav atrasta.
+        /// 
         private void CreateBasicGameUI()
         {
             GameObject gameUIObj = new GameObject("GameUI");
@@ -290,64 +335,82 @@ namespace HockeyGame.Game
             
             gameUI = gameUIObj.AddComponent<GameUI>();
             
-            Debug.Log("Created basic GameUI");
+            Debug.Log("Izveidots pamata GameUI");
         }
 
+        /// 
+        /// Izveido pamata QuarterTransitionPanel, ja tas nav atrasts.
+        /// 
         private void CreateBasicQuarterTransitionPanel()
         {
             GameObject panelObj = new GameObject("QuarterTransitionPanel");
             quarterTransitionPanel = panelObj.AddComponent<QuarterTransitionPanel>();
             panelObj.SetActive(false);
             
-            Debug.Log("Created basic QuarterTransitionPanel");
+            Debug.Log("Izveidots pamata QuarterTransitionPanel");
         }
 
+        /// 
+        /// Izveido pamata GameTimer, ja tas nav atrasts.
+        /// 
         private void CreateBasicGameTimer()
         {
             GameObject timerObj = new GameObject("GameTimer");
             gameTimer = timerObj.AddComponent<GameTimer>();
             
-            Debug.Log("Created basic GameTimer");
+            Debug.Log("Izveidots pamata GameTimer");
         }
 
+        /// 
+        /// Izveido pamata GameOverPanel, ja tas nav atrasts.
+        /// 
         private void CreateBasicGameOverPanel()
         {
             GameObject panelObj = new GameObject("GameOverPanel");
             gameOverPanel = panelObj.AddComponent<GameOverPanel>();
             panelObj.SetActive(false);
             
-            Debug.Log("Created basic GameOverPanel");
+            Debug.Log("Izveidots pamata GameOverPanel");
         }
 
+        /// 
+        /// Izveido pamata PauseMenuManager, ja tas nav atrasts.
+        /// 
         private void CreateBasicPauseMenuManager()
         {
             GameObject managerObj = new GameObject("PauseMenuManager");
             pauseMenuManager = managerObj.AddComponent<PauseMenuManager>();
             
-            Debug.Log("Created basic PauseMenuManager");
+            Debug.Log("Izveidots pamata PauseMenuManager");
         }
 
+        /// 
+        /// Tiek izsaukta, kad tīkla objekts tiek izveidots.
+        /// Inicializē spēles stāvokli un pierakstās uz rezultātu izmaiņu notikumiem.
+        /// 
         public override void OnNetworkSpawn()
         {
+            // Pārbaudīt vai esam pareizajā scēnā
             string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             if (currentScene == "MainMenu")
             {
-                Debug.LogError($"ABORT: GameManager.OnNetworkSpawn in MainMenu - skipping");
+                Debug.LogError($"PĀRTRAUKT: GameManager.OnNetworkSpawn galvenajā izvēlnē - izlaižam");
                 return;
             }
             
             if (!IsGameScene(currentScene))
             {
-                Debug.LogError($"ABORT: GameManager.OnNetworkSpawn not in game scene ({currentScene}) - skipping");
+                Debug.LogError($"PĀRTRAUKT: GameManager.OnNetworkSpawn nav spēles scēna ({currentScene}) - izlaižam");
                 return;
             }
 
-            Debug.Log($"GameManager.OnNetworkSpawn in scene: {currentScene}");
+            Debug.Log($"GameManager.OnNetworkSpawn scēnā: {currentScene}");
             
-            // FIXED: Subscribe to score changes for UI updates
+            // Pierakstīties uz rezultātu izmaiņām UI atjaunināšanai
             redScore.OnValueChanged += OnRedScoreChanged;
             blueScore.OnValueChanged += OnBlueScoreChanged;
             
+            // Inicializēt spēles stāvokli, ja esam serveris
             if (IsServer)
             {
                 InitializeGameState();
@@ -356,38 +419,58 @@ namespace HockeyGame.Game
             ValidateReferences();
         }
 
-        // FIXED: Add score change handlers for UI updates
+        /// 
+        /// Tiek izsaukta, kad sarkanās komandas rezultāts mainās.
+        /// 
+        /// <param name="oldValue">Vecā vērtība</param>
+        /// <param name="newValue">Jaunā vērtība</param>
         private void OnRedScoreChanged(int oldValue, int newValue)
         {
-            Debug.Log($"RootGameManager: Red score changed from {oldValue} to {newValue}");
+            Debug.Log($"RootGameManager: Sarkanās komandas rezultāts mainījās no {oldValue} uz {newValue}");
             UpdateGameUI();
         }
 
+        /// 
+        /// Tiek izsaukta, kad zilās komandas rezultāts mainās.
+        /// 
+        /// <param name="oldValue">Vecā vērtība</param>
+        /// <param name="newValue">Jaunā vērtība</param>
         private void OnBlueScoreChanged(int oldValue, int newValue)
         {
-            Debug.Log($"RootGameManager: Blue score changed from {oldValue} to {newValue}");
+            Debug.Log($"RootGameManager: Zilās komandas rezultāts mainījās no {oldValue} uz {newValue}");
             UpdateGameUI();
         }
 
+        /// 
+        /// Tiek izsaukta, kad tīkla objekts tiek iznīcināts.
+        /// Atrakstās no rezultātu izmaiņu notikumiem.
+        /// 
         public override void OnNetworkDespawn()
         {
-            // FIXED: Unsubscribe from score changes
+            // Atrakstīties no rezultātu izmaiņām
             redScore.OnValueChanged -= OnRedScoreChanged;
             blueScore.OnValueChanged -= OnBlueScoreChanged;
             
             base.OnNetworkDespawn();
         }
 
+        /// 
+        /// Inicializē spēles stāvokli servera pusē.
+        /// 
         private void InitializeGameState()
         {
-            Debug.Log("GameManager: Initializing game state");
+            Debug.Log("GameManager: Inicializē spēles stāvokli");
             
+            // Sākt spēles taimeri
             if (gameTimer != null)
             {
                 gameTimer.StartTimer();
             }
         }
 
+        /// 
+        /// Iestata spēles pauzes režīmu.
+        /// 
         public void PauseGame()
         {
             if (pauseMenuManager != null)
@@ -396,6 +479,9 @@ namespace HockeyGame.Game
             }
         }
 
+        /// Parāda spēles beigu ekrānu ar rezultātiem.
+        /// <param name="red">Sarkanās komandas rezultāts</param>
+        /// <param name="blue">Zilās komandas rezultāts</param>
         public void ShowGameOver(int red, int blue)
         {
             if (gameOverPanel != null)
@@ -404,10 +490,12 @@ namespace HockeyGame.Game
             }
             else
             {
-                Debug.LogError("GameOverPanel not found!");
+                Debug.LogError("GameOverPanel nav atrasts!");
             }
         }
 
+        /// Parāda periodu pārejas ekrānu.
+        
         public void ShowQuarterTransition(int quarter)
         {
             if (quarterTransitionPanel != null)
@@ -416,7 +504,11 @@ namespace HockeyGame.Game
             }
         }
 
-        // Add method to update scores
+        /// 
+        /// Iestatīt abu komandu rezultātus.
+    
+        /// <param name="redPoints">Sarkanās komandas punkti</param>
+        /// <param name="bluePoints">Zilās komandas punkti</param>
         public void UpdateScore(int redPoints, int bluePoints)
         {
             if (IsServer)
@@ -427,7 +519,11 @@ namespace HockeyGame.Game
             }
         }
         
-        // Add method to add score
+         
+        /// Pievienot punktus komandai.
+       
+        /// <param name="isBlueTeam">Vai punkti jāpievieno zilajai komandai</param>
+        /// <param name="points">Pievienojamo punktu skaits</param>
         public void AddScore(bool isBlueTeam, int points = 1)
         {
             if (IsServer)
@@ -444,8 +540,11 @@ namespace HockeyGame.Game
             }
         }
         
-        // Public properties for score access
+        // Publiskas īpašības rezultātu piekļuvei
+        /// Sarkanās komandas rezultāts.
+         
         public int RedScore => redScore.Value;
+        /// Zilās komandas rezultāts.
         public int BlueScore => blueScore.Value;
     }
 }

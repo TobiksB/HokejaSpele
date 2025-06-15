@@ -200,17 +200,18 @@ public class PlayerMovement : NetworkBehaviour
         }
     }    private void Update()
     {
-        // Apstrādā ievadi tikai īpašniekam
+        // Apstrādā ievadi tikai īpašniekam (tikai tas spēlētājs, kuram pieder šis objekts, var kontrolēt kustību)
         if (!IsOwner && NetworkManager.Singleton != null) return;
 
         HandleMovementInput();
 
         // --- PELES SKATS AR JUTĪGUMU ---
+        // Ja spēlētājs tur nospiestu Alt, ļauj grozīt kameru ar peli, ņemot vērā peles jutīgumu no iestatījumiem
         if (IsOwner && Input.GetKey(KeyCode.LeftAlt))
         {
             float mouseX = Input.GetAxis("Mouse X");
             float mouseSensitivity = 1.0f;
-            // Vienmēr iegūst jaunāko vērtību no GameSettingsManager
+            // Vienmēr iegūst jaunāko vērtību no GameSettingsManager (lietotāja iestatījumi)
             if (GameSettingsManager.Instance != null)
                 mouseSensitivity = GameSettingsManager.Instance.mouseSensitivity;
 
@@ -221,12 +222,12 @@ public class PlayerMovement : NetworkBehaviour
             }
             else
             {
-                // Ja kamera ir spēlētāja bērns, rotē spēlētāju
+                // Ja kamera ir spēlētāja bērns, rotē visu spēlētāju
                 transform.Rotate(0f, mouseX * mouseSensitivity * 2.0f, 0f);
             }
         }
 
-        // NOŅEMTS: Visa ripas pacelšanas loģika - PuckPickup komponents to apstrādā
+        // NOŅEMTS: Visa ripas pacelšanas loģika - PuckPickup komponents tagad apstrādā ripas pacelšanu
     }    private void HandleMovementInput()
     {
         float horizontal = Input.GetAxis("Horizontal"); // A/D tikai rotācijai
@@ -332,6 +333,12 @@ public class PlayerMovement : NetworkBehaviour
         
         bool shouldSend = inputChanged || (Time.time - lastInputSendTime) > inputSendRate;
         
+        // --- TĪKLA KUSTĪBAS SINHRONIZĀCIJA ---
+        // Šeit tiek pārbaudīts, vai spēlētāja ievade (kustība, sprint, ātrā apstāšanās) ir mainījusies vai pagājis noteikts laiks kopš pēdējās nosūtīšanas.
+        // Ja jā, tad ar MoveServerRpc tiek nosūtīti visi ievades dati uz serveri.
+        // ServerRpc metodes Unity Netcode sistēmā ļauj klientam droši paziņot serverim par savu stāvokli vai darbībām.
+        // Serveris pēc tam apstrādā šo informāciju, atjaunina fiziku un nosūta rezultātu citiem klientiem (izmantojot ClientRpc).
+        // Šī loģika nodrošina, ka visi spēlētāji redz konsekventu un sinhronizētu kustību tīklā, pat ja notiek nelielas aiztures vai atšķirības starp klientiem.
         if (shouldSend && NetworkManager.Singleton != null && IsSpawned)
         {
             MoveServerRpc(horizontal, vertical, sprint, quickStop, transform.position, transform.rotation);

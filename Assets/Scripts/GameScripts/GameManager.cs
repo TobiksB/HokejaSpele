@@ -7,15 +7,15 @@ namespace HockeyGame.Game
     {
         public static GameManager Instance { get; private set; }
         
-        [Header("UI References - TextMeshPro (Preferred)")]
+        [Header("UI References - TextMeshPro (Ieteicams)")]
         [SerializeField] private TMPro.TextMeshProUGUI redScoreTMP;
         [SerializeField] private TMPro.TextMeshProUGUI blueScoreTMP;
         
-        [Header("UI References - Legacy Text (Fallback)")]
+        [Header("UI References - Legacy Text (Rezerves variants)")]
         [SerializeField] private UnityEngine.UI.Text redScoreText;
         [SerializeField] private UnityEngine.UI.Text blueScoreText;
         
-        [Header("Game References")]
+        [Header("Spēles norādes")]
         [SerializeField] private ScoreManager scoreManager;
         
         private void Awake()
@@ -23,7 +23,7 @@ namespace HockeyGame.Game
             if (Instance == null)
             {
                 Instance = this;
-                Debug.Log("GameManager: Instance created");
+                Debug.Log("GameManager: Instance izveidota");
             }
             else
             {
@@ -35,31 +35,31 @@ namespace HockeyGame.Game
         {
             base.OnNetworkSpawn();
             
-            // Find ScoreManager if not assigned
+            // Atrast ScoreManager, ja nav piešķirts
             if (scoreManager == null)
             {
                 scoreManager = FindFirstObjectByType<ScoreManager>();
             }
             
-            // Subscribe to score changes for UI updates
+            // Abonēt rezultātu izmaiņas UI atjauninājumiem
             if (scoreManager != null)
             {
                 scoreManager.OnScoreChanged += UpdateScoreUI;
-                Debug.Log("GameManager: Subscribed to ScoreManager events");
+                Debug.Log("GameManager: Abonēti ScoreManager notikumi");
             }
             
-            // Auto-find score texts if not assigned (prioritize TMP)
+            // Automātiski atrast rezultātu tekstus, ja nav piešķirti (prioritāte TMP)
             if (redScoreTMP == null || blueScoreTMP == null)
             {
                 FindScoreUIElements();
             }
             
-            Debug.Log("GameManager: Network spawned");
+            Debug.Log("GameManager: Tīkla instances izveidotas");
         }
         
         public override void OnNetworkDespawn()
         {
-            // Unsubscribe from score changes
+            // Atrakstīties no rezultātu izmaiņām
             if (scoreManager != null)
             {
                 scoreManager.OnScoreChanged -= UpdateScoreUI;
@@ -70,9 +70,9 @@ namespace HockeyGame.Game
         
         private void FindScoreUIElements()
         {
-            Debug.Log("GameManager: Auto-finding score UI elements (prioritizing TextMeshPro)...");
+            Debug.Log("GameManager: Automātiski meklē rezultātu UI elementus (prioritāte TextMeshPro)...");
             
-            // PRIORITY: Find TextMeshPro components first
+            // PRIORITĀTE: Vispirms atrast TextMeshPro komponentes
             var allTMPs = FindObjectsByType<TMPro.TextMeshProUGUI>(FindObjectsSortMode.None);
             foreach (var tmp in allTMPs)
             {
@@ -81,16 +81,16 @@ namespace HockeyGame.Game
                 if (redScoreTMP == null && tmpName.Contains("red") && tmpName.Contains("score"))
                 {
                     redScoreTMP = tmp;
-                    Debug.Log($"GameManager: Found red score TMP: {tmp.name}");
+                    Debug.Log($"GameManager: Atrasts sarkanās komandas rezultāta TMP: {tmp.name}");
                 }
                 else if (blueScoreTMP == null && tmpName.Contains("blue") && tmpName.Contains("score"))
                 {
                     blueScoreTMP = tmp;
-                    Debug.Log($"GameManager: Found blue score TMP: {tmp.name}");
+                    Debug.Log($"GameManager: Atrasts zilās komandas rezultāta TMP: {tmp.name}");
                 }
             }
             
-            // FALLBACK: Find UI Text components only if TMP not found
+            // REZERVES VARIANTS: Atrast UI Text komponentes tikai ja TMP nav atrasts
             if (redScoreText == null || blueScoreText == null)
             {
                 var allTexts = FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None);
@@ -101,12 +101,12 @@ namespace HockeyGame.Game
                     if (redScoreText == null && textName.Contains("red") && textName.Contains("score"))
                     {
                         redScoreText = text;
-                        Debug.Log($"GameManager: Found red score text (fallback): {text.name}");
+                        Debug.Log($"GameManager: Atrasts sarkanās komandas rezultāta teksts (rezerves variants): {text.name}");
                     }
                     else if (blueScoreText == null && textName.Contains("blue") && textName.Contains("score"))
                     {
                         blueScoreText = text;
-                        Debug.Log($"GameManager: Found blue score text (fallback): {text.name}");
+                        Debug.Log($"GameManager: Atrasts zilās komandas rezultāta teksts (rezerves variants): {text.name}");
                     }
                 }
             }
@@ -114,35 +114,35 @@ namespace HockeyGame.Game
         
         private void UpdateScoreUI(int redScore, int blueScore)
         {
-            Debug.Log($"GameManager: Updating score UI - Red: {redScore}, Blue: {blueScore}");
+            Debug.Log($"GameManager: Atjaunina rezultātu UI - Sarkanā: {redScore}, Zilā: {blueScore}");
             
-            // PRIORITY: Update TextMeshPro components first
+            // PRIORITĀTE: Vispirms atjaunināt TextMeshPro komponentes
             if (redScoreTMP != null)
             {
                 redScoreTMP.text = redScore.ToString();
-                Debug.Log($"GameManager: Updated red score TMP to {redScore}");
+                Debug.Log($"GameManager: Atjaunināts sarkanās komandas rezultāta TMP uz {redScore}");
             }
             
             if (blueScoreTMP != null)
             {
                 blueScoreTMP.text = blueScore.ToString();
-                Debug.Log($"GameManager: Updated blue score TMP to {blueScore}");
+                Debug.Log($"GameManager: Atjaunināts zilās komandas rezultāta TMP uz {blueScore}");
             }
             
-            // FALLBACK: Update UI Text components if TMP not available
+            // REZERVES VARIANTS: Atjaunināt UI Text komponentes, ja TMP nav pieejams
             if (redScoreTMP == null && redScoreText != null)
             {
                 redScoreText.text = redScore.ToString();
-                Debug.Log($"GameManager: Updated red score text (fallback) to {redScore}");
+                Debug.Log($"GameManager: Atjaunināts sarkanās komandas rezultāta teksts (rezerves variants) uz {redScore}");
             }
             
             if (blueScoreTMP == null && blueScoreText != null)
             {
                 blueScoreText.text = blueScore.ToString();
-                Debug.Log($"GameManager: Updated blue score text (fallback) to {blueScore}");
+                Debug.Log($"GameManager: Atjaunināts zilās komandas rezultāta teksts (rezerves variants) uz {blueScore}");
             }
             
-            // If no assigned UI elements, try to find them automatically
+            // Ja nav piešķirtu UI elementu, mēģināt atrast tos automātiski
             if (redScoreTMP == null && blueScoreTMP == null && redScoreText == null && blueScoreText == null)
             {
                 FindAndUpdateScoreUI(redScore, blueScore);
@@ -151,7 +151,7 @@ namespace HockeyGame.Game
         
         private void FindAndUpdateScoreUI(int redScore, int blueScore)
         {
-            // PRIORITY: Try to find and update TMP texts first
+            // PRIORITĀTE: Vispirms mēģināt atrast un atjaunināt TMP tekstus
             var allTMPs = FindObjectsByType<TMPro.TextMeshProUGUI>(FindObjectsSortMode.None);
             bool foundRedTMP = false;
             bool foundBlueTMP = false;
@@ -163,18 +163,18 @@ namespace HockeyGame.Game
                 if (!foundRedTMP && tmpName.Contains("red") && tmpName.Contains("score"))
                 {
                     tmp.text = redScore.ToString();
-                    Debug.Log($"GameManager: Found and updated red score TMP: {tmp.name}");
+                    Debug.Log($"GameManager: Atrasts un atjaunināts sarkanās komandas rezultāta TMP: {tmp.name}");
                     foundRedTMP = true;
                 }
                 else if (!foundBlueTMP && tmpName.Contains("blue") && tmpName.Contains("score"))
                 {
                     tmp.text = blueScore.ToString();
-                    Debug.Log($"GameManager: Found and updated blue score TMP: {tmp.name}");
+                    Debug.Log($"GameManager: Atrasts un atjaunināts zilās komandas rezultāta TMP: {tmp.name}");
                     foundBlueTMP = true;
                 }
             }
             
-            // FALLBACK: Try regular UI Text only if TMP not found
+            // REZERVES VARIANTS: Mēģināt parasto UI Text tikai ja TMP nav atrasts
             if (!foundRedTMP || !foundBlueTMP)
             {
                 var allTexts = FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None);
@@ -185,12 +185,12 @@ namespace HockeyGame.Game
                     if (!foundRedTMP && textName.Contains("red") && textName.Contains("score"))
                     {
                         text.text = redScore.ToString();
-                        Debug.Log($"GameManager: Found and updated red score text (fallback): {text.name}");
+                        Debug.Log($"GameManager: Atrasts un atjaunināts sarkanās komandas rezultāta teksts (rezerves variants): {text.name}");
                     }
                     else if (!foundBlueTMP && textName.Contains("blue") && textName.Contains("score"))
                     {
                         text.text = blueScore.ToString();
-                        Debug.Log($"GameManager: Found and updated blue score text (fallback): {text.name}");
+                        Debug.Log($"GameManager: Atrasts un atjaunināts zilās komandas rezultāta teksts (rezerves variants): {text.name}");
                     }
                 }
             }
@@ -198,8 +198,8 @@ namespace HockeyGame.Game
         
         public void OnGameEnd()
         {
-            Debug.Log("GameManager: Game ended");
-            // Handle game end logic here
+            Debug.Log("GameManager: Spēle beigusies");
+            // Šeit apstrādāt spēles beigu loģiku
         }
     }
 }

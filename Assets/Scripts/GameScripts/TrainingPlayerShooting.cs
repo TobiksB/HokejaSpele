@@ -3,25 +3,26 @@ using System.Collections;
 
 namespace HockeyGame.Game
 {
+    // Klase, kas pārvalda spēlētāja ripas šaušanas mehāniku treniņa režīmā
     public class TrainingPlayerShooting : MonoBehaviour
     {
-        [SerializeField] private float shootForce = 30f; // Moderate force for training
-        [SerializeField] private float maxChargeTime = 1.2f;
-        [SerializeField] private float movementVelocityMultiplier = 0.8f;
-        [SerializeField] private float resetDelay = 3f; // Time before automatic reset
-        [SerializeField] private bool enableAutoReset = false; // Disabled by default to prevent constant respawns
+        [SerializeField] private float shootForce = 30f; // Vidējs spēks treniņam
+        [SerializeField] private float maxChargeTime = 1.2f; // Maksimālais uzlādes laiks
+        [SerializeField] private float movementVelocityMultiplier = 0.8f; // Cik daudz spēlētāja kustības ātrums ietekmē šāvienu
+        [SerializeField] private float resetDelay = 3f; // Laiks pirms automātiskās atiestatīšanas
+        [SerializeField] private bool enableAutoReset = false; // Pēc noklusējuma atspējots, lai novērstu pastāvīgu respawnošanu
         
-        private TrainingPuckPickup puckPickup;
-        private TrainingPlayerMovement playerMovement;
-        private Rigidbody playerRb;
-        private bool isCharging = false;
-        private float chargeTime = 0f;
-        private Vector3 initialPlayerPosition;
-        private Quaternion initialPlayerRotation;
+        private TrainingPuckPickup puckPickup; // Atsauce uz ripas pacelšanas komponenti
+        private TrainingPlayerMovement playerMovement; // Atsauce uz spēlētāja kustības komponenti
+        private Rigidbody playerRb; // Spēlētāja fiziskais ķermenis
+        private bool isCharging = false; // Vai šaušanas spēks tiek uzlādēts
+        private float chargeTime = 0f; // Cik ilgi uzlādēts šaušanas spēks
+        private Vector3 initialPlayerPosition; // Sākotnējā spēlētāja pozīcija
+        private Quaternion initialPlayerRotation; // Sākotnējā spēlētāja rotācija
         
         private void Awake()
         {
-            // Get or add required components
+            // Iegūst vai pievieno nepieciešamos komponentus
             puckPickup = GetComponent<TrainingPuckPickup>();
             if (puckPickup == null)
             {
@@ -31,19 +32,19 @@ namespace HockeyGame.Game
             playerMovement = GetComponent<TrainingPlayerMovement>();
             playerRb = GetComponent<Rigidbody>();
             
-            // Store initial position and rotation for reset
+            // Saglabā sākotnējo pozīciju un rotāciju atiestatīšanai
             initialPlayerPosition = transform.position;
             initialPlayerRotation = transform.rotation;
         }
         
         private void Update()
         {
-            HandleShootingInput();
+            HandleShootingInput(); // Apstrādā spēlētāja ievadi šaušanai
         }
         
         private void HandleShootingInput()
         {
-            // Only allow shooting if we have the puck
+            // Atļauj šaut tikai tad, ja spēlētājam ir ripa
             if (!puckPickup.CanShootPuck())
             {
                 if (isCharging)
@@ -54,19 +55,19 @@ namespace HockeyGame.Game
                 return;
             }
             
-            // Start charging on mouse down
+            // Sāk uzlādi, kad nospiež peles pogu
             if (Input.GetMouseButtonDown(0) && !isCharging)
             {
                 StartCharging();
             }
             
-            // Continue charging while held
+            // Turpina uzlādēt, kamēr peles poga tiek turēta
             if (Input.GetMouseButton(0) && isCharging)
             {
                 ContinueCharging();
             }
             
-            // Only allow shooting if charged at least 20%
+            // Atļauj šaut tikai, ja ir uzlādēts vismaz 20%
             if (Input.GetMouseButtonUp(0) && isCharging)
             {
                 if (chargeTime >= maxChargeTime * 0.2f)
@@ -81,6 +82,7 @@ namespace HockeyGame.Game
             }
         }
         
+        // Sāk uzlādes procesu
         private void StartCharging()
         {
             if (!puckPickup.CanShootPuck()) return;
@@ -89,12 +91,14 @@ namespace HockeyGame.Game
             chargeTime = 0f;
         }
         
+        // Palielina uzlādes laiku
         private void ContinueCharging()
         {
             chargeTime += Time.deltaTime;
             chargeTime = Mathf.Clamp(chargeTime, 0f, maxChargeTime);
         }
         
+        // Veic ripas šaušanu
         private void Shoot()
         {
             if (!puckPickup.CanShootPuck())
@@ -104,29 +108,29 @@ namespace HockeyGame.Game
                 return;
             }
             
-            // Calculate shoot force based on charge time
+            // Aprēķina šaušanas spēku, balstoties uz uzlādes laiku
             float chargePercentage = Mathf.Clamp01(chargeTime / maxChargeTime);
             float finalForce = shootForce * Mathf.Lerp(0.3f, 1f, chargePercentage);
             
-            // Get player's current velocity
+            // Iegūst spēlētāja pašreizējo ātrumu
             Vector3 playerVelocity = Vector3.zero;
             if (playerRb != null)
             {
                 playerVelocity = new Vector3(playerRb.linearVelocity.x, 0f, playerRb.linearVelocity.z);
             }
             
-            // Calculate shoot direction and velocity
+            // Aprēķina šaušanas virzienu un ātrumu
             Vector3 shootDirection = transform.forward;
             Vector3 baseShootVelocity = shootDirection * finalForce;
             Vector3 finalShootVelocity = baseShootVelocity + (playerVelocity * movementVelocityMultiplier);
             
-            // Get puck and release it
+            // Iegūst ripu un atlaiž to
             Puck puck = puckPickup.GetCurrentPuck();
             if (puck != null)
             {
                 puckPickup.ReleasePuckForShooting();
                 
-                // Apply velocity to puck
+                // Piemēro ātrumu ripai
                 Rigidbody puckRb = puck.GetComponent<Rigidbody>();
                 if (puckRb != null)
                 {
@@ -134,7 +138,7 @@ namespace HockeyGame.Game
                 }
             }
             
-            // Trigger animation
+            // Aktivizē animāciju
             if (playerMovement != null)
             {
                 playerMovement.TriggerShootAnimation();
@@ -143,18 +147,19 @@ namespace HockeyGame.Game
             isCharging = false;
             chargeTime = 0f;
             
-            // Automatically reset player and puck after delay - ONLY if explicitly enabled
+            // Automātiski atiestata spēlētāju un ripu pēc aizkaves - TIKAI ja tas ir īpaši iespējots
             if (enableAutoReset)
             {
                 StartCoroutine(ResetAfterDelay(resetDelay));
             }
         }
         
+        // Koroutīna, kas atiestata spēlētāja un ripas pozīciju pēc norādītā laika
         private IEnumerator ResetAfterDelay(float delay)
         {
             yield return new WaitForSeconds(delay);
             
-            // Reset player position and rotation
+            // Atiestata spēlētāja pozīciju un rotāciju
             if (playerRb != null)
             {
                 playerRb.linearVelocity = Vector3.zero;
@@ -170,7 +175,7 @@ namespace HockeyGame.Game
                 playerRb.rotation = initialPlayerRotation;
             }
             
-            // Reset puck
+            // Atiestata ripu
             GameObject puckObj = null;
             var allPucks = FindObjectsByType<Puck>(FindObjectsSortMode.None);
             if (allPucks.Length > 0)
@@ -180,7 +185,7 @@ namespace HockeyGame.Game
             
             if (puckObj != null)
             {
-                // Calculate position in front of player
+                // Aprēķina pozīciju spēlētāja priekšā
                 Vector3 puckPos = initialPlayerPosition + transform.forward * 1.5f;
                 puckPos.y = 0.71f;
                 
@@ -193,7 +198,7 @@ namespace HockeyGame.Game
                     puckRb.useGravity = true;
                 }
                 
-                // Reset puck position
+                // Atiestata ripas pozīciju
                 puckObj.transform.position = puckPos;
                 
                 if (puckRb != null)
@@ -207,11 +212,12 @@ namespace HockeyGame.Game
                     puckComponent.SetHeld(false);
                 }
                 
-                // Auto-pickup the puck
+                // Automātiski pacel ripu
                 StartCoroutine(AutoPickupPuckAfterReset(0.5f));
             }
         }
         
+        // Koroutīna, kas automātiski pacel ripu pēc atiestatīšanas
         private IEnumerator AutoPickupPuckAfterReset(float delay)
         {
             yield return new WaitForSeconds(delay);
@@ -222,11 +228,13 @@ namespace HockeyGame.Game
             }
         }
         
+        // Pārbauda, vai šaušanas spēks tiek uzlādēts
         public bool IsCharging()
         {
             return isCharging;
         }
         
+        // Atgriež uzlādes procentuālo vērtību
         public float GetChargePercentage()
         {
             if (!isCharging) return 0f;

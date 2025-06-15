@@ -4,14 +4,14 @@ using Unity.Netcode;
 public class PlayerShooting : NetworkBehaviour
 {
     [Header("Shooting Settings")]
-    [SerializeField] private float shootForce = 40f; // Increased base force
-    [SerializeField] private float maxChargeTime = 1.2f; // Shorter max charge for snappier feel
-    [SerializeField] private float movementVelocityMultiplier = 0.8f; // How much player movement affects puck speed
+    [SerializeField] private float shootForce = 40f; // Palielināts pamata spēks
+    [SerializeField] private float maxChargeTime = 1.2f; // Īsāks maksimālais uzlādes laiks ātrākai atsaucībai
+    [SerializeField] private float movementVelocityMultiplier = 0.8f; // Cik daudz spēlētāja kustība ietekmē ripas ātrumu
     [SerializeField] private bool enableDebugLogs = true;
 
     private PuckPickup puckPickup;
-    private PlayerMovement playerMovement; // Reference to get current velocity
-    private Rigidbody playerRb; // Reference to player's rigidbody
+    private PlayerMovement playerMovement; // Reference lai iegūtu pašreizējo ātrumu
+    private Rigidbody playerRb; // Reference uz spēlētāja rigidbody komponenti
     private bool isCharging = false;
     private float chargeTime = 0f;
 
@@ -20,27 +20,24 @@ public class PlayerShooting : NetworkBehaviour
         puckPickup = GetComponent<PuckPickup>();
         if (puckPickup == null)
         {
-            puckPickup = gameObject.AddComponent<PuckPickup>();
-            Debug.LogWarning("PlayerShooting: Added missing PuckPickup component");
+            puckPickup = gameObject.AddComponent<PuckPickup>();            Debug.LogWarning("PlayerShooting: Pievienots trūkstošais PuckPickup komponents");
         }
 
-        // Get references to player movement components
+        // Iegūstam atsauces uz spēlētāja kustības komponentiem
         playerMovement = GetComponent<PlayerMovement>();
         playerRb = GetComponent<Rigidbody>();
         
         if (playerMovement == null)
         {
-            Debug.LogWarning("PlayerShooting: No PlayerMovement component found!");
+            Debug.LogWarning("PlayerShooting: Nav atrasts PlayerMovement komponents!");
         }
         if (playerRb == null)
         {
-            Debug.LogWarning("PlayerShooting: No Rigidbody component found!");
+            Debug.LogWarning("PlayerShooting: Nav atrasts Rigidbody komponents!");
         }
-    }
-
-    private void Update()
+    }    private void Update()
     {
-        // Only process input for the owner
+        // Apstrādājam ievadi tikai īpašniekam
         if (!IsOwner) return;
 
         HandleShootingInput();
@@ -48,7 +45,7 @@ public class PlayerShooting : NetworkBehaviour
 
     private void HandleShootingInput()
     {
-        // Only allow shooting if we have the puck and not already charging
+        // Ļaujam šaut tikai, ja mums ir ripa un ja jau nenotiek uzlādēšanās
         if (!puckPickup.CanShootPuck())
         {
             if (isCharging)
@@ -83,17 +80,16 @@ public class PlayerShooting : NetworkBehaviour
                 Shoot();
             }
             else
-            {
-                if (enableDebugLogs)
+            {                if (enableDebugLogs)
                 {
-                    Debug.Log("PlayerShooting: Shot cancelled - not enough charge");
+                    Debug.Log("PlayerShooting: Šāviens atcelts - nepietiekama uzlāde");
                 }
                 isCharging = false;
                 chargeTime = 0f;
             }
         }
 
-        // Remove quick shoot on right mouse button for true charge-only shooting
+        // Noņemts ātrais šāviens ar labo peles pogu, lai būtu tikai uzlādes šaušana
     }
 
     private void StartCharging()
@@ -101,11 +97,9 @@ public class PlayerShooting : NetworkBehaviour
         if (!puckPickup.CanShootPuck()) return;
 
         isCharging = true;
-        chargeTime = 0f;
-
-        if (enableDebugLogs)
+        chargeTime = 0f;        if (enableDebugLogs)
         {
-            Debug.Log("PlayerShooting: Started charging shot");
+            Debug.Log("PlayerShooting: Sākta šāviena uzlāde");
         }
     }
 
@@ -147,33 +141,29 @@ public class PlayerShooting : NetworkBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"PlayerShooting: Shooting with {chargePercentage:P0} charge");
-            Debug.Log($"  Base shot force: {finalForce:F1}");
-            Debug.Log($"  Player velocity: {playerVelocity} (magnitude: {playerVelocity.magnitude:F1})");
-            Debug.Log($"  Final puck velocity: {finalShootVelocity} (magnitude: {finalShootVelocity.magnitude:F1})");
+            Debug.Log($"PlayerShooting: Šaušana ar {chargePercentage:P0} uzlādi");
+            Debug.Log($"  Pamata šāviena spēks: {finalForce:F1}");
+            Debug.Log($"  Spēlētāja ātrums: {playerVelocity} (lielums: {playerVelocity.magnitude:F1})");
+            Debug.Log($"  Ripas beigu ātrums: {finalShootVelocity} (lielums: {finalShootVelocity.magnitude:F1})");
         }
 
-        // Get puck and release it
+        // Iegūstam ripu un atlaižam to
         Puck puck = puckPickup.GetCurrentPuck();
         if (puck != null)
         {
             puckPickup.ReleasePuckForShooting();
 
-            ShootPuckServerRpc(puck.GetComponent<NetworkObject>().NetworkObjectId, finalShootVelocity);
-
-            if (enableDebugLogs)
+            ShootPuckServerRpc(puck.GetComponent<NetworkObject>().NetworkObjectId, finalShootVelocity);            if (enableDebugLogs)
             {
-                Debug.Log($"PlayerShooting: Shot puck with final velocity {finalShootVelocity}");
+                Debug.Log($"PlayerShooting: Iešauta ripa ar beigu ātrumu {finalShootVelocity}");
             }
         }
 
-        // --- TRIGGER SHOOT ANIMATION AFTER THE SHOT ---
+        // --- AKTIVIZĒ ŠAUŠANAS ANIMĀCIJU PĒC ŠĀVIENA ---
         TriggerShootAnimation();
 
         isCharging = false;
-        chargeTime = 0f;
-
-        // Reset shooting flag after a delay
+        chargeTime = 0f;        // Atiestatām šaušanas karogu pēc aiztures
         Invoke(nameof(ResetShootingFlag), 0.5f);
     }
 
@@ -268,22 +258,18 @@ public class PlayerShooting : NetworkBehaviour
         {
             puckPickup.ResetShootingFlag();
         }
-    }
-
-    // Public method to check if currently charging
+    }    // Publiska metode, lai pārbaudītu, vai pašlaik notiek uzlāde
     public bool IsCharging()
     {
         return isCharging;
     }
 
-    // Public method to get current charge percentage
+    // Publiska metode, lai iegūtu pašreizējo uzlādes procentu
     public float GetChargePercentage()
     {
         if (!isCharging) return 0f;
         return chargeTime / maxChargeTime;
-    }
-
-    // NEW: Public method to get the total shot power including movement
+    }    // JAUNS: Publiska metode, lai iegūtu kopējo šāviena jaudu, ieskaitot kustību
     public float GetTotalShotPower()
     {
         if (!isCharging) return 0f;
@@ -302,9 +288,7 @@ public class PlayerShooting : NetworkBehaviour
         Vector3 finalVelocity = baseShootVelocity + (playerVelocity * movementVelocityMultiplier);
         
         return finalVelocity.magnitude;
-    }
-
-    // NEW: Public method to get the movement speed bonus
+    }    // JAUNS: Publiska metode, lai iegūtu kustības ātruma bonusu
     public float GetMovementSpeedBonus()
     {
         if (playerRb == null) return 0f;
@@ -312,13 +296,11 @@ public class PlayerShooting : NetworkBehaviour
         Vector3 playerVelocity = new Vector3(playerRb.linearVelocity.x, 0f, playerRb.linearVelocity.z);
         Vector3 movementContribution = playerVelocity * movementVelocityMultiplier;
         
-        // Project movement onto forward direction to get the forward speed bonus
+        // Projicē kustību uz priekšu, lai iegūtu ātruma bonusu virzienā uz priekšu
         float forwardBonus = Vector3.Dot(movementContribution, transform.forward);
         
         return forwardBonus;
-    }
-
-    // Add this method to fix missing reference errors and trigger the animation
+    }    // Pievieno šo metodi, lai labotu trūkstošās atsauces kļūdas un aktivizētu animāciju
     private void TriggerShootAnimation()
     {
         if (playerMovement != null)
@@ -326,7 +308,7 @@ public class PlayerShooting : NetworkBehaviour
             playerMovement.TriggerShootAnimation();
             if (enableDebugLogs)
             {
-                Debug.Log("PlayerShooting: Triggered shoot animation on PlayerMovement");
+                Debug.Log("PlayerShooting: Aktivizēta šaušanas animācija PlayerMovement komponentē");
             }
         }
         else

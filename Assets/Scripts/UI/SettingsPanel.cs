@@ -4,16 +4,16 @@ using UnityEngine.UI;
 
 public class SettingsPanel : MonoBehaviour
 {
-    [Header("UI Elements - ASSIGN THESE IN INSPECTOR")]
+    [Header("UI Elementi - PIEŠĶIRT ŠOS INSPEKTORĀ")]
     public TMP_InputField playerNameInput;
     public TMP_Dropdown resolutionDropdown;
     public Toggle fullscreenToggle;
     public Slider mouseSensitivitySlider;
-    public Slider volumeSlider; // Single volume slider for all sounds
+    public Slider volumeSlider; // Viens skaļuma slīdnis visām skaņām
     public Button applyButton;
     public Button resetButton;
 
-    // ADDED: Text display components (optional)
+    // PIEVIENOTS: Teksta attēlošanas komponenti (neobligāti)
     public TMPro.TextMeshProUGUI volumeText;
     public TMPro.TextMeshProUGUI mouseSensitivityText;
 
@@ -31,7 +31,7 @@ public class SettingsPanel : MonoBehaviour
         LoadCurrentSettings();
     }
 
-    // Add this helper to ensure GameSettingsManager exists
+    // Pievienot šo palīgfunkciju, lai nodrošinātu, ka GameSettingsManager eksistē
     private void EnsureGameSettingsManagerExists()
     {
         if (GameSettingsManager.Instance == null)
@@ -42,14 +42,14 @@ public class SettingsPanel : MonoBehaviour
                 var go = new GameObject("GameSettingsManager");
                 go.AddComponent<GameSettingsManager>();
                 DontDestroyOnLoad(go);
-                Debug.LogWarning("SettingsPanel: Created missing GameSettingsManager at runtime.");
+                Debug.LogWarning("SettingsPanel: Izveidots trūkstošais GameSettingsManager izpildes laikā.");
             }
         }
     }
 
     private void ValidateUIElements()
     {
-        Debug.Log("=== SETTINGS PANEL UI VALIDATION ===");
+        Debug.Log("=== IESTATĪJUMU PANEĻA UI VALIDĀCIJA ===");
         Debug.Log($"playerNameInput: {(playerNameInput != null ? "✓ OK" : "✗ NULL")}");
         Debug.Log($"resolutionDropdown: {(resolutionDropdown != null ? "✓ OK" : "✗ NULL")}");
         Debug.Log($"fullscreenToggle: {(fullscreenToggle != null ? "✓ OK" : "✗ NULL")}");
@@ -62,22 +62,22 @@ public class SettingsPanel : MonoBehaviour
 
     private void SetupSliderListeners()
     {
-        // SIMPLIFIED: Single volume slider listener
+        // VIENKĀRŠOTS: Viena skaļuma slīdņa klausītājs
         if (volumeSlider != null)
         {
             volumeSlider.onValueChanged.RemoveAllListeners();
             volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
-            Debug.Log("SettingsPanel: Set up volume slider listener");
+            Debug.Log("SettingsPanel: Iestatīts skaļuma slīdņa klausītājs");
         }
         
         if (mouseSensitivitySlider != null)
         {
             mouseSensitivitySlider.onValueChanged.RemoveAllListeners();
             mouseSensitivitySlider.onValueChanged.AddListener(OnMouseSensitivityChanged);
-            Debug.Log("SettingsPanel: Set up mouse sensitivity slider listener");
+            Debug.Log("SettingsPanel: Iestatīts peles jutības slīdņa klausītājs");
         }
 
-        // Other UI elements
+        // Citi UI elementi
         if (resolutionDropdown != null)
         {
             resolutionDropdown.onValueChanged.RemoveAllListeners();
@@ -109,10 +109,10 @@ public class SettingsPanel : MonoBehaviour
         }
     }
 
-    // SIMPLIFIED: Single volume change handler
+    // VIENKĀRŠOTS: Vienots skaļuma izmaiņu apstrādātājs
     private void OnVolumeChanged(float value)
     {
-        Debug.Log($"SettingsPanel: Volume slider changed to {value:F2}");
+        Debug.Log($"SettingsPanel: Skaļuma slīdnis mainīts uz {value:F2}");
         
         if (SettingsManager.Instance != null)
         {
@@ -120,21 +120,21 @@ public class SettingsPanel : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("SettingsPanel: SettingsManager.Instance is null");
-            // Fallback to direct AudioListener control
+            Debug.LogWarning("SettingsPanel: SettingsManager.Instance ir null");
+            // Alternatīva tiešai AudioListener kontrolei
             AudioListener.volume = value;
         }
         
-        // Update display if available
+        // Atjaunināt attēlojumu, ja pieejams
         if (volumeText != null)
         {
-            volumeText.text = $"Volume: {(value * 100):F0}%";
+            volumeText.text = $"Skaļums: {(value * 100):F0}%";
         }
     }
 
     private void OnMouseSensitivityChanged(float value)
     {
-        Debug.Log($"SettingsPanel: Mouse sensitivity slider changed to {value:F2}");
+        Debug.Log($"SettingsPanel: Peles jutības slīdnis mainīts uz {value:F2}");
         
         if (GameSettingsManager.Instance != null)
         {
@@ -142,19 +142,19 @@ public class SettingsPanel : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("SettingsPanel: GameSettingsManager.Instance is null");
+            Debug.LogWarning("SettingsPanel: GameSettingsManager.Instance ir null");
         }
         
-        // Update display if available
+        // Atjaunināt attēlojumu, ja pieejams
         if (mouseSensitivityText != null)
         {
-            mouseSensitivityText.text = $"Sensitivity: {value:F1}";
+            mouseSensitivityText.text = $"Jutība: {value:F1}";
         }
     }
 
     private void LoadCurrentSettings()
     {
-        // SIMPLIFIED: Load settings from managers and apply to sliders
+        // VIENKĀRŠOTS: Ielādēt iestatījumus no pārvaldniekiem un piemērot slīdņiem
         if (SettingsManager.Instance != null)
         {
             if (volumeSlider != null)
@@ -162,7 +162,7 @@ public class SettingsPanel : MonoBehaviour
                 volumeSlider.value = SettingsManager.Instance.MasterVolume;
                 if (volumeText != null)
                 {
-                    volumeText.text = $"Volume: {(SettingsManager.Instance.MasterVolume * 100):F0}%";
+                    volumeText.text = $"Skaļums: {(SettingsManager.Instance.MasterVolume * 100):F0}%";
                 }
             }
             
@@ -171,7 +171,7 @@ public class SettingsPanel : MonoBehaviour
                 playerNameInput.text = SettingsManager.Instance.PlayerName;
             }
             
-            Debug.Log("SettingsPanel: Loaded current settings from SettingsManager");
+            Debug.Log("SettingsPanel: Ielādēti pašreizējie iestatījumi no SettingsManager");
         }
         
         if (GameSettingsManager.Instance != null)
@@ -181,11 +181,11 @@ public class SettingsPanel : MonoBehaviour
                 mouseSensitivitySlider.value = GameSettingsManager.Instance.mouseSensitivity;
                 if (mouseSensitivityText != null)
                 {
-                    mouseSensitivityText.text = $"Sensitivity: {GameSettingsManager.Instance.mouseSensitivity:F1}";
+                    mouseSensitivityText.text = $"Jutība: {GameSettingsManager.Instance.mouseSensitivity:F1}";
                 }
             }
             
-            // Load other GameSettingsManager values
+            // Ielādēt citas GameSettingsManager vērtības
             if (resolutionDropdown != null)
             {
                 PopulateResolutionDropdown();
@@ -196,7 +196,7 @@ public class SettingsPanel : MonoBehaviour
                 fullscreenToggle.isOn = GameSettingsManager.Instance.isFullscreen;
             }
             
-            Debug.Log("SettingsPanel: Loaded current settings from GameSettingsManager");
+            Debug.Log("SettingsPanel: Ielādēti pašreizējie iestatījumi no GameSettingsManager");
         }
     }
 
@@ -214,11 +214,11 @@ public class SettingsPanel : MonoBehaviour
                 resolutionDropdown.AddOptions(new System.Collections.Generic.List<string>(options));
                 resolutionDropdown.value = GameSettingsManager.Instance.CurrentResolutionIndex;
                 resolutionDropdown.RefreshShownValue();
-                Debug.Log($"Resolution dropdown populated with {options.Length} options");
+                Debug.Log($"Izšķirtspējas izvēlne piepildīta ar {options.Length} opcijām");
             }
             else
             {
-                Debug.LogError("SettingsPanel: No resolution options available");
+                Debug.LogError("SettingsPanel: Nav pieejamas izšķirtspējas opcijas");
                 string currentRes = $"{Screen.currentResolution.width} x {Screen.currentResolution.height}";
                 resolutionDropdown.AddOptions(new System.Collections.Generic.List<string> { currentRes });
                 resolutionDropdown.value = 0;
@@ -227,11 +227,11 @@ public class SettingsPanel : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"SettingsPanel: Error populating resolution dropdown: {e.Message}");
+            Debug.LogError($"SettingsPanel: Kļūda piepildot izšķirtspējas izvēlni: {e.Message}");
         }
     }
 
-    // Other UI element handlers
+    // Citu UI elementu apstrādātāji
     private void OnPlayerNameChanged(string newName)
     {
         if (SettingsManager.Instance != null)
@@ -255,36 +255,36 @@ public class SettingsPanel : MonoBehaviour
             PlayerPrefs.Save();
         }
         
-        Debug.Log($"SettingsPanel: Fullscreen toggled to {isFullscreen} using SetResolution");
+        Debug.Log($"SettingsPanel: Pilnekrāna režīms pārslēgts uz {isFullscreen} izmantojot SetResolution");
     }
 
     private void ApplySettings()
     {
         if (GameSettingsManager.Instance == null)
         {
-            Debug.LogError("SettingsPanel: Cannot apply settings - GameSettingsManager.Instance is null!");
+            Debug.LogError("SettingsPanel: Nevar piemērot iestatījumus - GameSettingsManager.Instance ir null!");
             return;
         }
 
-        Debug.Log("SettingsPanel: Applying all settings...");
+        Debug.Log("SettingsPanel: Piemēroju visus iestatījumus...");
 
         try
         {
-            // Apply mouse sensitivity
+            // Piemērot peles jutību
             if (mouseSensitivitySlider != null)
             {
                 GameSettingsManager.Instance.SetMouseSensitivity(mouseSensitivitySlider.value);
-                Debug.Log($"Applied mouse sensitivity: {mouseSensitivitySlider.value}");
+                Debug.Log($"Piemērota peles jutība: {mouseSensitivitySlider.value}");
             }
 
-            // Apply volume
+            // Piemērot skaļumu
             if (volumeSlider != null && SettingsManager.Instance != null)
             {
                 SettingsManager.Instance.SetMasterVolume(volumeSlider.value);
-                Debug.Log($"Applied volume: {volumeSlider.value}");
+                Debug.Log($"Piemērots skaļums: {volumeSlider.value}");
             }
 
-            // Apply resolution and fullscreen
+            // Piemērot izšķirtspēju un pilnekrāna režīmu
             if (resolutionDropdown != null && fullscreenToggle != null)
             {
                 GameSettingsManager.Instance.SetResolution(resolutionDropdown.value, fullscreenToggle.isOn);
@@ -293,28 +293,28 @@ public class SettingsPanel : MonoBehaviour
                 Resolution currentRes = Screen.currentResolution;
                 Screen.SetResolution(currentRes.width, currentRes.height, fullscreenToggle.isOn);
                 
-                Debug.Log($"Applied resolution index {resolutionDropdown.value} with fullscreen: {fullscreenToggle.isOn}");
+                Debug.Log($"Piemērots izšķirtspējas indekss {resolutionDropdown.value} ar pilnekrānu: {fullscreenToggle.isOn}");
             }
 
-            // Apply player name
+            // Piemērot spēlētāja vārdu
             if (playerNameInput != null && SettingsManager.Instance != null)
             {
                 SettingsManager.Instance.SetPlayerName(playerNameInput.text);
-                Debug.Log($"Applied player name: {playerNameInput.text}");
+                Debug.Log($"Piemērots spēlētāja vārds: {playerNameInput.text}");
             }
 
-            // Save all settings
+            // Saglabāt visus iestatījumus
             GameSettingsManager.Instance.SaveSettings();
             if (SettingsManager.Instance != null)
             {
                 SettingsManager.Instance.SaveSettings();
             }
 
-            Debug.Log("SettingsPanel: All settings applied and saved successfully!");
+            Debug.Log("SettingsPanel: Visi iestatījumi piemēroti un veiksmīgi saglabāti!");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"SettingsPanel: Error applying settings: {e.Message}");
+            Debug.LogError($"SettingsPanel: Kļūda piemērojot iestatījumus: {e.Message}");
         }
     }
 
@@ -322,32 +322,32 @@ public class SettingsPanel : MonoBehaviour
     {
         if (GameSettingsManager.Instance == null)
         {
-            Debug.LogError("SettingsPanel: Cannot reset settings - GameSettingsManager.Instance is null!");
+            Debug.LogError("SettingsPanel: Nevar atiestatīt iestatījumus - GameSettingsManager.Instance ir null!");
             return;
         }
 
-        Debug.Log("SettingsPanel: Resetting settings to defaults...");
+        Debug.Log("SettingsPanel: Atiestatu iestatījumus uz noklusējuma vērtībām...");
 
         try
         {
-            // Reset GameSettingsManager to defaults
+            // Atiestatīt GameSettingsManager uz noklusējuma vērtībām
             GameSettingsManager.Instance.ResetToDefaults();
 
-            // Reset SettingsManager to defaults
+            // Atiestatīt SettingsManager uz noklusējuma vērtībām
             if (SettingsManager.Instance != null)
             {
                 SettingsManager.Instance.ResetToDefaults();
             }
 
-            // Refresh UI with default values
+            // Atsvaidzināt UI ar noklusējuma vērtībām
             PopulateResolutionDropdown();
             LoadCurrentSettings();
 
-            Debug.Log("SettingsPanel: Settings reset to defaults successfully!");
+            Debug.Log("SettingsPanel: Iestatījumi veiksmīgi atiestatīti uz noklusējuma vērtībām!");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"SettingsPanel: Error resetting settings: {e.Message}");
+            Debug.LogError($"SettingsPanel: Kļūda atiestatot iestatījumus: {e.Message}");
         }
     }
 }

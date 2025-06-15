@@ -4,86 +4,98 @@ using Unity.Services.Lobbies.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq; // ADDED: For Take method
+using System.Linq; // Nepieciešams Take metodei
 
 namespace HockeyGame.UI
 {
+   
+    /// Pārvalda tērzēšanas funkcionalitāti lobija lietotāja saskarnē, izmantojot Unity Lobby servisus.
+    /// Klase nodrošina ziņu sūtīšanu, saņemšanu un sinhronizāciju starp spēlētājiem.
+
     public class LobbyChatManager : MonoBehaviour
     {
         public static LobbyChatManager Instance { get; private set; }
         
-        [Header("Chat Settings")]
-        [SerializeField] private int maxMessages = 10;
-        [SerializeField] private float pollInterval = 15f;
-        [SerializeField] private float sendCooldown = 3f;
+        [Header("Tērzēšanas iestatījumi")]
+        [SerializeField] private int maxMessages = 10;           // Maksimālais saglabāto ziņu skaits
+        [SerializeField] private float pollInterval = 15f;       // Intervāls starp tērzēšanas atjaunināšanu (sekundes)
+        [SerializeField] private float sendCooldown = 3f;        // Minimālais laiks starp ziņu sūtīšanu (pret spamu)
         
-        // Local cache for quick access
-        private List<string> localMessages = new List<string>();
+        // Lokāls kešs ātrai piekļuvei
+        private List<string> localMessages = new List<string>();  // Saraksts ar visām ziņām
         
-        // ADDED: Client message queue for host processing
-        private Queue<string> pendingClientMessages = new Queue<string>();
-        private float lastClientMessageTime = 0f;
+        // Klienta ziņu rinda resursdatora apstrādei
+        private Queue<string> pendingClientMessages = new Queue<string>();  // Rinda ar gaidošajām klienta ziņām
+        private float lastClientMessageTime = 0f;                          // Pēdējās ziņas sūtīšanas laiks
         
-        // Event to notify UI when chat is updated
-        public event Action<List<string>> OnChatUpdated;
+        // Notikums, lai paziņotu UI, kad tērzēšana ir atjaunināta
+        public event Action<List<string>> OnChatUpdated;         // Izsauc, kad tērzēšanas saturs mainās
         
-        // Chat polling and rate limiting
-        private float pollTimer;
-        private int lastMessageCount = 0;
-        private float lastSendTime = 0f;
-        private bool isUpdatingLobby = false;
-        private string lastMessageHash = "";
+        // Tērzēšanas aptaujāšana un ātruma ierobežošana
+        private float pollTimer;                                 // Taimeris aptaujas intervālam
+        private int lastMessageCount = 0;                        // Pēdējais zināmais ziņu skaits
+        private float lastSendTime = 0f;                         // Pēdējās ziņas sūtīšanas laiks
+        private bool isUpdatingLobby = false;                    // Vai pašlaik notiek lobija atjaunināšana
+        private string lastMessageHash = "";                     // Kontrolsumma izmaiņu noteikšanai
         
-        // ADDED: Coordinate with LobbyManager to avoid duplicate API calls
-        private bool useSharedPolling = true;
+        // Koordinācija ar LobbyManager, lai izvairītos no dubultām API izsaukšanām
+        private bool useSharedPolling = true;                    // Vai izmantot LobbyManager aptauju
         
+      
+        /// Unity dzīves cikla metode - izsaukta inicializācijas laikā
+
         private void Awake()
         {
+            // Singltona pārvaldība - nodrošina, ka pastāv tikai viena instance
             if (Instance == null)
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
-                Debug.Log("LobbyChatManager: Instance created using Lobby Service");
+                Debug.Log("LobbyChatManager: Instance izveidota, izmantojot Lobby Service");
             }
             else
             {
-                Debug.LogWarning("LobbyChatManager: Duplicate instance destroyed");
+                Debug.LogWarning("LobbyChatManager: Dublikāta instance iznīcināta");
                 Destroy(gameObject);
             }
         }
-        
+
+        /// Unity dzīves cikla metode - izsaukta katrā kadrā
+
         private void Update()
         {
-            // FIXED: Only poll if LobbyManager isn't already polling
+            // Izmantot tikai LobbyManager aptaujāšanu, ja tas ir pieejams
             if (useSharedPolling && LobbyManager.Instance != null)
             {
-                // Let LobbyManager handle all polling, we'll get updates via callback
+                // Ļauj LobbyManager apstrādāt visu aptaujāšanu, mēs saņemsim atjauninājumus caur atsaukumu
                 return;
             }
             
-            // Fallback polling only if LobbyManager is unavailable
+            // Atkāpšanās aptaujāšana tikai tad, ja LobbyManager nav pieejams
             if (LobbyManager.Instance != null && LobbyManager.Instance.GetCurrentLobby() != null)
             {
                 pollTimer -= Time.deltaTime;
                 if (pollTimer <= 0f && !isUpdatingLobby)
                 {
                     pollTimer = pollInterval;
-                    _ = PollLobbyForChatUpdates();
+                    _ = PollLobbyForChatUpdates();  // Asinhrons izsaukums bez gaidīšanas
                 }
             }
         }
         
-        // ADDED: Method for LobbyManager to provide chat updates
+
+        // Metode, lai LobbyManager varētu sniegt tērzēšanas atjauninājumus
+      
         public void OnLobbyDataUpdated(Unity.Services.Lobbies.Models.Lobby lobby)
         {
             if (lobby?.Data == null) return;
             
             try
             {
-                // Extract current chat messages
+                // Iegūt pašreizējās tērzēšanas ziņas
                 var newMessages = ExtractChatMessagesFromLobby(lobby);
                 
-                // If we're the host, also check for pending client messages
+                // Ja esam resursdators, pārbaudīt gaidošās klienta ziņas
                 if (LobbyManager.Instance != null && LobbyManager.Instance.IsLobbyHost())
                 {
                     _ = ProcessPendingClientMessagesAsync(lobby);
@@ -91,28 +103,31 @@ namespace HockeyGame.UI
                 
                 string newMessageHash = GetMessageHash(newMessages);
                 
+                // Atjaunināt lokālo kešu un paziņot UI, ja ziņas ir mainījušās
                 if (newMessageHash != lastMessageHash)
                 {
                     localMessages = newMessages;
                     lastMessageCount = newMessages.Count;
                     lastMessageHash = newMessageHash;
                     
-                    Debug.Log($"LobbyChatManager: Updated chat from LobbyManager with {newMessages.Count} messages");
+                    Debug.Log($"LobbyChatManager: Atjaunināts tērzēšanas saraksts no LobbyManager ar {newMessages.Count} ziņām");
                     
-                    // Remove any "sending..." indicators from local messages
+                    // Notīrīt jebkurus "sending..." indikatorus no lokālajām ziņām
                     CleanupPendingMessages();
                     
-                    // Notify UI
+                    // Paziņot UI
                     OnChatUpdated?.Invoke(new List<string>(localMessages));
                 }
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"LobbyChatManager: Error processing lobby data: {e.Message}");
+                Debug.LogError($"LobbyChatManager: Kļūda apstrādājot lobija datus: {e.Message}");
             }
         }
         
-        // Poll lobby data for chat messages with better error handling
+ 
+        /// Aptaujā lobija datus tērzēšanas ziņām ar labāku kļūdu apstrādi
+
         private async Task PollLobbyForChatUpdates()
         {
             if (LobbyManager.Instance == null || isUpdatingLobby) return;
@@ -122,62 +137,67 @@ namespace HockeyGame.UI
             
             try
             {
-                // FIXED: Direct call to LobbyService instead of reflection to avoid async issues
+                // Tiešs izsaukums uz LobbyService, lai izvairītos no asinhrono problēmām
                 var lobby = await LobbyService.Instance.GetLobbyAsync(currentLobby.Id);
                 
                 if (lobby?.Data != null)
                 {
-                    // Extract chat messages from lobby data
+                    // Iegūt tērzēšanas ziņas no lobija datiem
                     var newMessages = ExtractChatMessagesFromLobby(lobby);
                     
-                    // IMPROVED: Better change detection using hash
+                    // Labāka izmaiņu noteikšana, izmantojot kontrolsummu
                     string newMessageHash = GetMessageHash(newMessages);
                     bool messagesChanged = newMessageHash != lastMessageHash;
                     
-                    // Update local cache if messages changed
+                    // Atjaunināt lokālo kešu, ja ziņas ir mainījušās
                     if (messagesChanged)
                     {
                         localMessages = newMessages;
                         lastMessageCount = newMessages.Count;
                         lastMessageHash = newMessageHash;
                         
-                        Debug.Log($"LobbyChatManager: Updated chat with {newMessages.Count} messages (hash changed)");
-                        Debug.Log($"LobbyChatManager: Latest messages: [{string.Join(", ", newMessages)}]");
+                        Debug.Log($"LobbyChatManager: Atjaunināta tērzēšana ar {newMessages.Count} ziņām (kontrolsumma mainījusies)");
+                        Debug.Log($"LobbyChatManager: Jaunākās ziņas: [{string.Join(", ", newMessages)}]");
                         
-                        // Notify UI immediately
+                        // Nekavējoties paziņot UI
                         OnChatUpdated?.Invoke(new List<string>(localMessages));
                     }
                 }
             }
             catch (Exception e)
             {
+                // Ātruma ierobežojuma apstrāde
                 if (e.Message.Contains("Rate limit") || e.Message.Contains("429"))
                 {
-                    Debug.LogWarning($"LobbyChatManager: Rate limit hit, backing off polling for 30s");
-                    pollTimer = 30f; // Longer backoff
+                    Debug.LogWarning($"LobbyChatManager: Sasniegts ātruma ierobežojums, atpakaļspiešana aptaujāšanai uz 30s");
+                    pollTimer = 30f; // Ilgāka atpakaļspiešana
                 }
                 else
                 {
-                    Debug.LogError($"LobbyChatManager: Error polling lobby for chat: {e.Message}");
+                    Debug.LogError($"LobbyChatManager: Kļūda aptaujājot lobiju tērzēšanai: {e.Message}");
                 }
             }
         }
         
-        // ADDED: Helper method to generate hash for better change detection
+
+        /// Palīgmetode, lai ģenerētu kontrolsummu labākai izmaiņu noteikšanai
+   
         private string GetMessageHash(List<string> messages)
         {
             if (messages == null || messages.Count == 0) return "";
             return string.Join("|", messages).GetHashCode().ToString();
         }
         
-        // Extract chat messages from lobby data
+
+        /// Iegūst tērzēšanas ziņas no lobija datiem
+
         private List<string> ExtractChatMessagesFromLobby(Lobby lobby)
         {
             var messages = new List<string>();
             
             if (lobby.Data == null) return messages;
             
-            // Chat messages are stored with keys like "Chat_0", "Chat_1", etc.
+            // Tērzēšanas ziņas ir saglabātas ar atslēgām "Chat_0", "Chat_1", utt.
             for (int i = 0; i < maxMessages; i++)
             {
                 string chatKey = $"Chat_{i}";
@@ -194,7 +214,9 @@ namespace HockeyGame.UI
             return messages;
         }
         
-        // Check if two message lists match
+   
+        /// /// Pārbauda, vai divi ziņu saraksti sakrīt
+    
         private bool MessagesMatch(List<string> list1, List<string> list2)
         {
             if (list1.Count != list2.Count) return false;
@@ -207,61 +229,65 @@ namespace HockeyGame.UI
             return true;
         }
         
-        // COMPLETELY REWRITTEN: Client message sending through host relay
+    
+        /// Klienta ziņu sūtīšana caur resursdatora starpniecību
+ 
         public async void SendChat(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
                 return;
                 
-            // Rate limiting
+            // Ātruma ierobežošana
             if (Time.time - lastSendTime < sendCooldown)
             {
-                Debug.LogWarning($"LobbyChatManager: Send rate limited, wait {sendCooldown - (Time.time - lastSendTime):F1}s");
+                Debug.LogWarning($"LobbyChatManager: Sūtīšanas ātrums ierobežots, gaidiet {sendCooldown - (Time.time - lastSendTime):F1}s");
                 return;
             }
             
             if (isUpdatingLobby)
             {
-                Debug.LogWarning("LobbyChatManager: Already updating lobby, ignoring send request");
+                Debug.LogWarning("LobbyChatManager: Jau notiek lobija atjaunināšana, ignorējam sūtīšanas pieprasījumu");
                 return;
             }
                 
-            Debug.Log($"LobbyChatManager: Sending chat message: {message}");
+            Debug.Log($"LobbyChatManager: Sūtam tērzēšanas ziņu: {message}");
             
             if (LobbyManager.Instance == null)
             {
-                Debug.LogError("LobbyChatManager: LobbyManager instance is null!");
+                Debug.LogError("LobbyChatManager: LobbyManager instance ir null!");
                 return;
             }
             
             var currentLobby = LobbyManager.Instance.GetCurrentLobby();
             if (currentLobby == null)
             {
-                Debug.LogError("LobbyChatManager: No current lobby!");
+                Debug.LogError("LobbyChatManager: Nav pašreizējā lobija!");
                 return;
             }
             
             lastSendTime = Time.time;
             
-            // Check if we're the host or client
+            // Pārbaudīt, vai esam resursdators vai klients
             bool isHost = LobbyManager.Instance.IsLobbyHost();
             
             if (isHost)
             {
-                // Host can update lobby directly
+                // Resursdators var atjaunināt lobiju tieši
                 await SendMessageAsHost(message);
             }
             else
             {
-                // Client must use player data to signal message to host
+                // Klientam jāizmanto spēlētāja dati, lai signalizētu ziņu resursdatoram
                 await SendMessageAsClient(message);
             }
         }
         
-        // ADDED: Host message sending (direct lobby update)
+
+        /// Resursdatora ziņu sūtīšana (tiešs lobija atjauninājums)
+
         private async Task SendMessageAsHost(string message)
         {
-            Debug.Log($"LobbyChatManager: Host sending message directly: {message}");
+            Debug.Log($"LobbyChatManager: Resursdators sūta ziņu tieši: {message}");
             
             isUpdatingLobby = true;
             
@@ -271,26 +297,26 @@ namespace HockeyGame.UI
                 var lobby = await GetLobbyWithRateLimit(currentLobby.Id);
                 if (lobby == null)
                 {
-                    Debug.LogError("LobbyChatManager: Failed to get lobby data");
+                    Debug.LogError("LobbyChatManager: Neizdevās iegūt lobija datus");
                     return;
                 }
                 
                 var currentMessages = ExtractChatMessagesFromLobby(lobby);
                 currentMessages.Add(message);
                 
-                // Process any pending client messages too
+                // Apstrādāt arī gaidošās klienta ziņas
                 await ProcessPendingClientMessages(lobby, currentMessages);
                 
-                // Trim messages
+                // Apgriezt ziņas, ja pārsniegts limits
                 while (currentMessages.Count > maxMessages)
                 {
                     currentMessages.RemoveAt(0);
                 }
                 
-                // Update lobby with all messages
+                // Atjaunināt lobiju ar visām ziņām
                 var lobbyData = new Dictionary<string, DataObject>();
                 
-                // Preserve existing data
+                // Saglabāt esošos datus
                 if (lobby.Data != null)
                 {
                     foreach (var kvp in lobby.Data)
@@ -302,7 +328,7 @@ namespace HockeyGame.UI
                     }
                 }
                 
-                // Add chat messages
+                // Pievienot tērzēšanas ziņas
                 for (int i = 0; i < currentMessages.Count && i < maxMessages; i++)
                 {
                     string chatKey = $"Chat_{i}";
@@ -313,19 +339,19 @@ namespace HockeyGame.UI
                 
                 if (updateSuccess)
                 {
-                    Debug.Log($"LobbyChatManager: Host successfully sent message");
+                    Debug.Log($"LobbyChatManager: Resursdators veiksmīgi nosūtījis ziņu");
                     localMessages = new List<string>(currentMessages);
                     lastMessageHash = GetMessageHash(localMessages);
                     OnChatUpdated?.Invoke(new List<string>(localMessages));
                 }
                 else
                 {
-                    Debug.LogError("LobbyChatManager: Host failed to update lobby");
+                    Debug.LogError("LobbyChatManager: Resursdatoram neizdevās atjaunināt lobiju");
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"LobbyChatManager: Host error sending message: {e.Message}");
+                Debug.LogError($"LobbyChatManager: Resursdatora kļūda ziņas sūtīšanā: {e.Message}");
             }
             finally
             {
@@ -333,27 +359,29 @@ namespace HockeyGame.UI
             }
         }
         
-        // ADDED: Client message sending (via player data)
+
+        /// Klienta ziņu sūtīšana (caur spēlētāja datiem)
+
         private async Task SendMessageAsClient(string message)
         {
-            Debug.Log($"LobbyChatManager: Client sending message via player data: {message}");
+            Debug.Log($"LobbyChatManager: Klients sūta ziņu caur spēlētāja datiem: {message}");
             
             try
             {
                 string playerId = Unity.Services.Authentication.AuthenticationService.Instance.PlayerId;
                 string timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
                 
-                // Encode message with timestamp to make it unique
+                // Kodēt ziņu ar laika zīmogu, lai padarītu to unikālu
                 string encodedMessage = $"{timestamp}:{message}";
                 
-                // Update player data with pending message
+                // Atjaunināt spēlētāja datus ar gaidošo ziņu
                 var playerData = new Dictionary<string, PlayerDataObject>();
                 playerData["PendingChatMessage"] = new PlayerDataObject(
                     PlayerDataObject.VisibilityOptions.Member, 
                     encodedMessage
                 );
                 
-                // FIXED: Use correct UpdatePlayerOptions from Unity.Services.Lobbies namespace
+                // Izmantot pareizo UpdatePlayerOptions no Unity.Services.Lobbies namespace
                 var updateOptions = new UpdatePlayerOptions
                 {
                     Data = playerData
@@ -362,25 +390,26 @@ namespace HockeyGame.UI
                 var currentLobby = LobbyManager.Instance.GetCurrentLobby();
                 await Unity.Services.Lobbies.LobbyService.Instance.UpdatePlayerAsync(currentLobby.Id, playerId, updateOptions);
                 
-                Debug.Log($"LobbyChatManager: Client successfully signaled message to host");
+                Debug.Log($"LobbyChatManager: Klients veiksmīgi signalizējis ziņu resursdatoram");
                 
-                // Add to local pending queue for UI feedback
+                // Pievienot lokālajai gaidošajai rindai UI atgriezeniskajai saitei
                 pendingClientMessages.Enqueue(message);
                 lastClientMessageTime = Time.time;
                 
-                // Show message locally with "sending..." indicator
+                // Parādīt ziņu lokāli ar "sending..." indikatoru
                 var tempMessages = new List<string>(localMessages);
-                tempMessages.Add($"{message} (sending...)");
+                tempMessages.Add($"{message} (sūta...)");
                 OnChatUpdated?.Invoke(tempMessages);
                 
             }
             catch (Exception e)
             {
-                Debug.LogError($"LobbyChatManager: Client error signaling message: {e.Message}");
+                Debug.LogError($"LobbyChatManager: Klienta kļūda signalizējot ziņu: {e.Message}");
             }
         }
         
-        // ADDED: Host processes pending client messages
+
+        /// Resursdators apstrādā gaidošās klienta ziņas
         private async Task ProcessPendingClientMessages(Unity.Services.Lobbies.Models.Lobby lobby, List<string> currentMessages)
         {
             if (lobby.Players == null) return;
@@ -394,22 +423,22 @@ namespace HockeyGame.UI
                         string encodedMessage = player.Data["PendingChatMessage"].Value;
                         if (!string.IsNullOrEmpty(encodedMessage))
                         {
-                            // Parse timestamp and message
+                            // Parsēt laika zīmogu un ziņu
                             var parts = encodedMessage.Split(':', 2);
                             if (parts.Length >= 2)
                             {
                                 string timestamp = parts[0];
                                 string message = parts[1];
                                 
-                                // Check if we've already processed this message
+                                // Pārbaudīt, vai esam jau apstrādājuši šo ziņu
                                 string messageId = $"{player.Id}:{timestamp}";
                                 if (!HasProcessedMessage(messageId))
                                 {
-                                    Debug.Log($"LobbyChatManager: Host processing client message: {message}");
+                                    Debug.Log($"LobbyChatManager: Resursdators apstrādā klienta ziņu: {message}");
                                     currentMessages.Add(message);
                                     MarkMessageAsProcessed(messageId);
                                     
-                                    // Clear the client's pending message
+                                    // Notīrīt klienta gaidošo ziņu
                                     await ClearClientPendingMessage(player.Id);
                                 }
                             }
@@ -417,28 +446,34 @@ namespace HockeyGame.UI
                     }
                     catch (Exception e)
                     {
-                        Debug.LogError($"LobbyChatManager: Error processing client message from {player.Id}: {e.Message}");
+                        Debug.LogError($"LobbyChatManager: Kļūda apstrādājot klienta ziņu no {player.Id}: {e.Message}");
                     }
                 }
             }
         }
         
-        // ADDED: Track processed messages to avoid duplicates
+        // Apstrādāto ziņu izsekošana, lai izvairītos no dublikātiem
         private HashSet<string> processedMessageIds = new HashSet<string>();
         
+
+        /// Pārbauda, vai ziņa jau ir apstrādāta
+
         private bool HasProcessedMessage(string messageId)
         {
             return processedMessageIds.Contains(messageId);
         }
         
+
+        /// Atzīmē ziņu kā apstrādātu
+
         private void MarkMessageAsProcessed(string messageId)
         {
             processedMessageIds.Add(messageId);
             
-            // Keep only recent message IDs to prevent memory bloat
+            // Saglabāt tikai jaunākās ziņu ID, lai novērstu atmiņas pārpildīšanos
             if (processedMessageIds.Count > 100)
             {
-                // FIXED: Convert to list first, then use Take
+                // Vispirms pārveidot sarakstā, tad izmantot Take
                 var oldestIds = processedMessageIds.ToList().Take(50).ToArray();
                 foreach (var id in oldestIds)
                 {
@@ -447,7 +482,9 @@ namespace HockeyGame.UI
             }
         }
         
-        // ADDED: Clear client's pending message after processing
+
+        /// Notīra klienta gaidošo ziņu pēc apstrādes
+
         private async Task ClearClientPendingMessage(string playerId)
         {
             try
@@ -455,10 +492,10 @@ namespace HockeyGame.UI
                 var playerData = new Dictionary<string, PlayerDataObject>();
                 playerData["PendingChatMessage"] = new PlayerDataObject(
                     PlayerDataObject.VisibilityOptions.Member, 
-                    "" // Clear the message
+                    "" // Notīrīt ziņu
                 );
                 
-                // FIXED: Use correct UpdatePlayerOptions from Unity.Services.Lobbies namespace
+                // Izmantot pareizo UpdatePlayerOptions no Unity.Services.Lobbies namespace
                 var updateOptions = new UpdatePlayerOptions
                 {
                     Data = playerData
@@ -467,15 +504,17 @@ namespace HockeyGame.UI
                 var currentLobby = LobbyManager.Instance.GetCurrentLobby();
                 await Unity.Services.Lobbies.LobbyService.Instance.UpdatePlayerAsync(currentLobby.Id, playerId, updateOptions);
                 
-                Debug.Log($"LobbyChatManager: Cleared pending message for player {playerId}");
+                Debug.Log($"LobbyChatManager: Notīrīta gaidošā ziņa spēlētājam {playerId}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"LobbyChatManager: Error clearing pending message for {playerId}: {e.Message}");
+                Debug.LogError($"LobbyChatManager: Kļūda notīrot gaidošo ziņu spēlētājam {playerId}: {e.Message}");
             }
         }
 
-        // ADDED: Async wrapper for client message processing
+   
+        /// Asinhrona iesaiņotājs klienta ziņu apstrādei
+   
         private async Task ProcessPendingClientMessagesAsync(Unity.Services.Lobbies.Models.Lobby lobby)
         {
             if (!LobbyManager.Instance.IsLobbyHost() || isUpdatingLobby) return;
@@ -501,12 +540,12 @@ namespace HockeyGame.UI
                                 
                                 if (!HasProcessedMessage(messageId))
                                 {
-                                    Debug.Log($"LobbyChatManager: Host auto-processing client message: {message}");
+                                    Debug.Log($"LobbyChatManager: Resursdators automātiski apstrādā klienta ziņu: {message}");
                                     currentMessages.Add(message);
                                     MarkMessageAsProcessed(messageId);
                                     hasNewMessages = true;
                                     
-                                    // Clear client's pending message
+                                    // Notīrīt klienta gaidošo ziņu
                                     _ = ClearClientPendingMessage(player.Id);
                                 }
                             }
@@ -516,17 +555,19 @@ namespace HockeyGame.UI
                 
                 if (hasNewMessages)
                 {
-                    // Update lobby with new messages
+                    // Atjaunināt lobiju ar jaunām ziņām
                     await UpdateChatMessages(currentMessages);
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"LobbyChatManager: Error in auto-processing client messages: {e.Message}");
+                Debug.LogError($"LobbyChatManager: Kļūda automātiskajā klienta ziņu apstrādē: {e.Message}");
             }
         }
         
-        // ADDED: Helper to update chat messages in lobby
+
+        /// Palīgs tērzēšanas ziņu atjaunināšanai lobijā
+
         private async Task UpdateChatMessages(List<string> messages)
         {
             if (isUpdatingLobby) return;
@@ -539,7 +580,7 @@ namespace HockeyGame.UI
                 var lobby = await GetLobbyWithRateLimit(currentLobby.Id);
                 if (lobby == null) return;
                 
-                // Trim messages
+                // Apgriezt ziņas, ja pārsniegts limits
                 while (messages.Count > maxMessages)
                 {
                     messages.RemoveAt(0);
@@ -547,7 +588,7 @@ namespace HockeyGame.UI
                 
                 var lobbyData = new Dictionary<string, DataObject>();
                 
-                // Preserve existing data
+                // Saglabāt esošos datus
                 if (lobby.Data != null)
                 {
                     foreach (var kvp in lobby.Data)
@@ -559,7 +600,7 @@ namespace HockeyGame.UI
                     }
                 }
                 
-                // Add chat messages
+                // Pievienot tērzēšanas ziņas
                 for (int i = 0; i < messages.Count && i < maxMessages; i++)
                 {
                     string chatKey = $"Chat_{i}";
@@ -577,7 +618,7 @@ namespace HockeyGame.UI
             }
             catch (Exception e)
             {
-                Debug.LogError($"LobbyChatManager: Error updating chat messages: {e.Message}");
+                Debug.LogError($"LobbyChatManager: Kļūda atjauninot tērzēšanas ziņas: {e.Message}");
             }
             finally
             {
@@ -585,17 +626,17 @@ namespace HockeyGame.UI
             }
         }
         
-        // ADDED: Clean up pending message indicators
+        /// Notīra gaidošo ziņu indikatorus
         private void CleanupPendingMessages()
         {
-            // Remove "sending..." indicators that are now complete
+            // Notīrīt "sending..." indikatorus, kas tagad ir pabeigti
             if (pendingClientMessages.Count > 0 && Time.time - lastClientMessageTime > 5f)
             {
                 pendingClientMessages.Clear();
             }
         }
 
-        // ADDED: Rate-limited lobby get using LobbyManager's API with better retries
+        /// Iegūst lobiju ar ātruma ierobežojuma pārvaldību, izmantojot LobbyManager API
         private async Task<Unity.Services.Lobbies.Models.Lobby> GetLobbyWithRateLimit(string lobbyId)
         {
             int maxRetries = 3;
@@ -605,7 +646,7 @@ namespace HockeyGame.UI
             {
                 try
                 {
-                    // Try to use LobbyManager's rate-limited API first
+                    // Mēģināt izmantot LobbyManager ātruma ierobežoto API vispirms
                     var lobbyApiMethod = typeof(LobbyManager).GetMethod("LobbyApiWithBackoff", 
                         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                     
@@ -621,7 +662,7 @@ namespace HockeyGame.UI
                     }
                     else
                     {
-                        // Fallback to direct call
+                        // Rezerves variants - tiešs izsaukums
                         return await LobbyService.Instance.GetLobbyAsync(lobbyId);
                     }
                 }
@@ -632,13 +673,13 @@ namespace HockeyGame.UI
                         if (attempt < maxRetries - 1)
                         {
                             float delay = baseDelay * (attempt + 1);
-                            Debug.LogWarning($"LobbyChatManager: Rate limit on get lobby attempt {attempt + 1}, waiting {delay}s");
+                            Debug.LogWarning($"LobbyChatManager: Ātruma ierobežojums lobija iegūšanas mēģinājumā {attempt + 1}, gaidām {delay}s");
                             await Task.Delay((int)(delay * 1000));
                             continue;
                         }
                     }
                     
-                    Debug.LogWarning($"LobbyChatManager: Failed to get lobby on attempt {attempt + 1}: {e.Message}");
+                    Debug.LogWarning($"LobbyChatManager: Neizdevās iegūt lobiju mēģinājumā {attempt + 1}: {e.Message}");
                     
                     if (attempt == maxRetries - 1)
                     {
@@ -650,7 +691,7 @@ namespace HockeyGame.UI
             return null;
         }
         
-        // ADDED: Rate-limited lobby update using LobbyManager's API with better retries
+        /// Atjaunina lobiju ar ātruma ierobežojuma pārvaldību, izmantojot LobbyManager API
         private async Task<bool> UpdateLobbyWithRateLimit(string lobbyId, Dictionary<string, DataObject> lobbyData)
         {
             int maxRetries = 3;
@@ -662,7 +703,7 @@ namespace HockeyGame.UI
                 {
                     var updateOptions = new UpdateLobbyOptions { Data = lobbyData };
                     
-                    // Try to use LobbyManager's rate-limited API first
+                    // Mēģināt izmantot LobbyManager ātruma ierobežoto API vispirms
                     var lobbyApiMethod = typeof(LobbyManager).GetMethod("LobbyApiWithBackoff", 
                         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                     
@@ -675,14 +716,14 @@ namespace HockeyGame.UI
                             }) as Task<Unity.Services.Lobbies.Models.Lobby>;
                         
                         await task;
-                        Debug.Log($"LobbyChatManager: Successfully updated lobby via LobbyManager API on attempt {attempt + 1}");
+                        Debug.Log($"LobbyChatManager: Veiksmīgi atjaunināts lobijs caur LobbyManager API mēģinājumā {attempt + 1}");
                         return true;
                     }
                     else
                     {
-                        // Fallback to direct call
+                        // Rezerves variants - tiešs izsaukums
                         await LobbyService.Instance.UpdateLobbyAsync(lobbyId, updateOptions);
-                        Debug.Log($"LobbyChatManager: Successfully updated lobby via direct API on attempt {attempt + 1}");
+                        Debug.Log($"LobbyChatManager: Veiksmīgi atjaunināts lobijs caur tiešo API mēģinājumā {attempt + 1}");
                         return true;
                     }
                 }
@@ -693,28 +734,28 @@ namespace HockeyGame.UI
                         if (attempt < maxRetries - 1)
                         {
                             float delay = baseDelay * (attempt + 1);
-                            Debug.LogWarning($"LobbyChatManager: Rate limit on update attempt {attempt + 1}, waiting {delay}s");
+                            Debug.LogWarning($"LobbyChatManager: Ātruma ierobežojums atjaunināšanas mēģinājumā {attempt + 1}, gaidām {delay}s");
                             await Task.Delay((int)(delay * 1000));
                             continue;
                         }
                         else
                         {
-                            Debug.LogError($"LobbyChatManager: Rate limit exceeded after {maxRetries} attempts");
+                            Debug.LogError($"LobbyChatManager: Ātruma ierobežojums pārsniegts pēc {maxRetries} mēģinājumiem");
                             return false;
                         }
                     }
                     else if (e.Message.Contains("Forbidden") || e.Message.Contains("403"))
                     {
-                        Debug.LogError($"LobbyChatManager: Permission denied - client may not have lobby update permissions");
+                        Debug.LogError($"LobbyChatManager: Piekļuve liegta - klientam var nebūt lobija atjaunināšanas atļaujas");
                         return false;
                     }
                     else
                     {
-                        Debug.LogWarning($"LobbyChatManager: Update failed on attempt {attempt + 1}: {e.Message}");
+                        Debug.LogWarning($"LobbyChatManager: Atjaunināšana neizdevās mēģinājumā {attempt + 1}: {e.Message}");
                         
                         if (attempt == maxRetries - 1)
                         {
-                            Debug.LogError($"LobbyChatManager: All update attempts failed");
+                            Debug.LogError($"LobbyChatManager: Visi atjaunināšanas mēģinājumi neizdevās");
                             return false;
                         }
                     }
@@ -724,7 +765,7 @@ namespace HockeyGame.UI
             return false;
         }
         
-        // ADDED: Missing GetAllMessages method for UI integration
+        /// Iegūst visas ziņas UI integrācijai
         public List<string> GetAllMessages()
         {
             return new List<string>(localMessages);

@@ -14,10 +14,10 @@ namespace HockeyGame.Game
         
         private void Awake()
         {
-            // Find the training manager
+            // Atrast training manager, ja tas nav piešķirts
             trainingManager = FindObjectOfType<TrainingModeManager>();
             
-            // Set up buttons
+            
             if (resetButton != null)
             {
                 resetButton.onClick.RemoveAllListeners();
@@ -30,7 +30,7 @@ namespace HockeyGame.Game
                 mainMenuButton.onClick.AddListener(OnMainMenuButtonClicked);
             }
             
-            // Set translated Latvian instructions
+        
             if (instructionsText != null)
             {
                 instructionsText.text = "Treniņa režīms\n\nW/S - Kustība\nA/D - Rotācija\nShift - Sprints\nSpace - Ātrā apstāšanās\nE - Pacelt ripu\nPeles poga - Mest (turēt, lai uzlādētu)\nESC - Pauzes izvēlne";

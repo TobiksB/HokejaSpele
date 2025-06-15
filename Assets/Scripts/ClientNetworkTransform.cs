@@ -4,16 +4,12 @@ using UnityEngine;
 
 namespace Unity.Netcode.Components
 {
-    /// <summary>
-    /// Used for syncing a transform with client side changes. This includes host client changes
-    /// </summary>
+    /// Tiek izmantots, lai sinhronizētu transformāciju ar klienta puses izmaiņām. Tas ietver arī resursdatora klienta izmaiņas.
     [DisallowMultipleComponent]
     public class ClientNetworkTransform : NetworkTransform
     {
-        /// <summary>
-        /// Used to determine who can write to this transform. Owner client only.
-        /// This imposes state to the server. This is putting trust on your clients. Make sure no security-sensitive features use this transform.
-        /// </summary>
+        /// Tiek izmantots, lai noteiktu, kurš var rakstīt šajā transformācijā. Tikai īpašnieka klients.
+        /// Tas uzspiež stāvokli serverim. Tas nozīmē uzticēšanos klientiem. Pārliecinieties, ka neviena drošībai jutīga funkcija neizmanto šo transformāciju.
         protected override bool OnIsServerAuthoritative()
         {
             return false;

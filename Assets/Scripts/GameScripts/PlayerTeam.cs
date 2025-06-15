@@ -1,39 +1,45 @@
 using UnityEngine;
 using Unity.Netcode;
 
+// Uzskaitījums, kas definē iespējamās komandas krāsas
 public enum TeamColor { Red, Blue }
 
+// Šī klase pārvalda spēlētāja komandas piederību un sinhronizē to starp visiem tīkla klientiem
+// PlayerTeam atbild par spēlētāja komandas noteikšanu, saglabāšanu un vizuālo attēlošanu
 public class PlayerTeam : NetworkBehaviour
 {
-    [SerializeField] private TeamColor teamColor = TeamColor.Red;
-    private NetworkVariable<int> networkTeamColor = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private NetworkVariable<bool> isBlueTeam = new NetworkVariable<bool>();
-    private PlayerTeamVisuals visuals;
+    [SerializeField] private TeamColor teamColor = TeamColor.Red; // Noklusējuma komanda ir sarkanā
+    private NetworkVariable<int> networkTeamColor = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server); // Tīklā sinhronizētā komanda (0=Red, 1=Blue)
+    private NetworkVariable<bool> isBlueTeam = new NetworkVariable<bool>(); // Alternatīvs veids kā uzglabāt komandu - true=zilā, false=sarkanā
+    private PlayerTeamVisuals visuals; // Atsauce uz komponenti, kas atbild par komandas vizuālo attēlojumu
 
-    // Add this property or field at the top of your class
-    public string Team { get; private set; }
-    public string CurrentTeam => isBlueTeam.Value ? "Blue" : "Red";
+    // Īpašības komandas piekļuvei
+    public string Team { get; private set; } // Komandas nosaukums (nav izmantots?)
+    public string CurrentTeam => isBlueTeam.Value ? "Blue" : "Red"; // Atgriež pašreizējo komandu kā tekstu
 
     private void Awake()
     {
+        // Iegūst atsauci uz vizuālo komponenti
         visuals = GetComponent<PlayerTeamVisuals>();
     }
 
     public override void OnNetworkSpawn()
     {
+        // Pievieno klausītāju tīkla mainīgā izmaiņām
         networkTeamColor.OnValueChanged += OnTeamColorChanged;
         
-        if (!IsServer) return;
+        if (!IsServer) return; // Tālāk turpina tikai serveris
         
-        // Determine team from stored lobby data
+        // Nosaka komandu no saglabātajiem priekštelpas datiem
         TeamColor assignedTeam = GetTeamFromStoredDataAdvanced();
         networkTeamColor.Value = (int)assignedTeam;
         teamColor = assignedTeam;
-        Debug.Log($"PlayerTeam: Server assigned team {assignedTeam} to {gameObject.name}");
+        Debug.Log($"PlayerTeam: Serveris piešķīra komandu {assignedTeam} objektam {gameObject.name}");
     }
 
     public override void OnNetworkDespawn()
     {
+        // Noņem klausītājus, lai izvairītos no atmiņas noplūdēm
         networkTeamColor.OnValueChanged -= OnTeamColorChanged;
         if (IsServer)
         {
@@ -41,12 +47,12 @@ public class PlayerTeam : NetworkBehaviour
         }
     }
 
+    // Sarežģīta funkcija komandas noteikšanai no dažādiem avotiem
     private TeamColor GetTeamFromStoredDataAdvanced()
     {
-        // FIXED: Use direct authId mapping instead of non-existent GetPlayerTeam method
         ulong ownerClientId = OwnerClientId;
         
-        // Get authId for this client
+        // Iegūst autentifikācijas ID šim klientam
         string authId = "";
         try
         {
@@ -56,7 +62,7 @@ public class PlayerTeam : NetworkBehaviour
             }
             else if (NetworkSpawnManager.Instance != null)
             {
-                // Try to get from NetworkSpawnManager's mapping
+                // Mēģina iegūt no NetworkSpawnManager kartējuma
                 var clientToAuthMapping = GetClientToAuthMapping();
                 if (clientToAuthMapping != null && clientToAuthMapping.ContainsKey(ownerClientId))
                 {
@@ -66,34 +72,33 @@ public class PlayerTeam : NetworkBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning($"PlayerTeam: Error getting authId: {e.Message}");
+            Debug.LogWarning($"PlayerTeam: Kļūda iegūstot authId: {e.Message}");
         }
 
         if (!string.IsNullOrEmpty(authId))
         {
-            // Try to get team from LobbyManager mapping
+            // Mēģina iegūt komandu no LobbyManager kartējuma
             var teamMapping = LobbyManager.Instance?.GetAuthIdToTeamMapping();
             if (teamMapping != null && teamMapping.ContainsKey(authId))
             {
                 string team = teamMapping[authId];
                 TeamColor result = team.ToLower() == "blue" ? TeamColor.Blue : TeamColor.Red;
-                Debug.Log($"PlayerTeam: Got team {result} from lobby mapping for authId {authId}");
+                Debug.Log($"PlayerTeam: Ieguva komandu {result} no priekštelpas kartējuma priekš authId {authId}");
                 return result;
             }
         }
 
-        // Fallback to stored PlayerPrefs data with duplicate name handling
+        // Rezerves variants - izmanto saglabātos PlayerPrefs datus ar dublikātu vārdu apstrādi
         string allPlayerTeams = PlayerPrefs.GetString("AllPlayerTeams", "");
         if (string.IsNullOrEmpty(allPlayerTeams))
         {
-            Debug.LogWarning("PlayerTeam: No stored team data found, defaulting based on clientId");
+            Debug.LogWarning("PlayerTeam: Nav atrasti saglabāti komandu dati, izmanto noklusējumu pēc klienta ID");
             return ownerClientId == 0 ? TeamColor.Red : TeamColor.Blue;
         }
 
-        // FIXED: Handle duplicate names by using clientId order as fallback
         string[] playerEntries = allPlayerTeams.Split('|');
         
-        // Try to match by unique player identifier (authId or unique name)
+        // Mēģina atrast pēc unikāla spēlētāja identifikatora (authId vai unikāls vārds)
         string playerIdentifier = GetUniquePlayerIdentifier();
         if (!string.IsNullOrEmpty(playerIdentifier))
         {
@@ -105,64 +110,63 @@ public class PlayerTeam : NetworkBehaviour
                     string name = parts[0];
                     string team = parts[1];
                     
-                    // FIXED: Try exact match first, then partial match for duplicate names
+                    // LABOTS: Vispirms mēģina precīzu sakritību, tad daļēju sakritību dublikātu vārdiem
                     if (name == playerIdentifier || (playerIdentifier.Contains(name) && name.Length > 3))
                     {
                         TeamColor result = team.ToLower() == "blue" ? TeamColor.Blue : TeamColor.Red;
-                        Debug.Log($"PlayerTeam: Found team assignment - {name} -> {result}");
+                        Debug.Log($"PlayerTeam: Atrasta komandas piešķire - {name} -> {result}");
                         return result;
                     }
                 }
             }
         }
 
-        // FIXED: If no match found, use clientId-based assignment from stored data order
         if (playerEntries.Length >= 2)
         {
-            if (ownerClientId == 0) // Host gets first team
+            if (ownerClientId == 0) // Resursdatora īpašnieks saņem pirmo komandu
             {
                 string[] parts = playerEntries[0].Split(':');
                 if (parts.Length == 2)
                 {
                     TeamColor result = parts[1].ToLower() == "blue" ? TeamColor.Blue : TeamColor.Red;
-                    Debug.Log($"PlayerTeam: Host gets first stored team: {result}");
+                    Debug.Log($"PlayerTeam: Resursdatora īpašnieks saņem pirmo saglabāto komandu: {result}");
                     return result;
                 }
             }
-            else if (ownerClientId == 1 && playerEntries.Length > 1) // First client gets second team
+            else if (ownerClientId == 1 && playerEntries.Length > 1) // Pirmais klients saņem otro komandu
             {
                 string[] parts = playerEntries[1].Split(':');
                 if (parts.Length == 2)
                 {
                     TeamColor result = parts[1].ToLower() == "blue" ? TeamColor.Blue : TeamColor.Red;
-                    Debug.Log($"PlayerTeam: Client 1 gets second stored team: {result}");
+                    Debug.Log($"PlayerTeam: Klients 1 saņem otro saglabāto komandu: {result}");
                     return result;
                 }
             }
             else
             {
-                // For additional clients, alternate teams
+                // Papildus klientiem, pamīšus komandas
                 int entryIndex = (int)ownerClientId % playerEntries.Length;
                 string[] parts = playerEntries[entryIndex].Split(':');
                 if (parts.Length == 2)
                 {
                     TeamColor result = parts[1].ToLower() == "blue" ? TeamColor.Blue : TeamColor.Red;
-                    Debug.Log($"PlayerTeam: Client {ownerClientId} gets team from entry {entryIndex}: {result}");
+                    Debug.Log($"PlayerTeam: Klients {ownerClientId} saņem komandu no ieraksta {entryIndex}: {result}");
                     return result;
                 }
             }
         }
 
-        Debug.LogWarning($"PlayerTeam: No team found for player, defaulting based on clientId {ownerClientId}");
+        Debug.LogWarning($"PlayerTeam: Komanda netika atrasta spēlētājam, izmanto noklusējumu pēc klienta ID {ownerClientId}");
         return ownerClientId % 2 == 0 ? TeamColor.Red : TeamColor.Blue;
     }
 
-    // FIXED: Add method to get client-to-auth mapping safely
+    // Palīgfunkcija, kas iegūst klientu-uz-autentifikāciju kartējumu no NetworkSpawnManager
     private System.Collections.Generic.Dictionary<ulong, string> GetClientToAuthMapping()
     {
         if (NetworkSpawnManager.Instance == null) return null;
         
-        // Use reflection to access private field safely
+        // Izmanto refleksiju, lai droši piekļūtu privātam laukam
         var field = typeof(NetworkSpawnManager).GetField("clientIdToAuthId", 
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         
@@ -174,18 +178,18 @@ public class PlayerTeam : NetworkBehaviour
         return null;
     }
 
-    // FIXED: Create unique player identifier to handle duplicate names
+    // Iegūst unikālu spēlētāja identifikatoru dažādos veidos
     private string GetUniquePlayerIdentifier()
     {
         string baseIdentifier = "";
         
-        // Try to get from SettingsManager first
+        // Vispirms mēģina iegūt no SettingsManager
         if (SettingsManager.Instance != null)
         {
             baseIdentifier = SettingsManager.Instance.PlayerName;
         }
 
-        // Try to get from authentication service
+        // Mēģina iegūt no autentifikācijas servisa
         if (string.IsNullOrEmpty(baseIdentifier))
         {
             try
@@ -198,35 +202,36 @@ public class PlayerTeam : NetworkBehaviour
             catch { }
         }
 
-        // Fallback: use object name
+        // Rezerves variants: izmanto objekta nosaukumu
         if (string.IsNullOrEmpty(baseIdentifier))
         {
             baseIdentifier = gameObject.name.Replace("(Clone)", "").Replace("Player", "");
         }
 
-        // FIXED: Make identifier unique by appending clientId if name might be duplicate
         if (!string.IsNullOrEmpty(baseIdentifier))
         {
-            // Check if this is likely a duplicate name (short or common names)
+            // Pārbauda, vai šis varētu būt dublikāta vārds (īsi vai izplatīti vārdi)
             if (baseIdentifier.Length <= 3 || 
                 baseIdentifier.ToLower().Contains("player") || 
                 baseIdentifier.ToLower().Contains("user"))
             {
                 baseIdentifier += $"_{OwnerClientId}";
-                Debug.Log($"PlayerTeam: Created unique identifier for potential duplicate: {baseIdentifier}");
+                Debug.Log($"PlayerTeam: Izveidots unikāls identifikators potenciālam dublikātam: {baseIdentifier}");
             }
         }
 
         return baseIdentifier;
     }
 
+    // Apstrādā tīkla krāsas izmaiņas
     private void OnTeamColorChanged(int oldValue, int newValue)
     {
         teamColor = (TeamColor)newValue;
         UpdateVisuals();
-        Debug.Log($"PlayerTeam: Network team color changed to {teamColor} on {gameObject.name}");
+        Debug.Log($"PlayerTeam: Tīkla komandas krāsa mainīta uz {teamColor} objektam {gameObject.name}");
     }
 
+    // Apstrādā komandas izmaiņas (zilā vai ne)
     private void OnTeamChanged(bool oldValue, bool newValue)
     {
         if (visuals != null)
@@ -235,12 +240,13 @@ public class PlayerTeam : NetworkBehaviour
         }
     }
 
+    // Iestata spēlētāja komandas krāsu
     public void SetTeamColor(TeamColor color)
     {
         teamColor = color;
-        Debug.Log($"PlayerTeam: Set team color to {color} on {gameObject.name}");
+        Debug.Log($"PlayerTeam: Iestatīta komandas krāsa uz {color} objektam {gameObject.name}");
         
-        // Update network variable if we're the server
+        // Atjaunina tīkla mainīgo, ja mēs esam serveris
         if (IsServer)
         {
             networkTeamColor.Value = (int)color;
@@ -249,6 +255,7 @@ public class PlayerTeam : NetworkBehaviour
         UpdateVisuals();
     }
 
+    // Iestata spēlētāja komandu pēc nosaukuma
     public void SetTeam(string team)
     {
         if (IsServer)
@@ -265,27 +272,32 @@ public class PlayerTeam : NetworkBehaviour
         }
     }
 
+    // Servera RPC metode komandas iestatīšanai no klienta
     [ServerRpc(RequireOwnership = false)]
     private void SetTeamServerRpc(bool isBlue)
     {
         isBlueTeam.Value = isBlue;
     }
 
+    // Atgriež pašreizējo komandu kā tekstu
     public string GetTeam()
     {
         return isBlueTeam.Value ? "Blue" : "Red";
     }
 
+    // Pārbauda, vai spēlētājs ir zilajā komandā
     public bool IsBlueTeam()
     {
         return teamColor == TeamColor.Blue;
     }
 
+    // Atgriež pašreizējo komandas krāsu
     public TeamColor GetTeamColor()
     {
         return teamColor;
     }
 
+    // Atjaunina spēlētāja vizuālo izskatu atbilstoši komandai
     public void UpdateVisuals()
     {
         var visuals = GetComponent<PlayerTeamVisuals>();

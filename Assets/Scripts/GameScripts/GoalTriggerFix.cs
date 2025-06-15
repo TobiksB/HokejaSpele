@@ -1,6 +1,5 @@
 using UnityEngine;
 
-// FIXED: Helper class to fix GoalTrigger calls
 public static class GoalTriggerHelper
 {
     public static void FixScoreGoalCall(ScoreManager scoreManager, bool isRedTeam)

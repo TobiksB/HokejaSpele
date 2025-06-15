@@ -2,15 +2,16 @@
 // [System.Serializable]
 public class LobbyPlayerData
 {
-    public string PlayerId;
-    public string PlayerName;
-    public string Team;
-    public bool IsReady;
-    public bool IsLocalPlayer;
+    public string PlayerId;      // Spēlētāja unikālais identifikators
+    public string PlayerName;    // Spēlētāja redzamais vārds
+    public string Team;          // Spēlētāja komanda ("Red" vai "Blue")
+    public bool IsReady;         // Vai spēlētājs ir atzīmējis gatavību
+    public bool IsLocalPlayer;   // Vai šis ir lokālais spēlētājs (pašreizējais lietotājs)
     
-    // Add the missing IsBlueTeam property
+    // Pievienotā IsBlueTeam īpašība, kas automātiski nosaka, vai spēlētājs ir zilajā komandā
     public bool IsBlueTeam => Team == "Blue";
     
+    // Noklusējuma konstruktors
     public LobbyPlayerData()
     {
         PlayerId = "";
@@ -20,6 +21,7 @@ public class LobbyPlayerData
         IsLocalPlayer = false;
     }
     
+    // Konstruktors ar parametriem
     public LobbyPlayerData(string playerId, string playerName, string team, bool isReady, bool isLocalPlayer = false)
     {
         PlayerId = playerId;

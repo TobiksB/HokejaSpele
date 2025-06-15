@@ -17,12 +17,12 @@ public class PlayerTeamVisuals : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Subscribe to OnValueChanged on all clients, not just server
+        // Abonē OnValueChanged visiem klientiem, ne tikai serverim
         isBlueTeam.OnValueChanged += OnTeamChanged;
 
         if (playerTeam != null)
         {
-            // Only the server sets the value, but all clients will receive the change
+            // Tikai serveris iestata vērtību, bet visi klienti saņems izmaiņas
             if (IsServer)
             {
                 isBlueTeam.Value = playerTeam.CurrentTeam == "Blue";
@@ -41,17 +41,17 @@ public class PlayerTeamVisuals : NetworkBehaviour
         UpdateTeamColor();
     }
 
-    // FIXED: Add immediate team setting for server authority
+    //  Pievienot tūlītēju komandas iestatīšanu servera autoritātei
     public void SetTeamImmediate(string team)
     {
         ApplyTeamVisuals(team);
         Debug.Log($"PlayerTeamVisuals: Applied {team} team visuals immediately");
     }
 
-    // Networked team setter
+    // Tīklotā komandu iestatīšana
     public void SetTeamNetworked(string team)
     {
-        // Set the NetworkVariable so all clients get the correct value
+        // Iestata NetworkVariable, lai visi klienti saņemtu pareizo vērtību
         bool blue = team.Equals("Blue", System.StringComparison.OrdinalIgnoreCase);
         if (IsServer)
         {
@@ -60,7 +60,7 @@ public class PlayerTeamVisuals : NetworkBehaviour
         }
         else
         {
-            // On clients, set the visuals directly (NetworkVariable will update from server)
+            // Klientiem iestata vizuālos elementus tieši (NetworkVariable atjaunosies no servera)
             ApplyTeamVisuals(team);
         }
         Debug.Log($"PlayerTeamVisuals: SetTeamNetworked called, applied {team} color");
@@ -69,10 +69,10 @@ public class PlayerTeamVisuals : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void SetTeamServerRpc(string team)
     {
-        // Apply on server first
+        // Vispirms piemēro serverī
         ApplyTeamVisuals(team);
         
-        // Then sync to all clients
+        // Tad sinhronizē ar visiem klientiem
         SetTeamClientRpc(team);
     }
 
@@ -84,7 +84,7 @@ public class PlayerTeamVisuals : NetworkBehaviour
 
     private void ApplyTeamVisuals(string team)
     {
-        // Assign the correct team material to ALL submeshes and ALL renderers, including SkinnedMeshRenderer
+        // Piešķir pareizo komandas materiālu VISIEM apakšrežģiem un VISIEM renderētājiem, ieskaitot SkinnedMeshRenderer
         Material teamMaterial = team.Equals("Blue", System.StringComparison.OrdinalIgnoreCase) ? blueTeamMaterial : redTeamMaterial;
         var renderers = GetComponentsInChildren<Renderer>(true);
 
@@ -92,7 +92,7 @@ public class PlayerTeamVisuals : NetworkBehaviour
         {
             if (renderer != null && teamMaterial != null)
             {
-                // Replace ALL materials with the team material (not just color)
+                // Aizstāj VISUS materiālus ar komandas materiālu (ne tikai krāsu)
                 int matCount = renderer.materials.Length;
                 Material[] mats = new Material[matCount];
                 for (int i = 0; i < matCount; i++)
@@ -133,14 +133,14 @@ public class PlayerTeamVisuals : NetworkBehaviour
         Renderer[] renderers = teamColorRenderers;
         if (renderers == null || renderers.Length == 0)
         {
-            Debug.LogWarning($"[PlayerTeamVisuals] No teamColorRenderers assigned for {gameObject.name}, using all child renderers as fallback.");
+            Debug.LogWarning($"[PlayerTeamVisuals] Nav piešķirti teamColorRenderers objektam {gameObject.name}, izmantojam visus bērnu renderētājus kā rezerves variantu.");
             renderers = GetComponentsInChildren<Renderer>(true);
         }
 
         Material teamMaterial = isBlueTeam.Value ? blueTeamMaterial : redTeamMaterial;
         if (teamMaterial == null)
         {
-            Debug.LogWarning($"[PlayerTeamVisuals] Team material is null for {(isBlueTeam.Value ? "Blue" : "Red")} team! Using fallback color.");
+            Debug.LogWarning($"[PlayerTeamVisuals] Komandas materiāls ir null priekš {(isBlueTeam.Value ? "Blue" : "Red")} komandas! Izmantojam rezerves krāsu.");
             Color fallbackColor = isBlueTeam.Value ? Color.blue : Color.red;
             foreach (var renderer in renderers)
             {
@@ -168,7 +168,7 @@ public class PlayerTeamVisuals : NetworkBehaviour
                     mats[i] = teamMaterial;
                 }
                 renderer.materials = mats;
-                Debug.Log($"[PlayerTeamVisuals] Applied {(isBlueTeam.Value ? "Blue" : "Red")} team material to {renderer.name} (full replace)");
+                Debug.Log($"[PlayerTeamVisuals] Piemērots {(isBlueTeam.Value ? "Blue" : "Red")} komandas materiāls objektam {renderer.name} (pilna aizstāšana)");
             }
         }
     }
@@ -178,10 +178,10 @@ public class PlayerTeamVisuals : NetworkBehaviour
         return isBlueTeam.Value ? "Blue" : "Red";
     }
 
-    // FIXED: Add SetTeamColorDirect method
+    //  Pievienot SetTeamColorDirect metodi
     public void SetTeamColorDirect(string team)
     {
-        // Assign the correct team material instead of changing color directly
+        // Piešķir pareizo komandas materiālu tā vietā, lai mainītu krāsu tieši
         Material teamMaterial = team.Equals("Blue", System.StringComparison.OrdinalIgnoreCase) ? blueTeamMaterial : redTeamMaterial;
         var renderers = GetComponentsInChildren<Renderer>();
         foreach (var renderer in renderers)
@@ -194,20 +194,20 @@ public class PlayerTeamVisuals : NetworkBehaviour
         Debug.Log($"PlayerTeamVisuals: Applied {team} material directly to {renderers.Length} renderers");
     }
 
-    // FIXED: Add missing SetBlueTeam method
+    //  Pievienot trūkstošo SetBlueTeam metodi
     public void SetBlueTeam()
     {
         SetTeam("Blue");
     }
 
-    // FIXED: Add missing SetRedTeam method
+    //  Pievienot trūkstošo SetRedTeam metodi
     public void SetRedTeam()
     {
         SetTeam("Red");
     }
 
-    // FIXED: Remove duplicate SetTeam method - keep only one version
-    // If there's an existing SetTeam method, update it to this implementation:
+    // Izņemt dublikāta SetTeam metodi - paturēt tikai vienu versiju
+    // Ja jau eksistē SetTeam metode, atjaunināt to uz šo implementāciju:
     public void SetTeam(string teamName)
     {
         if (teamName == "Blue")
@@ -222,7 +222,7 @@ public class PlayerTeamVisuals : NetworkBehaviour
         Debug.Log($"PlayerTeamVisuals: Set team to {teamName}");
     }
 
-    // FIXED: Add team color application methods if they don't exist
+    // Pievienot komandas krāsu piemērošanas metodes, ja tās neeksistē
     private void ApplyBlueTeamColors()
     {
         ApplyColorToRenderers(blueTeamMaterial);

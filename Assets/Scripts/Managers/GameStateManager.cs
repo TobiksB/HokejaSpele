@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
 
+// Klase, kas pārvalda spēles vispārējo stāvokli un nodrošina iespēju pilnīgi atiestatīt spēli
 public class GameStateManager : MonoBehaviour
 {
     public static GameStateManager Instance { get; private set; }
@@ -19,11 +20,12 @@ public class GameStateManager : MonoBehaviour
         }
     }
 
+    // Statiska metode, kas pilnībā atiestata spēles stāvokli
     public static void CompleteGameReset()
     {
-        Debug.Log("GameStateManager: Starting complete game reset...");
+        Debug.Log("GameStateManager: Sākas pilnīga spēles atiestatīšana...");
 
-        // Stop all coroutines
+        // Aptur visas koroutīnas
         var allMonoBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
         foreach (var mono in allMonoBehaviours)
         {
@@ -33,10 +35,10 @@ public class GameStateManager : MonoBehaviour
             }
         }
 
-        // Reset time scale
+        // Atiestata laika mērogu
         Time.timeScale = 1f;
 
-        // Shutdown networking completely
+        // Pilnībā izslēdz tīklošanu
         if (NetworkManager.Singleton != null)
         {
             try
@@ -48,39 +50,40 @@ public class GameStateManager : MonoBehaviour
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning($"GameStateManager: Error shutting down NetworkManager: {e.Message}");
+                Debug.LogWarning($"GameStateManager: Kļūda izslēdzot NetworkManager: {e.Message}");
             }
         }
 
-        // Clear temporary game data but preserve user settings
+        // Notīra īslaicīgos spēles datus, bet saglabā lietotāja iestatījumus
         ClearTemporaryGameData();
 
-        // Destroy game objects but keep essential managers
+        // Iznīcina spēles objektus, bet saglabā būtiskos pārvaldniekus
         DestroyTemporaryObjects();
 
-        // Reset all managers to initial state
+        // Atiestata visus pārvaldniekus uz sākotnējo stāvokli
         ResetAllManagers();
 
-        // Clear audio
+        // Notīra audio
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.StopMusic();
         }
 
-        // Force garbage collection
+        // Piespiedu kārtā veic atmiņas atbrīvošanu
         System.GC.Collect();
 
-        Debug.Log("GameStateManager: Complete reset finished, loading main menu...");
+        Debug.Log("GameStateManager: Pilnīga atiestatīšana pabeigta, ielādē galveno izvēlni...");
 
-        // Load main menu scene
+        // Ielādē galvenās izvēlnes ainu
         SceneManager.LoadScene("MainMenu");
     }
 
+    // Notīra īslaicīgos spēles datus, bet saglabā lietotāja iestatījumus
     private static void ClearTemporaryGameData()
     {
-        Debug.Log("GameStateManager: Clearing temporary game data...");
+        Debug.Log("GameStateManager: Notīra īslaicīgos spēles datus...");
 
-        // Clear temporary PlayerPrefs (keep user settings)
+        // Notīra īslaicīgos PlayerPrefs (saglabā lietotāja iestatījumus)
         PlayerPrefs.DeleteKey("CurrentGameSession");
         PlayerPrefs.DeleteKey("TempPlayerData");
         PlayerPrefs.DeleteKey("CurrentTeam");
@@ -91,15 +94,16 @@ public class GameStateManager : MonoBehaviour
         PlayerPrefs.DeleteKey("CurrentLobbyCode");
         PlayerPrefs.DeleteKey("LastJoinedLobby");
 
-        // Keep these: MouseSensitivity, GameVolume, Fullscreen, PlayerName, etc.
+        // Saglabā šos: MouseSensitivity, GameVolume, Fullscreen, PlayerName, utt.
         PlayerPrefs.Save();
     }
 
+    // Iznīcina īslaicīgos objektus, bet saglabā būtiskos pārvaldniekus
     private static void DestroyTemporaryObjects()
     {
-        Debug.Log("GameStateManager: Destroying temporary objects...");
+        Debug.Log("GameStateManager: Iznīcina īslaicīgos objektus...");
 
-        // Only destroy DontDestroyOnLoad objects, leave scene UI alone
+        // Iznīcina tikai DontDestroyOnLoad objektus, atstāj ainas UI neskartu
         var dontDestroyObjects = new System.Collections.Generic.List<GameObject>();
         
         for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
@@ -117,47 +121,47 @@ public class GameStateManager : MonoBehaviour
         {
             if (obj == null) continue;
 
-            // Keep essential managers - these should persist between scenes
+            // Saglabā būtiskos pārvaldniekus - tiem jāsaglabājas starp ainām
             if (obj.GetComponent<GameSettingsManager>() != null ||
                 obj.GetComponent<SettingsManager>() != null ||
                 obj.GetComponent<AudioManager>() != null ||
                 obj.GetComponent<GameStateManager>() != null)
             {
-                Debug.Log($"GameStateManager: Keeping essential manager: {obj.name}");
+                Debug.Log($"GameStateManager: Saglabā būtisko pārvaldnieku: {obj.name}");
                 continue;
             }
 
-            // Destroy temporary game objects that were moved to DontDestroyOnLoad
-            Debug.Log($"GameStateManager: Destroying temporary object: {obj.name}");
+            // Iznīcina īslaicīgos spēles objektus, kas tika pārvietoti uz DontDestroyOnLoad
+            Debug.Log($"GameStateManager: Iznīcina īslaicīgo objektu: {obj.name}");
             Destroy(obj);
         }
 
-        // Don't destroy scene UI - it should remain intact and work with inspector assignments
-        Debug.Log("GameStateManager: Scene UI objects preserved for inspector assignments");
+        // Neiznīcina ainas UI - tam jāpaliek neskartam un jāstrādā ar inspektora piešķirēm
+        Debug.Log("GameStateManager: Ainas UI objekti saglabāti inspektora piešķirēm");
     }
 
+    // Atiestata visus pārvaldniekus uz sākotnējo stāvokli
     private static void ResetAllManagers()
     {
-        Debug.Log("GameStateManager: Resetting all managers...");
+        Debug.Log("GameStateManager: Atiestata visus pārvaldniekus...");
 
-        // Reset LobbyManager
+        // Atiestata LobbyManager
         if (LobbyManager.Instance != null)
         {
             try
             {
                 LobbyManager.Instance.StopAllCoroutines();
                 
-                // Use reflection to reset private fields
                 var lobbyManagerType = typeof(LobbyManager);
                 
-                // Reset lobby state
+                // Atiestata priekštelpas stāvokli
                 var currentLobbyField = lobbyManagerType.GetField("currentLobby", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (currentLobbyField != null)
                 {
                     currentLobbyField.SetValue(LobbyManager.Instance, null);
                 }
 
-                // Reset player dictionaries
+                // Atiestata spēlētāju vārdnīcas
                 var playerTeamsField = lobbyManagerType.GetField("playerTeams", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (playerTeamsField != null)
                 {
@@ -179,53 +183,53 @@ public class GameStateManager : MonoBehaviour
                     playerReadyStates?.Clear();
                 }
 
-                Debug.Log("GameStateManager: LobbyManager reset complete");
+                Debug.Log("GameStateManager: LobbyManager atiestatīšana pabeigta");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"GameStateManager: Error resetting LobbyManager: {e.Message}");
+                Debug.LogError($"GameStateManager: Kļūda atiestatot LobbyManager: {e.Message}");
             }
         }
 
-        // Reset GameNetworkManager
+        // Atiestata GameNetworkManager
         if (GameNetworkManager.Instance != null)
         {
             try
             {
                 GameNetworkManager.Instance.StopAllCoroutines();
-                Debug.Log("GameStateManager: GameNetworkManager reset complete");
+                Debug.Log("GameStateManager: GameNetworkManager atiestatīšana pabeigta");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"GameStateManager: Error resetting GameNetworkManager: {e.Message}");
+                Debug.LogError($"GameStateManager: Kļūda atiestatot GameNetworkManager: {e.Message}");
             }
         }
 
-        // Reset GameSettingsManager (force reload settings)
+        // Atiestata GameSettingsManager (piespiedu kārtā pārlādē iestatījumus)
         if (GameSettingsManager.Instance != null)
         {
             try
             {
                 GameSettingsManager.Instance.LoadSettings();
-                Debug.Log("GameStateManager: GameSettingsManager reset complete");
+                Debug.Log("GameStateManager: GameSettingsManager atiestatīšana pabeigta");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"GameSettingsManager: Error resetting GameSettingsManager: {e.Message}");
+                Debug.LogError($"GameSettingsManager: Kļūda atiestatot GameSettingsManager: {e.Message}");
             }
         }
 
-        // Reset SettingsManager
+        // Atiestata SettingsManager
         if (SettingsManager.Instance != null)
         {
             try
             {
                 SettingsManager.Instance.LoadSettings();
-                Debug.Log("GameStateManager: SettingsManager reset complete");
+                Debug.Log("GameStateManager: SettingsManager atiestatīšana pabeigta");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"GameStateManager: Error resetting SettingsManager: {e.Message}");
+                Debug.LogError($"GameStateManager: Kļūda atiestatot SettingsManager: {e.Message}");
             }
         }
     }

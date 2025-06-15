@@ -4,7 +4,7 @@ using TMPro;
 
 public class MainMenuManager : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("UI atsauces")]
     [SerializeField] private Button playButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button exitButton;
@@ -13,50 +13,50 @@ public class MainMenuManager : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log("MainMenuManager: Start() called");
+        Debug.Log("MainMenuManager: Start() izsaukta");
         
-        // CRITICAL: Always reinitialize when MainMenu loads
+        //  Vienmēr reinicializēt, kad ielādējas MainMenu
         StartCoroutine(InitializeMainMenuWithDelay());
     }
 
     private System.Collections.IEnumerator InitializeMainMenuWithDelay()
     {
-        // Wait a frame for scene to fully load
+        // Uzgaidam kadru, lai aina pilnībā ielādētos
         yield return null;
         
-        // CRITICAL: Only initialize if we're actually in the MainMenu scene
+        //  Inicializēt tikai tad, ja mēs patiešām esam MainMenu ainā
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (currentScene != "MainMenu")
         {
-            Debug.LogWarning($"MainMenuManager: Not in MainMenu scene (current: {currentScene}), destroying this instance");
+            Debug.LogWarning($"MainMenuManager: Nav MainMenu aina (pašreizējā: {currentScene}), iznīcinām šo instanci");
             Destroy(gameObject);
             yield break;
         }
         
-        // FIXED: Always validate and find UI references (they may be lost when returning from game)
+        //  Vienmēr validēt un atrast UI atsauces (tās var pazust, atgriežoties no spēles)
         bool referencesValid = ValidateUIReferences();
         if (!referencesValid)
         {
-            Debug.LogWarning("MainMenuManager: UI references invalid, attempting to find them...");
+            Debug.LogWarning("MainMenuManager: UI atsauces nav derīgas, mēģinam tās atrast...");
             FindUIReferences();
             
-            // Validate again after finding
+            // Validējam vēlreiz pēc meklēšanas
             referencesValid = ValidateUIReferences();
             if (!referencesValid)
             {
-                Debug.LogError("MainMenuManager: Failed to find UI references after search!");
+                Debug.LogError("MainMenuManager: Neizdevās atrast UI atsauces pēc meklēšanas!");
             }
         }
         
         SetupButtonListeners();
         LoadAndDisplaySettings();
         
-        Debug.Log("MainMenuManager: Initialization complete");
+        Debug.Log("MainMenuManager: Inicializācija pabeigta");
     }
 
     private void OnEnable()
     {
-        // Subscribe to scene loaded events to handle returns from game
+        // Pierakstāmies uz ainas ielādes notikumiem, lai apstrādātu atgriešanos no spēles
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -67,35 +67,35 @@ public class MainMenuManager : MonoBehaviour
 
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
-        // Only reinitialize if this is the MainMenu scene
+        // Reinicializēt tikai tad, ja šī ir MainMenu aina
         if (scene.name == "MainMenu" && gameObject != null)
         {
-            Debug.Log("MainMenuManager: MainMenu scene loaded, reinitializing...");
+            Debug.Log("MainMenuManager: MainMenu aina ielādēta, reinicializējam...");
             StartCoroutine(InitializeMainMenuWithDelay());
         }
     }
 
-    // ADDED: Method to validate all UI references
+    //  Metode, lai validētu visas UI atsauces
     private bool ValidateUIReferences()
     {
         bool allValid = true;
         
-        if (playButton == null) { Debug.LogError("MainMenuManager: playButton is null"); allValid = false; }
-        if (settingsButton == null) { Debug.LogError("MainMenuManager: settingsButton is null"); allValid = false; }
-        if (exitButton == null) { Debug.LogError("MainMenuManager: exitButton is null"); allValid = false; }
-        if (settingsPanel == null) { Debug.LogError("MainMenuManager: settingsPanel is null"); allValid = false; }
-        if (playerNameDisplay == null) { Debug.LogError("MainMenuManager: playerNameDisplay is null"); allValid = false; }
+        if (playButton == null) { Debug.LogError("MainMenuManager: playButton ir null"); allValid = false; }
+        if (settingsButton == null) { Debug.LogError("MainMenuManager: settingsButton ir null"); allValid = false; }
+        if (exitButton == null) { Debug.LogError("MainMenuManager: exitButton ir null"); allValid = false; }
+        if (settingsPanel == null) { Debug.LogError("MainMenuManager: settingsPanel ir null"); allValid = false; }
+        if (playerNameDisplay == null) { Debug.LogError("MainMenuManager: playerNameDisplay ir null"); allValid = false; }
         
-        Debug.Log($"MainMenuManager: UI references validation result: {allValid}");
+        Debug.Log($"MainMenuManager: UI atsauču validācijas rezultāts: {allValid}");
         return allValid;
     }
 
-    // ADDED: Method to find UI references if they're lost
+    //  Metode, lai atrastu UI atsauces, ja tās ir pazudušas
     private void FindUIReferences()
     {
-        Debug.Log("MainMenuManager: Searching for UI references...");
+        Debug.Log("MainMenuManager: Meklējam UI atsauces...");
         
-        // Try to find buttons by name and tag
+        // Mēģinām atrast pogas pēc nosaukuma un taga
         if (playButton == null)
         {
             playButton = FindUIComponent<Button>("PlayButton", "Play Button", "StartButton");
@@ -117,7 +117,7 @@ public class MainMenuManager : MonoBehaviour
             if (foundPanel != null)
             {
                 settingsPanel = foundPanel;
-                Debug.Log("MainMenuManager: Found SettingsPanel");
+                Debug.Log("MainMenuManager: Atrasts SettingsPanel");
             }
         }
         
@@ -127,7 +127,7 @@ public class MainMenuManager : MonoBehaviour
         }
     }
 
-    // Helper method to find UI components with multiple possible names
+    // Palīgmetode, lai atrastu UI komponentes ar vairākiem iespējamiem nosaukumiem
     private T FindUIComponent<T>(params string[] possibleNames) where T : Component
     {
         foreach (string name in possibleNames)
@@ -138,25 +138,25 @@ public class MainMenuManager : MonoBehaviour
                 var component = foundObject.GetComponent<T>();
                 if (component != null)
                 {
-                    Debug.Log($"MainMenuManager: Found {typeof(T).Name}: {name}");
+                    Debug.Log($"MainMenuManager: Atrasts {typeof(T).Name}: {name}");
                     return component;
                 }
             }
         }
         
-        // If not found by name, search by component type
+        // Ja neatrod pēc nosaukuma, meklējam pēc komponentes tipa
         var allComponents = FindObjectsByType<T>(FindObjectsSortMode.None);
         if (allComponents.Length > 0)
         {
-            Debug.Log($"MainMenuManager: Found {typeof(T).Name} by type search: {allComponents[0].name}");
+            Debug.Log($"MainMenuManager: Atrasts {typeof(T).Name} pēc tipa meklēšanas: {allComponents[0].name}");
             return allComponents[0];
         }
         
-        Debug.LogWarning($"MainMenuManager: Could not find {typeof(T).Name} with any of the names: {string.Join(", ", possibleNames)}");
+        Debug.LogWarning($"MainMenuManager: Nevarēja atrast {typeof(T).Name} ar nosaukumiem: {string.Join(", ", possibleNames)}");
         return null;
     }
 
-    // Helper method to find GameObjects
+    // Palīgmetode, lai atrastu GameObject objektus
     private GameObject FindUIObject(params string[] possibleNames)
     {
         foreach (string name in possibleNames)
@@ -164,80 +164,80 @@ public class MainMenuManager : MonoBehaviour
             var foundObject = GameObject.Find(name);
             if (foundObject != null)
             {
-                Debug.Log($"MainMenuManager: Found GameObject: {name}");
+                Debug.Log($"MainMenuManager: Atrasts GameObject: {name}");
                 return foundObject;
             }
         }
         
-        Debug.LogWarning($"MainMenuManager: Could not find GameObject with any of the names: {string.Join(", ", possibleNames)}");
+        Debug.LogWarning($"MainMenuManager: Nevarēja atrast GameObject ar nosaukumiem: {string.Join(", ", possibleNames)}");
         return null;
     }
 
     private void SetupButtonListeners()
     {
-        // Remove any existing listeners first to avoid duplicates
+        // Vispirms noņemam visus esošos klausītājus, lai izvairītos no dublikātiem
         if (playButton != null)
         {
             playButton.onClick.RemoveAllListeners();
             playButton.onClick.AddListener(OnPlayButtonClicked);
-            Debug.Log("MainMenuManager: Setup play button listener");
+            Debug.Log("MainMenuManager: Iestatīts spēles pogas klausītājs");
         }
         
         if (settingsButton != null)
         {
             settingsButton.onClick.RemoveAllListeners();
             settingsButton.onClick.AddListener(OnSettingsButtonClicked);
-            Debug.Log("MainMenuManager: Setup settings button listener");
+            Debug.Log("MainMenuManager: Iestatīts iestatījumu pogas klausītājs");
         }
         
         if (exitButton != null)
         {
             exitButton.onClick.RemoveAllListeners();
             exitButton.onClick.AddListener(OnExitButtonClicked);
-            Debug.Log("MainMenuManager: Setup exit button listener");
+            Debug.Log("MainMenuManager: Iestatīts izejas pogas klausītājs");
         }
     }
 
     private void LoadAndDisplaySettings()
     {
-        // Ensure SettingsManager exists
+        // Pārliecināmies, ka SettingsManager eksistē
         if (SettingsManager.Instance == null)
         {
             var existingSettings = FindObjectOfType<SettingsManager>();
             if (existingSettings != null)
             {
-                Debug.Log("MainMenuManager: Found existing SettingsManager");
+                Debug.Log("MainMenuManager: Atrasts esošais SettingsManager");
             }
             else
             {
                 GameObject settingsObj = new GameObject("SettingsManager");
                 settingsObj.AddComponent<SettingsManager>();
                 DontDestroyOnLoad(settingsObj);
-                Debug.Log("MainMenuManager: Created new SettingsManager");
+                Debug.Log("MainMenuManager: Izveidots jauns SettingsManager");
             }
         }
         
-        // FIXED: Call LoadSettings without parameters (it's now public)
+        //  Izsaucam LoadSettings bez parametriem (tagad tas ir publisks)
         if (SettingsManager.Instance != null)
         {
-            // Load settings - this is now a public method
+            // Ielādējam iestatījumus - šī tagad ir publiska metode
             if (playerNameDisplay != null)
             {
                 playerNameDisplay.text = SettingsManager.Instance.PlayerName;
-                Debug.Log($"MainMenuManager: Displayed player name: {SettingsManager.Instance.PlayerName}");
+                Debug.Log($"MainMenuManager: Attēlots spēlētāja vārds: {SettingsManager.Instance.PlayerName}");
             }
         }
     }
 
     private void OnPlayButtonClicked()
     {
-        Debug.Log("MainMenuManager: Play button clicked");
-        // Your existing play button logic here
+        Debug.Log("MainMenuManager: Nospiesta spēles poga");
+        // Jūsu esošā spēles pogas loģika šeit
     }
 
     private void OnSettingsButtonClicked()
     {
-        Debug.Log("MainMenuManager: Settings button clicked");
+        Debug.Log("MainMenuManager: Nospiesta iestatījumu poga");
         if (settingsPanel != null)
         {
             settingsPanel.SetActive(!settingsPanel.activeSelf);
@@ -246,7 +246,7 @@ public class MainMenuManager : MonoBehaviour
 
     private void OnExitButtonClicked()
     {
-        Debug.Log("MainMenuManager: Exit button clicked");
+        Debug.Log("MainMenuManager: Nospiesta izejas poga");
         
         #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
@@ -257,21 +257,21 @@ public class MainMenuManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        // Clean up persistent managers to restore inspector values
+        // Notīrām pastāvīgos pārvaldniekus, lai atjaunotu inspektora vērtības
         if (MenuManager.Instance != null)
         {
             MenuManager.Instance.CleanupOnMainMenu();
         }
-        // Repeat for other managers if needed (e.g., AudioManager, SettingsManager)
+        // Atkārtojam citiem pārvaldniekiem, ja nepieciešams (piem., AudioManager, SettingsManager)
         // AudioManager.Instance?.CleanupOnMainMenu();
 
-        // Load main menu scene
+        // Ielādējam galvenās izvēlnes ainu
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 
     private void OnDestroy()
     {
-        // Clean up event listeners
+        // Notīrām notikumu klausītājus
         if (playButton != null)
             playButton.onClick.RemoveAllListeners();
         if (settingsButton != null)

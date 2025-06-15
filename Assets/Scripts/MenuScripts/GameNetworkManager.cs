@@ -9,58 +9,55 @@ public class GameNetworkManager : MonoBehaviour
 
     private GameObject prefabToAssign;
 
-    [Header("Prefabs")]
-    [SerializeField] public GameObject playerPrefabReference; // FIXED: Made public to fix LobbyManager access
+    [Header("Prefabi")]
+    [SerializeField] public GameObject playerPrefabReference; // Pārveidots par publisku, lai labotu LobbyManager piekļuvi
 
-    [Header("Network Settings")]
-    [SerializeField] private float sceneLoadTimeout = 30f;
-    [SerializeField] private float hostStartDelay = 1f;
+    [Header("Tīkla iestatījumi")]
+    [SerializeField] private float sceneLoadTimeout = 30f; // Ainas ielādes noilgums sekundēs
+    [SerializeField] private float hostStartDelay = 1f; // Aizkave pirms hosta sākšanas
 
-    [Header("Player Spawn Points")]
-    [SerializeField] private Transform[] redTeamSpawns;
-    [SerializeField] private Transform[] blueTeamSpawns;
-
-    // REMOVED: No more hardcoded default spawns - only use inspector transforms
+    [Header("Spēlētāju parādīšanās punkti")]
+    [SerializeField] private Transform[] redTeamSpawns; // Sarkanās komandas parādīšanās punkti
+    [SerializeField] private Transform[] blueTeamSpawns; // Zilās komandas parādīšanās punkti
     private bool isLoadingScene = false;
     private string pendingSceneName = "";
 
-    // NEW: Track spawn point usage for sequential spawning
+    // Seko parādīšanās punktu izmantošanai secīgai spēlētāju izvietošanai
     private Dictionary<string, int> teamSpawnCounters = new Dictionary<string, int>();
 
-    // NEW: Dictionary to store auth IDs for clients during connection approval
+    // Vārdnīca, lai saglabātu klientu autentifikācijas ID savienojuma apstiprināšanas laikā
     private Dictionary<ulong, string> clientAuthIds = new Dictionary<ulong, string>();
 
     private void Awake()
     {
+        // Pārbauda, vai šī ir vienīgā GameNetworkManager instance, un iestata to kā Singleton
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Debug.Log("GameNetworkManager: Instance created and set to DontDestroyOnLoad");
+            Debug.Log("GameNetworkManager: Instance izveidota un iestatīta kā DontDestroyOnLoad");
 
-            // CRITICAL: Validate spawn points are assigned in inspector
+            // Pārbauda, vai parādīšanās punkti ir piešķirti inspektorā
             ValidateSpawnPoints();
 
-            // CRITICAL: Force PlayerPrefab assignment on NetworkManager.Singleton at runtime
+            // Piespiež PlayerPrefab piešķiršanu NetworkManager.Singleton, lai novērstu Unity kļūdas
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.NetworkConfig != null)
             {
                 NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
-                
-                // CRITICAL: Disable automatic player spawning - let ConnectionApprovalCheck handle ALL spawning
-                NetworkManager.Singleton.NetworkConfig.PlayerPrefab = null; // Temporarily disable to prevent auto-spawn
-                
-                // --- DEBUG: Log all possible sources for the prefab ---
-                Debug.Log($"[GameNetworkManager] Inspector playerPrefabReference: {(playerPrefabReference != null ? playerPrefabReference.name : "null")}");
-                Debug.Log($"[GameNetworkManager] NetworkConfig.PlayerPrefab BEFORE: {(NetworkManager.Singleton.NetworkConfig.PlayerPrefab != null ? NetworkManager.Singleton.NetworkConfig.PlayerPrefab.name : "null")}");
+                // Atspējo automātisko spēlētāju radīšanu, lai to pārvaldītu ConnectionApprovalCheck
+                NetworkManager.Singleton.NetworkConfig.PlayerPrefab = null;
+                // Izvada informāciju par visiem iespējamajiem prefab avotiem
+                Debug.Log($"[GameNetworkManager] Inspektora playerPrefabReference: {(playerPrefabReference != null ? playerPrefabReference.name : "null")}");
+                Debug.Log($"[GameNetworkManager] NetworkConfig.PlayerPrefab PIRMS: {(NetworkManager.Singleton.NetworkConfig.PlayerPrefab != null ? NetworkManager.Singleton.NetworkConfig.PlayerPrefab.name : "null")}");
 
-                // Always assign, even if already set, to avoid it being cleared by Unity
+                // Vienmēr piešķir prefab, pat ja tas jau ir iestatīts, lai novērstu Unity kļūdas
                 prefabToAssign = playerPrefabReference;
                 if (prefabToAssign == null)
                 {
                     prefabToAssign = Resources.Load<GameObject>("Prefabs/Player");
                     if (prefabToAssign != null)
                     {
-                        Debug.Log("[GameNetworkManager] Loaded PlayerPrefab from Resources/Prefabs/Player");
+                        Debug.Log("[GameNetworkManager] Ielādēts PlayerPrefab no Resources/Prefabs/Player");
                     }
                 }
                 if (prefabToAssign == null && NetworkManager.Singleton.NetworkConfig.Prefabs != null)
@@ -70,40 +67,28 @@ public class GameNetworkManager : MonoBehaviour
                         if (np.Prefab != null && np.Prefab.name.ToLower().Contains("player"))
                         {
                             prefabToAssign = np.Prefab;
-                            Debug.Log($"[GameNetworkManager] Fallback: Found PlayerPrefab in NetworkPrefabs: {prefabToAssign.name}");
+                            Debug.Log($"[GameNetworkManager] Rezerves variants: Atrasts PlayerPrefab NetworkPrefabs sarakstā: {prefabToAssign.name}");
                             break;
                         }
                     }
                 }
-                
-                // Store the prefab but don't assign it yet - we'll assign it in ConnectionApprovalCheck
-                Debug.Log($"[GameNetworkManager] Stored PlayerPrefab for manual spawning: {(prefabToAssign != null ? prefabToAssign.name : "null")}");
+                // Saglabā prefab, bet nepievieno to uzreiz - to izdarīs ConnectionApprovalCheck
+                Debug.Log($"[GameNetworkManager] Saglabāts PlayerPrefab manuālai izvietošanai: {(prefabToAssign != null ? prefabToAssign.name : "null")}");
             }
             else
             {
-                Debug.LogWarning("[GameNetworkManager] Could not set PlayerPrefab on NetworkManager.Singleton (missing reference or prefab)");
+                Debug.LogWarning("[GameNetworkManager] Nevarēja iestatīt PlayerPrefab uz NetworkManager.Singleton (trūkst atsauces vai prefaba)");
             }
 
             string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            // --- REMOVE THIS BLOCK: It disables the PlayerPrefab in MainMenu and causes it to be lost ---
-            /*
-            if (currentScene == "MainMenu")
-            {
-                if (NetworkManager.Singleton != null && NetworkManager.Singleton.NetworkConfig != null)
-                {
-                    NetworkManager.Singleton.NetworkConfig.PlayerPrefab = null;
-                    Debug.Log("GameNetworkManager: Disabled player prefab in MainMenu for NetworkManager.Singleton");
-                }
-            }
-            */
-
-            // Remove duplicate allManagers logic here
+      
+            // Izņem dublikātu NetworkManager objektus, lai novērstu konfliktus
             var allManagers = FindObjectsByType<NetworkManager>(FindObjectsSortMode.None);
             foreach (var nm in allManagers)
             {
                 if (nm != NetworkManager.Singleton)
                 {
-                    Debug.LogWarning("GameNetworkManager: Destroying duplicate NetworkManager in scene");
+                    Debug.LogWarning("GameNetworkManager: Iznīcina dublikātu NetworkManager ainā");
                     Destroy(nm.gameObject);
                 }
             }
@@ -112,65 +97,71 @@ public class GameNetworkManager : MonoBehaviour
                 DontDestroyOnLoad(NetworkManager.Singleton.gameObject);
             }
 
-            // ONLY setup connection approval callback - no spawn handlers
+            // Iestata ConnectionApprovalCallback, lai pārvaldītu klientu apstiprināšanu un spēlētāju radīšanu
             if (NetworkManager.Singleton != null)
             {
                 NetworkManager.Singleton.ConnectionApprovalCallback = ConnectionApprovalCheck;
-                Debug.Log("GameNetworkManager: Set ConnectionApprovalCallback");
+                Debug.Log("GameNetworkManager: Iestatīts ConnectionApprovalCallback");
             }
 
-            // CRITICAL: Initialize spawn counters
+            // Inicializē komandu parādīšanās secības skaitītājus
             teamSpawnCounters["Red"] = 0;
             teamSpawnCounters["Blue"] = 0;
         }
         else
         {
-            Debug.Log("GameNetworkManager: Duplicate instance destroyed");
+            Debug.Log("GameNetworkManager: Dublikāta instance iznīcināta");
             Destroy(gameObject);
         }
 
-        // REMOVED: Don't create NetworkSpawnManager - it's not needed for ConnectionApprovalCheck spawning
-        // ConnectionApprovalCheck handles all spawning directly
+        //  NetworkSpawnManager nav nepieciešams, jo ConnectionApprovalCheck pārvalda radīšanu
     }
 
-    // REMOVED: SyncSpawnPoints method - no longer needed
+ 
 
     private NetworkManager GetTrueNetworkManager()
     {
-        // Always get the real DontDestroyOnLoad instance
+        // Vienmēr atgriež īsto DontDestroyOnLoad instanci
         var allManagers = FindObjectsByType<NetworkManager>(FindObjectsSortMode.None);
         foreach (var nm in allManagers)
         {
             if (nm != null && nm.gameObject.scene.name == "DontDestroyOnLoad")
                 return nm;
         }
-        // Fallback to Singleton
+        // Rezerves variants: Singleton
         return NetworkManager.Singleton;
     }
 
     public void StartGame(string sceneName)
     {
-        // --- GUARD: Only allow host to call StartGame directly, but allow client if relay is ready and IsClientReadyForGame ---
+        //  Only allow host to call StartGame directly, but allow client if relay is ready and IsClientReadyForGame ---
+        //  Atļauj tikai hostam tiešā veidā izsaukt StartGame, bet atļauj arī klientam, ja relejs ir gatavs un IsClientReadyForGame
         if (LobbyManager.Instance != null && !LobbyManager.Instance.IsLobbyHost())
         {
             // Allow client to start if relay is ready and IsClientReadyForGame
+            //  Atļauj klientam sākt, ja relejs ir gatavs un IsClientReadyForGame
             if (!LobbyManager.Instance.IsClientReadyForGame())
             {
                 Debug.LogWarning("[GameNetworkManager] StartGame called on CLIENT but relay not ready. Waiting for relay...");
+                //  StartGame izsaukts KLIENTĀ, bet relejs nav gatavs. Gaida releju...
                 return;
             }
             Debug.LogWarning("[GameNetworkManager] StartGame called on CLIENT with relay ready. Proceeding to start client.");
+            //  StartGame izsaukts KLIENTĀ ar gatavu releju. Turpina ar klienta palaišanu.
         }
 
         Debug.LogWarning($"[GameNetworkManager] StartGame CALLED on {(NetworkManager.Singleton?.IsHost == true ? "HOST" : "CLIENT")} with scene: {sceneName}, isLoadingScene={isLoadingScene}, IsClient={NetworkManager.Singleton?.IsClient}, IsHost={NetworkManager.Singleton?.IsHost}");
         
-        // FIXED: Validate we're not trying to start networking in MainMenu
+        // Validate we're not trying to start networking in MainMenu
+        // Pārbauda, vai nemēģinām sākt tīklošanu MainMenu scenā
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (currentScene == "MainMenu" && NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost)
         {
             Debug.LogWarning("GameNetworkManager: Host is already running in MainMenu - shutting down before starting game");
+            //  Hosts jau darbojas MainMenu - aizveram to pirms spēles sākšanas
             NetworkManager.Singleton.Shutdown();
             // Wait a frame for shutdown to complete
+            //  Gaidām vienu kadru, lai aizvēršana pabeidzas
             StartCoroutine(DelayedGameStart(sceneName));
             return;
         }
@@ -178,43 +169,53 @@ public class GameNetworkManager : MonoBehaviour
         if (isLoadingScene)
         {
             Debug.LogWarning("GameNetworkManager: Scene load already in progress, ignoring request");
+            //  Scēnas ielāde jau notiek, ignorējam pieprasījumu
             return;
         }
 
         pendingSceneName = sceneName;
 
         // Check if NetworkManager exists and is properly configured
+        //  Pārbaudam, vai NetworkManager eksistē un ir pareizi konfigurēts
         if (NetworkManager.Singleton == null)
         {
             Debug.LogError("GameNetworkManager: NetworkManager.Singleton is null! Cannot start networked game.");
+            //  NetworkManager.Singleton ir null! Nevar sākt tīkla spēli.
             return;
         }
 
-        // --- FIX: Ensure host never tries to start as client ---
+        // Ensure host never tries to start as client ---
+        //   Nodrošina, ka hosts nekad nemēģina sākt kā klients
         bool shouldBeHost = ShouldStartAsHost();
         if (shouldBeHost)
         {
             Debug.Log("[GameNetworkManager] Host detected, will only start as host (never as client)");
+            //  Hosts konstatēts, sāksim tikai kā hosts (nekad kā klients)
         }
         else
         {
-            // --- GUARD: Prevent host from starting as client ---
+            //  Prevent host from starting as client ---
+            //  Neļaut hostam sākt kā klientam
             if (LobbyManager.Instance != null && LobbyManager.Instance.IsLobbyHost())
             {
                 Debug.LogWarning("[GameNetworkManager] Host should never start as client. Skipping StartClient.");
+                //  Hostam nekad nevajadzētu sākt kā klientam. Izlaižam StartClient.
                 return;
             }
             Debug.Log("[GameNetworkManager] Client detected, will only start as client");
         }
 
-        // --- CRITICAL: For client, ensure relay is configured before starting client ---
+        //  For client, ensure relay is configured before starting client ---
+        //   Klientam jāpārliecinās, ka relejs ir konfigurēts pirms klienta sākšanas
         if (!shouldBeHost)
         {
-            // --- ADD THIS GUARD: Check relay transport is configured before starting client ---
+            //  Check relay transport is configured before starting client ---
+            //  JĀPIEVIENO ŠĪ AIZSARDZĪBA: Pārbaudīt, vai releja transports ir konfigurēts pirms klienta sākšanas
             var transport = NetworkManager.Singleton.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>();
             if (transport == null || transport.Protocol != Unity.Netcode.Transports.UTP.UnityTransport.ProtocolType.RelayUnityTransport)
             {
                 Debug.LogError("[GameNetworkManager] Client relay transport is NOT configured! Aborting StartClient. Wait for relay to be set up.");
+                //  Klienta releja transports NAV konfigurēts! Pārtraucam StartClient. Jāgaida, kamēr relejs tiks iestatīts.
                 isLoadingScene = false;
                 return;
             }
@@ -222,6 +223,7 @@ public class GameNetworkManager : MonoBehaviour
             if (LobbyManager.Instance != null && !LobbyManager.Instance.IsClientReadyForGame())
             {
                 Debug.Log("[GameNetworkManager] Client relay not configured yet, waiting for relay before starting client...");
+                //  Klienta relejs vēl nav konfigurēts, gaidām releju pirms klienta sākšanas...
                 LobbyManager.Instance.OnClientReadyForGame -= StartClientAfterRelayReady;
                 LobbyManager.Instance.OnClientReadyForGame += StartClientAfterRelayReady;
                 pendingSceneName = sceneName;
@@ -230,33 +232,43 @@ public class GameNetworkManager : MonoBehaviour
             else
             {
                 Debug.Log("[GameNetworkManager] Client relay already configured, starting client immediately...");
+                // Klienta relejs jau ir konfigurēts, sākam klientu nekavējoties...
             }
         }
 
-        // FIXED: Always start fresh - shutdown any existing connection first
+        //  Always start fresh - shutdown any existing connection first
+        // Vienmēr sākam no jauna - vispirms aizveram jebkuru esošo savienojumu
         if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)
         {
             Debug.Log($"GameNetworkManager: Shutting down existing connection before starting fresh");
+            // Aizveram esošo savienojumu pirms jauna sākuma
             Debug.Log($"  Was Host: {NetworkManager.Singleton.IsHost}");
+            // Bija Hosts: {NetworkManager.Singleton.IsHost}
             Debug.Log($"  Was Server: {NetworkManager.Singleton.IsServer}");
+            //  Bija Serveris: {NetworkManager.Singleton.IsServer}
             Debug.Log($"  Was Client: {NetworkManager.Singleton.IsClient}");
+            // Bija Klients: {NetworkManager.Singleton.IsClient}
             
             NetworkManager.Singleton.Shutdown();
             
             // Wait for shutdown to complete, then start fresh
+            //  Gaidām, kamēr aizvēršana pabeidzas, tad sākam no jauna
             StartCoroutine(WaitForShutdownThenStart(shouldBeHost, sceneName));
             return;
         }
 
         bool shouldLoadScene = false;
         // Start fresh connection
+        //  Sākam jaunu savienojumu
         if (shouldBeHost)
         {
             Debug.Log("GameNetworkManager: Starting as host...");
+            //  Sākam kā hosts...
             string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             if (activeScene != sceneName)
             {
                 Debug.Log($"[GameNetworkManager] Host is in '{activeScene}', needs to be in '{sceneName}'. Loading scene first...");
+                //  Hosts ir scenā '{activeScene}', tam jābūt scenā '{sceneName}'. Vispirms ielādējam scēnu...
                 shouldLoadScene = true;
             }
             else
@@ -267,6 +279,7 @@ public class GameNetworkManager : MonoBehaviour
         else
         {
             Debug.Log("GameNetworkManager: Starting as client...");
+            //  Sākam kā klients...
             StartCoroutine(StartClientAndWaitForScene());
         }
 
@@ -279,8 +292,10 @@ public class GameNetworkManager : MonoBehaviour
     private System.Collections.IEnumerator WaitForShutdownThenStart(bool shouldBeHost, string sceneName)
     {
         Debug.Log("GameNetworkManager: Waiting for NetworkManager shutdown to complete...");
+        //  Gaidām, kamēr NetworkManager aizvēršana pabeidzas...
         
-        // Wait for shutdown to complete
+
+        //  Gaidām, kamēr aizvēršana pabeidzas
         float shutdownTimeout = 5f;
         float elapsed = 0f;
         
@@ -293,49 +308,62 @@ public class GameNetworkManager : MonoBehaviour
         if (elapsed >= shutdownTimeout)
         {
             Debug.LogWarning("GameNetworkManager: Shutdown timeout - forcing restart anyway");
+            //  Aizvēršanas noilgums - vienalga piespiedu restartēšana
         }
         else
         {
             Debug.Log("GameNetworkManager: Shutdown completed, starting fresh connection");
+            //  Aizvēršana pabeigta, sākam jaunu savienojumu
         }
         
-        // Now start fresh
+ 
+        //  Tagad sākam no jauna
         if (shouldBeHost)
         {
             Debug.Log("GameNetworkManager: Starting as host after shutdown...");
+            // Sākam kā hosts pēc aizvēršanas...
             StartCoroutine(StartHostAndLoadScene(sceneName));
         }
         else
         {
             Debug.Log("GameNetworkManager: Starting as client after shutdown...");
+            //  Sākam kā klients pēc aizvēršanas...
             StartCoroutine(StartClientAndWaitForScene());
         }
     }
 
-    // FIXED: Add delayed start method to handle shutdown timing
+ 
+    // Pievienota aizkavētā sākuma metode, lai apstrādātu aizvēršanas laiku
     private System.Collections.IEnumerator DelayedGameStart(string sceneName)
     {
         yield return null; // Wait one frame for shutdown
+        // Gaidām vienu kadru aizvēršanai
         
-        // Now start the game properly
+    
+        //  Tagad pareizi sākam spēli
         StartGame(sceneName);
     }
 
     private bool ShouldStartAsHost()
     {
-        // Check if we're the lobby host
+
+        //  Pārbaudām, vai esam lobby hosts
         if (LobbyManager.Instance != null && LobbyManager.Instance.IsLobbyHost())
         {
             Debug.Log("GameNetworkManager: We are the lobby host, starting as network host");
+            //  Mēs esam lobby hosts, sākam kā tīkla hosts
             return true;
         }
         
-        // Fallback: if no lobby or not lobby host, assume we should be client
+    
+        //  Papildiespēja: ja nav lobby vai neesam lobby hosts, pieņemam, ka jābūt klientam
         Debug.Log("GameNetworkManager: We are not the lobby host, starting as network client");
+        //  Mēs neesam lobby hosts, sākam kā tīkla klients
         return false;
     }
 
-    // FIXED: Update helper method to use stored scene name
+    //  Update helper method to use stored scene name
+    // Atjauninām palīgmetodi, lai izmantotu saglabāto scēnas nosaukumu
     private void StartClientAfterRelayReady()
     {
         if (LobbyManager.Instance != null)
@@ -343,11 +371,14 @@ public class GameNetworkManager : MonoBehaviour
             LobbyManager.Instance.OnClientReadyForGame -= StartClientAfterRelayReady;
         }
         Debug.Log("GameNetworkManager: Relay ready, starting client...");
+        // Relejs gatavs, sākam klientu...
         
-        // FIXED: Use the stored scene name
+        // Use the stored scene name
+        //  LABOTS: Izmantojam saglabāto scēnas nosaukumu
         if (!string.IsNullOrEmpty(pendingSceneName))
         {
             Debug.Log($"GameNetworkManager: Using pending scene name: {pendingSceneName}");
+            //  Izmantojam gaidāmās scēnas nosaukumu: {pendingSceneName}
         }
         
         StartCoroutine(StartClientAndWaitForScene());
@@ -357,17 +388,19 @@ public class GameNetworkManager : MonoBehaviour
     {
         isLoadingScene = true;
         Debug.LogWarning("GameNetworkManager: [CLIENT] Starting client for networked game...");
+        //  Sākam klientu tīkla spēlei...
 
-        // --- CRITICAL: Only allow StartClient in MainMenu ---
+        // Atļaut StartClient tikai MainMenu scenā
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (currentScene != "MainMenu")
         {
             Debug.LogError("GameNetworkManager: Client must call StartClient() in MainMenu scene! Aborting client start.");
+            //  Klientam jāizsauc StartClient() MainMenu scenā! Pārtraucam klienta sākšanu.
             isLoadingScene = false;
             yield break;
         }
 
-        // --- CRITICAL: Always set PlayerPrefab on NetworkManager.Singleton before starting client ---
+        //  Vienmēr iestatīt PlayerPrefab uz NetworkManager.Singleton pirms klienta sākšanas
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.NetworkConfig != null)
         {
             GameObject prefabToAssign = playerPrefabReference;
@@ -380,10 +413,12 @@ public class GameNetworkManager : MonoBehaviour
             {
                 NetworkManager.Singleton.NetworkConfig.PlayerPrefab = prefabToAssign;
                 Debug.Log($"GameNetworkManager: Set PlayerPrefab on NetworkManager.Singleton: {prefabToAssign.name}");
+                //  Iestatīts PlayerPrefab uz NetworkManager.Singleton: {prefabToAssign.name}
             }
         }
 
-        // --- CRITICAL: Pass authentication ID as connection data ---
+
+        //  Nodot autentifikācijas ID kā savienojuma datus
         if (NetworkManager.Singleton != null)
         {
             string authId = "";
@@ -396,23 +431,27 @@ public class GameNetworkManager : MonoBehaviour
             {
                 NetworkManager.Singleton.NetworkConfig.ConnectionData = System.Text.Encoding.UTF8.GetBytes(authId);
                 Debug.Log($"GameNetworkManager: Set ConnectionData to authId: {authId}");
+                //  Iestatīti ConnectionData uz authId: {authId}
             }
         }
 
-        // Validate transport configuration
+
+        // Validējam transporta konfigurāciju
         var transport = NetworkManager.Singleton.GetComponent<Unity.Netcode.Transports.UTP.UnityTransport>();
         if (transport == null || transport.Protocol != Unity.Netcode.Transports.UTP.UnityTransport.ProtocolType.RelayUnityTransport)
         {
             Debug.LogError("GameNetworkManager: Client transport is NOT configured for relay! Aborting StartClient.");
+            // Klienta transports NAV konfigurēts relejam! Pārtraucam StartClient.
             isLoadingScene = false;
             yield break;
         }
 
-        // Start client - ConnectionApprovalCheck will handle spawning
+        //  Sākam klientu - ConnectionApprovalCheck pārvaldīs spawning
         bool clientStarted = false;
         try
         {
             Debug.LogWarning("GameNetworkManager: [CLIENT] Calling NetworkManager.Singleton.StartClient()");
+            // Izsaucam NetworkManager.Singleton.StartClient()
             clientStarted = NetworkManager.Singleton.StartClient();
             Debug.LogWarning($"GameNetworkManager: [CLIENT] StartClient() returned: {clientStarted}");
         }
@@ -430,7 +469,7 @@ public class GameNetworkManager : MonoBehaviour
             yield break;
         }
 
-        // Wait for connection
+        // Gaidām savienojumu
         float timeout = 30f;
         float elapsed = 0f;
         while (elapsed < timeout && !NetworkManager.Singleton.IsConnectedClient)
@@ -442,18 +481,22 @@ public class GameNetworkManager : MonoBehaviour
         if (!NetworkManager.Singleton.IsConnectedClient)
         {
             Debug.LogError($"GameNetworkManager: Client failed to connect within {timeout} seconds");
+            //  Klientam neizdevās savienoties {timeout} sekunžu laikā
             isLoadingScene = false;
             yield break;
         }
 
         Debug.Log("GameNetworkManager: Client connected successfully!");
+        // Klients veiksmīgi savienojies!
 
-        // Load scene if needed
+
+        //  Ielādējam scēnu, ja nepieciešams
         string expectedScene = pendingSceneName;
         string currentSceneNow = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (!string.IsNullOrEmpty(expectedScene) && currentSceneNow != expectedScene)
         {
             Debug.LogWarning($"GameNetworkManager: Client loading scene {expectedScene}");
+            // Klients ielādē scēnu {expectedScene}
             UnityEngine.SceneManagement.SceneManager.LoadScene(expectedScene);
             
             float sceneLoadWait = 10f;
@@ -476,7 +519,7 @@ public class GameNetworkManager : MonoBehaviour
         isLoadingScene = true;
         Debug.Log("GameNetworkManager: Starting host for networked game...");
 
-        // CRITICAL: Disable PlayerPrefab temporarily to prevent automatic spawning
+        //  Disable PlayerPrefab temporarily to prevent automatic spawning
         var allManagers = FindObjectsByType<NetworkManager>(FindObjectsSortMode.None);
         foreach (var nm in allManagers)
         {
@@ -547,7 +590,7 @@ public class GameNetworkManager : MonoBehaviour
         LoadSceneAsServer(sceneName);
     }
 
-    // FIXED: Add method to get expected player count from lobby
+
     private int GetExpectedPlayerCount()
     {
         int expectedPlayers = 1; // Host always counts as 1
@@ -566,7 +609,7 @@ public class GameNetworkManager : MonoBehaviour
                 }
             }
             
-            // Fallback: check player count from LobbyManager dictionaries
+            // check player count from LobbyManager dictionaries
             if (expectedPlayers == 1)
             {
                 var playerNamesField = typeof(LobbyManager).GetField("playerNames", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -660,10 +703,10 @@ public class GameNetworkManager : MonoBehaviour
     {
         Debug.Log($"GameNetworkManager: Scene {sceneName} fully loaded, network game ready");
 
-        // CRITICAL: Reset spawn counters for new game
+        //  Reset spawn counters for new game
         ResetSpawnCounters();
 
-        // CRITICAL: Re-assign PlayerPrefab after scene load
+        // Re-assign PlayerPrefab after scene load
         if (prefabToAssign != null)
         {
             NetworkManager.Singleton.NetworkConfig.PlayerPrefab = prefabToAssign;
@@ -700,14 +743,14 @@ public class GameNetworkManager : MonoBehaviour
         
         Debug.Log("GameNetworkManager: Scene load complete - manually spawning all players at inspector spawn points");
         
-        // CRITICAL: Manually spawn all connected players at correct positions after scene load
+        //  Manually spawn all connected players at correct positions after scene load
         if (NetworkManager.Singleton.IsServer)
         {
             StartCoroutine(ManuallySpawnAllPlayers());
         }
     }
 
-    // ADDED: Missing ManuallySpawnAllPlayers method
+    // Missing ManuallySpawnAllPlayers method
     private IEnumerator ManuallySpawnAllPlayers()
     {
         Debug.Log("GameNetworkManager: Starting manual spawn process for all connected players");
@@ -744,8 +787,8 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log("GameNetworkManager: Manual spawn process completed for all players");
     }
 
-    // FIXED: GetTeamForClient method with improved auth ID matching and better fallbacks
-    // FIXED: Make public for GoalTrigger and other scripts
+    //  GetTeamForClient method with improved auth ID matching and better fallbacks
+    //  Make public for GoalTrigger and other scripts
     public string GetTeamForClient(ulong clientId)
     {
         Debug.Log($"========== GET TEAM FOR CLIENT {clientId} ==========");
@@ -761,7 +804,7 @@ public class GameNetworkManager : MonoBehaviour
             catch { }
         }
 
-        // Method 1: PRIORITY - Get from stored team data using auth ID matching
+        // Method 1:  - Get from stored team data using auth ID matching
         try
         {
             string teamData = PlayerPrefs.GetString("AllPlayerTeams", "");
@@ -826,7 +869,7 @@ public class GameNetworkManager : MonoBehaviour
             Debug.LogWarning($"GameNetworkManager: Error reading fallback team: {e.Message}");
         }
         
-        // Method 3: ENHANCED - Deterministic assignment based on client ID for consistency
+        // Method 3:  - Deterministic assignment based on client ID for consistency
         var allClientIds = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
         allClientIds.Sort(); // Sort to ensure consistent ordering across all clients
         
@@ -838,7 +881,6 @@ public class GameNetworkManager : MonoBehaviour
             clientIndex = (int)(clientId % 2);
         }
         
-        // FIXED: Ensure proper team distribution
         string assignedTeam = (clientIndex % 2 == 0) ? "Red" : "Blue";
         
         Debug.Log($"GameNetworkManager: ✓ DETERMINISTIC ASSIGNMENT for client {clientId}:");
@@ -851,8 +893,7 @@ public class GameNetworkManager : MonoBehaviour
         return assignedTeam;
     }
 
-    // ENHANCED: Method to get spawn position with better validation and error handling
-    // FIXED: Make public for GoalTrigger and other scripts
+    
     public Vector3 GetSpawnPositionFromInspector(ulong clientId, string team)
     {
         Debug.Log($"========== GET SPAWN POSITION FROM INSPECTOR ==========");
@@ -880,7 +921,7 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        // ENHANCED: Better spawn point validation
+        // : Better spawn point validation
         if (teamSpawns == null || teamSpawns.Length == 0)
         {
             Debug.LogError($"GameNetworkManager: ✗ NO {team} TEAM SPAWN TRANSFORMS ASSIGNED!");
@@ -901,11 +942,11 @@ public class GameNetworkManager : MonoBehaviour
             return fallback;
         }
         
-        // ENHANCED: Sequential spawn assignment with better error handling
+        // : Sequential spawn assignment with better error handling
         int spawnIndex = GetNextSpawnIndexForTeam(team, teamSpawns.Length);
         Debug.Log($"Sequential spawn index for {team} team: {spawnIndex}");
         
-        // ADDED: Validate spawn index is within bounds
+        // : Validate spawn index is within bounds
         if (spawnIndex < 0 || spawnIndex >= teamSpawns.Length)
         {
             Debug.LogError($"GameNetworkManager: Invalid spawn index {spawnIndex} for team {team} (max: {teamSpawns.Length - 1})");
@@ -938,10 +979,10 @@ public class GameNetworkManager : MonoBehaviour
             return fallback;
         }
         
-        // ENHANCED: Use exact transform position with validation
+        // : Use exact transform position with validation
         Vector3 spawnPos = spawnTransform.position;
         
-        // ADDED: Validate spawn position is reasonable
+        // : Validate spawn position is reasonable
         if (float.IsNaN(spawnPos.x) || float.IsNaN(spawnPos.y) || float.IsNaN(spawnPos.z))
         {
             Debug.LogError($"GameNetworkManager: Invalid spawn position detected: {spawnPos}");
@@ -960,12 +1001,12 @@ public class GameNetworkManager : MonoBehaviour
         return spawnPos;
     }
 
-    // ENHANCED: Manually spawn a player with better error handling and validation
+    // Manually spawn a player with better error handling and validation
     private void ManuallySpawnPlayer(ulong clientId)
     {
         Debug.Log($"========== MANUAL SPAWN PLAYER {clientId} ==========");
         
-        // ENHANCED: Additional validations before spawning
+        //  Additional validations before spawning
         if (!NetworkManager.Singleton.IsServer)
         {
             Debug.LogError($"GameNetworkManager: ManuallySpawnPlayer called on non-server! Client {clientId} will not be spawned.");
@@ -978,7 +1019,7 @@ public class GameNetworkManager : MonoBehaviour
             return;
         }
         
-        // ADDED: Check if player is already spawned
+        //  Check if player is already spawned
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var clientData))
         {
             if (clientData.PlayerObject != null)
@@ -988,15 +1029,15 @@ public class GameNetworkManager : MonoBehaviour
             }
         }
         
-        // CRITICAL: Get team assignment with extensive logging
+        // Get team assignment with extensive logging
         string team = GetTeamForClient(clientId);
         Debug.Log($"GameNetworkManager: Client {clientId} assigned to team: {team}");
         
-        // CRITICAL: Get spawn position from inspector transforms only
+        //  Get spawn position from inspector transforms only
         Vector3 spawnPos = GetSpawnPositionFromInspector(clientId, team);
         Debug.Log($"GameNetworkManager: Client {clientId} spawn position: {spawnPos}");
         
-        // ENHANCED: Team-specific rotation with validation
+        // Team-specific rotation with validation
         Quaternion spawnRot;
         if (team == "Blue")
         {
@@ -1020,7 +1061,7 @@ public class GameNetworkManager : MonoBehaviour
                 return;
             }
             
-            // FIXED: Force position and rotation immediately after instantiation
+            //  Force position and rotation immediately after instantiation
             playerObject.transform.position = spawnPos;
             playerObject.transform.rotation = spawnRot;
             
@@ -1030,11 +1071,11 @@ public class GameNetworkManager : MonoBehaviour
             var networkObject = playerObject.GetComponent<Unity.Netcode.NetworkObject>();
             if (networkObject != null)
             {
-                // CRITICAL: Spawn as player object for the specific client
+                //  Spawn as player object for the specific client
                 networkObject.SpawnAsPlayerObject(clientId);
                 Debug.Log($"GameNetworkManager: Spawned NetworkObject for client {clientId}");
                 
-                // ADDED: Wait a frame for network spawn to complete
+                //  Wait a frame for network spawn to complete
                 StartCoroutine(FinalizePlayerSpawn(playerObject, clientId, team, spawnPos, spawnRot));
             }
             else
@@ -1051,7 +1092,7 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log($"================================================");
     }
 
-    // ENHANCED: Finalize player spawn with better position synchronization
+    //  Finalize player spawn with better position synchronization
     private IEnumerator FinalizePlayerSpawn(GameObject playerObject, ulong clientId, string team, Vector3 spawnPos, Quaternion spawnRot)
     {
         yield return null; // Wait one frame for network spawn to complete
@@ -1064,7 +1105,7 @@ public class GameNetworkManager : MonoBehaviour
         
         Debug.Log($"GameNetworkManager: Finalizing spawn for client {clientId}");
         
-        // ENHANCED: Multiple position enforcement attempts
+        //  Multiple position enforcement attempts
         for (int i = 0; i < 3; i++)
         {
             // Force position and rotation
@@ -1081,7 +1122,7 @@ public class GameNetworkManager : MonoBehaviour
                 rigidbody.angularVelocity = Vector3.zero;
             }
             
-            // ADDED: Update network position if player has PlayerMovement
+            //  Update network position if player has PlayerMovement
             var pm = playerObject.GetComponent<PlayerMovement>(); // renamed from playerMovement to pm
             if (pm != null && pm.IsServer)
             {
@@ -1135,14 +1176,14 @@ public class GameNetworkManager : MonoBehaviour
             playerMovement.SetTeamServerRpc(teamEnum);
         }
 
-        // --- NEW: Sync team visuals on all clients after team assignment ---
+        //  Sync team visuals on all clients after team assignment ---
         var netObj = playerObject.GetComponent<Unity.Netcode.NetworkObject>();
         if (netObj != null && NetworkManager.Singleton.IsServer)
         {
             SyncTeamVisualsClientRpc(netObj.NetworkObjectId, team);
         }
 
-        // ENHANCED: Setup camera for local player with delay
+        //  Setup camera for local player with delay
         if (clientId == NetworkManager.Singleton.LocalClientId)
         {
             Debug.Log($"GameNetworkManager: Setting up camera for local client {clientId}");
@@ -1164,7 +1205,7 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log($"  Network Object ID: {netObj?.NetworkObjectId}");
     }
 
-    // NEW: ClientRpc to sync team visuals after spawn/team assignment
+    //  ClientRpc to sync team visuals after spawn/team assignment
     [Unity.Netcode.ClientRpc]
     private void SyncTeamVisualsClientRpc(ulong networkObjectId, string team)
     {
@@ -1188,69 +1229,55 @@ public class GameNetworkManager : MonoBehaviour
         }
     }
 
-    // COMPLETELY REWRITTEN: Much more reliable team color sync that actually works for clients
     private void ApplyTeamColorWithSync(GameObject playerObject, string team, ulong clientId)
     {
         Debug.Log($"GameNetworkManager: Applying team color for {team} team with FORCED client sync");
         
-        // Apply colors immediately on server
         ApplyTeamColorDirectly(playerObject, team);
         
-        // CRITICAL: Get the NetworkObject and immediately force sync to ALL clients
         var networkObject = playerObject.GetComponent<Unity.Netcode.NetworkObject>();
         if (networkObject != null && NetworkManager.Singleton.IsServer)
         {
             Debug.Log($"GameNetworkManager: FORCING team color sync to ALL clients for NetworkObject {networkObject.NetworkObjectId}");
             
-            // IMMEDIATE call to all clients
             ForceTeamColorClientRpc(networkObject.NetworkObjectId, team);
             
-            // Multiple follow-up calls to ensure delivery
             StartCoroutine(ForceTeamColorSyncRepeated(networkObject.NetworkObjectId, team));
         }
     }
 
-    // FIXED: Repeated team color sync with more aggressive timing
     private IEnumerator ForceTeamColorSyncRepeated(ulong networkObjectId, string team)
     {
-        // Immediate second attempt
         yield return new WaitForSeconds(0.05f);
         ForceTeamColorClientRpc(networkObjectId, team);
         
-        // Third attempt
         yield return new WaitForSeconds(0.1f);
         ForceTeamColorClientRpc(networkObjectId, team);
         
-        // Fourth attempt
         yield return new WaitForSeconds(0.2f);
         ForceTeamColorClientRpc(networkObjectId, team);
         
-        // Fifth attempt
         yield return new WaitForSeconds(0.5f);
         ForceTeamColorClientRpc(networkObjectId, team);
         
-        // Final attempt
         yield return new WaitForSeconds(1f);
         ForceTeamColorClientRpc(networkObjectId, team);
         
         Debug.Log($"GameNetworkManager: Completed 6 team color sync attempts for {team} team");
     }
 
-    // COMPLETELY REWRITTEN: More reliable ClientRpc for team colors
     [Unity.Netcode.ClientRpc]
     private void ForceTeamColorClientRpc(ulong networkObjectId, string team)
     {
         Debug.Log($"GameNetworkManager: [ClientRpc] RECEIVED team color command for NetworkObject {networkObjectId}, team: {team}");
         Debug.Log($"GameNetworkManager: [ClientRpc] Running on: IsServer={NetworkManager.Singleton.IsServer}, IsHost={NetworkManager.Singleton.IsHost}, IsClient={NetworkManager.Singleton.IsClient}");
         
-        // CRITICAL: Find player object with multiple methods
         GameObject playerObject = FindPlayerObjectByNetworkId(networkObjectId);
         
         if (playerObject != null)
         {
             Debug.Log($"GameNetworkManager: [ClientRpc] Found player object {playerObject.name}, applying {team} color NOW");
             
-            // Apply team color with maximum force
             bool success = ForceTeamColorOnClient(playerObject, team);
             
             if (success)
@@ -1260,7 +1287,6 @@ public class GameNetworkManager : MonoBehaviour
             else
             {
                 Debug.LogError($"GameNetworkManager: [ClientRpc] ✗ FAILED to apply {team} color on client");
-                // Start aggressive retry
                 StartCoroutine(AggressiveClientColorRetry(networkObjectId, team));
             }
         }
@@ -1271,7 +1297,6 @@ public class GameNetworkManager : MonoBehaviour
         }
     }
 
-    // NEW: Aggressive client-side color retry
     private IEnumerator AggressiveClientColorRetry(ulong networkObjectId, string team)
     {
         int maxAttempts = 20;
@@ -1299,14 +1324,12 @@ public class GameNetworkManager : MonoBehaviour
         Debug.LogError($"GameNetworkManager: [ClientRetry] COMPLETE FAILURE - Could not apply {team} color after {maxAttempts} attempts");
     }
 
-    // NEW: Force team color specifically on client with maximum aggressiveness
     private bool ForceTeamColorOnClient(GameObject playerObject, string team)
     {
         if (playerObject == null) return false;
         
         Debug.Log($"GameNetworkManager: CLIENT FORCE applying {team} team color to {playerObject.name}");
         
-        // EXTREME colors for visibility
         Color teamColor;
         if (team == "Blue")
         {
@@ -1319,7 +1342,6 @@ public class GameNetworkManager : MonoBehaviour
         
         Debug.Log($"GameNetworkManager: CLIENT using EXTREME color {teamColor} for {team} team");
         
-        // Get ALL possible renderers
         var allRenderers = new List<Renderer>();
         allRenderers.AddRange(playerObject.GetComponentsInChildren<Renderer>(true));
         allRenderers.AddRange(playerObject.GetComponents<Renderer>());
@@ -1338,7 +1360,6 @@ public class GameNetworkManager : MonoBehaviour
             
             try
             {
-                // EXTREME approach: Replace ALL materials
                 Material[] materials = renderer.materials;
                 for (int i = 0; i < materials.Length; i++)
                 {
@@ -1362,11 +1383,9 @@ public class GameNetworkManager : MonoBehaviour
                     }
                 }
                 
-                // Force assign new materials
                 renderer.materials = materials;
-                renderer.material = materials[0]; // Force refresh
+                renderer.material = materials[0]; 
                 
-                // Force renderer refresh
                 renderer.enabled = false;
                 renderer.enabled = true;
                 
@@ -1386,10 +1405,8 @@ public class GameNetworkManager : MonoBehaviour
         return success;
     }
 
-    // NEW: Helper method to get auth ID for a specific client
     private string GetAuthIdForClient(ulong clientId)
     {
-        // Always return the local authId for the local client (works on both host and client)
         if (clientId == NetworkManager.Singleton.LocalClientId)
         {
             try
@@ -1401,7 +1418,6 @@ public class GameNetworkManager : MonoBehaviour
                 Debug.LogWarning($"GameNetworkManager: Error getting local auth ID: {e.Message}");
             }
         }
-        // For server, use stored mapping
         if (clientAuthIds.ContainsKey(clientId))
         {
             return clientAuthIds[clientId];
@@ -1409,7 +1425,6 @@ public class GameNetworkManager : MonoBehaviour
         return "";
     }
 
-    // ADDED: ValidateSpawnPoints method
     private void ValidateSpawnPoints()
     {
         Debug.Log("========== VALIDATING SPAWN POINTS ==========");
@@ -1467,7 +1482,6 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log("===============================================");
     }
 
-    // ADDED: LoadSceneThenStartHost method that was missing
     private IEnumerator LoadSceneThenStartHost(string sceneName)
     {
         isLoadingScene = true;
@@ -1495,19 +1509,15 @@ public class GameNetworkManager : MonoBehaviour
         StartCoroutine(StartHostAndLoadScene(sceneName));
     }
 
-    // NEW: Get next sequential spawn index for a team
     private int GetNextSpawnIndexForTeam(string team, int maxSpawns)
     {
-        // Initialize counter if not exists
         if (!teamSpawnCounters.ContainsKey(team))
         {
             teamSpawnCounters[team] = 0;
         }
         
-        // Get current counter value
         int spawnIndex = teamSpawnCounters[team];
         
-        // Increment counter for next player (wrap around if needed)
         teamSpawnCounters[team] = (teamSpawnCounters[team] + 1) % maxSpawns;
         
         Debug.Log($"GameNetworkManager: {team} team spawn counter: {spawnIndex} (next will be {teamSpawnCounters[team]})");
@@ -1515,7 +1525,6 @@ public class GameNetworkManager : MonoBehaviour
         return spawnIndex;
     }
 
-    // NEW: Reset spawn counters when starting a new game
     private void ResetSpawnCounters()
     {
         teamSpawnCounters["Red"] = 0;
@@ -1523,7 +1532,6 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log("GameNetworkManager: Reset spawn counters for new game");
     }
 
-    // ENHANCED: Connection approval with better auth ID storage and validation
     private void ConnectionApprovalCheck(Unity.Netcode.NetworkManager.ConnectionApprovalRequest request, Unity.Netcode.NetworkManager.ConnectionApprovalResponse response)
     {
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
@@ -1584,7 +1592,6 @@ public class GameNetworkManager : MonoBehaviour
             Debug.LogWarning($"GameNetworkManager: ⚠ No connection data payload for client {request.ClientNetworkId} - team assignment will use fallback");
         }
         
-        // Block player spawning in MainMenu
         if (currentScene == "MainMenu")
         {
             Debug.LogWarning($"GameNetworkManager: ✗ BLOCKING player spawn in MainMenu for client {request.ClientNetworkId}");
@@ -1595,7 +1602,6 @@ public class GameNetworkManager : MonoBehaviour
             return;
         }
 
-        // CRITICAL: Ensure PlayerPrefab is set for spawning
         if (NetworkManager.Singleton.NetworkConfig.PlayerPrefab == null && prefabToAssign != null)
         {
             NetworkManager.Singleton.NetworkConfig.PlayerPrefab = prefabToAssign;
@@ -1609,7 +1615,6 @@ public class GameNetworkManager : MonoBehaviour
             return;
         }
 
-        // CRITICAL: Always disable automatic spawning - manual spawning handles everything
         Debug.Log($"GameNetworkManager: ✓ APPROVING connection for client {request.ClientNetworkId}");
         Debug.Log($"GameNetworkManager: ✓ MANUAL SPAWNING will handle all positioning and team assignment");
         
@@ -1622,7 +1627,6 @@ public class GameNetworkManager : MonoBehaviour
         Debug.Log($"===============================================");
     }
 
-    // FIXED: Improved player object finding method
     private GameObject FindPlayerObjectByNetworkId(ulong networkObjectId)
     {
         // Method 1: SpawnedObjects (fastest)
@@ -1656,7 +1660,6 @@ public class GameNetworkManager : MonoBehaviour
         return null;
     }
 
-    // FIXED: Much more aggressive team color application
     private bool ApplyTeamColorDirectly(GameObject playerObject, string team)
     {
         if (playerObject == null)
@@ -1667,7 +1670,6 @@ public class GameNetworkManager : MonoBehaviour
         
         Debug.Log($"GameNetworkManager: Applying {team} team color to {playerObject.name}");
         
-        // FIXED: Use much more vibrant and distinct colors
         Color teamColor;
         if (team == "Blue")
         {

@@ -1,11 +1,11 @@
 using UnityEngine;
-using UnityEngine.UI; // Added for Slider
+using UnityEngine.UI; // Pievienots Slider izmantošanai
 
 public class SettingsManager : MonoBehaviour
 {
     public static SettingsManager Instance { get; private set; }
 
-    // Settings properties
+    // Iestatījumu īpašības
     public float MouseSensitivity { get; set; } = 1f;
     public float Volume { get; set; } = 1f;
     public string PlayerName { get; private set; } = "Player";
@@ -14,12 +14,12 @@ public class SettingsManager : MonoBehaviour
     private const string MOUSE_SENS_KEY = "MouseSensitivity";
     private const string VOLUME_KEY = "Volume";
 
-    // ADDED: Audio settings properties
+    // Audio iestatījumu īpašības
     private float musicVolume = 1f;
     private float sfxVolume = 1f;
     private float masterVolume = 1f;
 
-    // ADDED: UI Sliders for audio settings
+    //  UI slaideri audio iestatījumiem
     public Slider musicSlider;
     public Slider sfxSlider;
     public Slider masterVolumeSlider;
@@ -49,36 +49,36 @@ public class SettingsManager : MonoBehaviour
 
     public void ResetToDefaults()
     {
-        Debug.Log("SettingsManager: Resetting to default values...");
+        Debug.Log("SettingsManager: Atiestatām uz noklusējuma vērtībām...");
         
-        // Reset to default values
+        // Atiestatīt uz noklusējuma vērtībām
         MouseSensitivity = 1f;
         Volume = 1f;
         Screen.fullScreen = true;
         PlayerName = "Player";
         
-        // ADDED: Reset audio settings to defaults
+        // Atiestatīt audio iestatījumus uz noklusējuma vērtībām
         musicVolume = 1f;
         sfxVolume = 1f;
         masterVolume = 1f;
         
-        // Save defaults
+        // Saglabāt noklusējuma vērtības
         SaveSettings();
         
-        Debug.Log($"SettingsManager: Reset complete - Player Name: {PlayerName}");
+        Debug.Log($"SettingsManager: Atiestatīšana pabeigta - Spēlētāja vārds: {PlayerName}");
     }
 
     public void LoadSettings()
     {
-        // Load player name
+        // Ielādēt spēlētāja vārdu
         PlayerName = PlayerPrefs.GetString("PlayerName", "Player");
         
-        // Load single volume setting
+        // Ielādēt vienu skaļuma iestatījumu
         masterVolume = PlayerPrefs.GetFloat("MasterVolume", 1.0f);
         
-        Debug.Log($"SettingsManager: Loaded settings - Name: {PlayerName}, Volume: {masterVolume:F2}");
+        Debug.Log($"SettingsManager: Ielādēti iestatījumi - Vārds: {PlayerName}, Skaļums: {masterVolume:F2}");
         
-        // Apply audio settings after loading
+        // Pielietot audio iestatījumus pēc ielādes
         StartCoroutine(ApplyAudioSettingsDelayed());
     }
 
@@ -88,7 +88,7 @@ public class SettingsManager : MonoBehaviour
         PlayerPrefs.SetFloat(VOLUME_KEY, Volume);
         PlayerPrefs.SetString(PLAYER_NAME_KEY, PlayerName);
 
-        // ADDED: Save audio settings
+        //  Saglabāt audio iestatījumus
         PlayerPrefs.SetFloat("MusicVolume", musicVolume);
         PlayerPrefs.SetFloat("SFXVolume", sfxVolume);
         PlayerPrefs.SetFloat("MasterVolume", masterVolume);
@@ -96,52 +96,52 @@ public class SettingsManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    // ADDED: Method to set master volume
+    //  Metode galvenā skaļuma iestatīšanai
     public void SetMasterVolume(float volume)
     {
         masterVolume = Mathf.Clamp01(volume);
         
-        // Apply volume to AudioManager immediately
+        // Nekavējoties pielietot skaļumu AudioManager
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.SetMasterVolume(masterVolume);
-            Debug.Log($"SettingsManager: Set master volume to {masterVolume:F2} via AudioManager");
+            Debug.Log($"SettingsManager: Iestatīts galvenais skaļums uz {masterVolume:F2} caur AudioManager");
         }
         else
         {
-            Debug.LogWarning("SettingsManager: AudioManager.Instance is null, using AudioListener fallback");
-            // Fallback to AudioListener
+            Debug.LogWarning("SettingsManager: AudioManager.Instance ir null, izmantojam AudioListener rezerves variantu");
+            // Rezerves variants - AudioListener
             AudioListener.volume = masterVolume;
         }
         
         SaveSettings();
-        Debug.Log($"SettingsManager: Master volume set to {masterVolume:F2}");
+        Debug.Log($"SettingsManager: Galvenais skaļums iestatīts uz {masterVolume:F2}");
     }
 
-    // REMOVED: SetMusicVolume and SetSFXVolume methods - using single volume control now
 
-    // ADDED: Method to ensure AudioManager has correct settings on startup
+
+    //  Metode, lai nodrošinātu, ka AudioManager sākotnēji ir ar pareiziem iestatījumiem
     public void ApplyAudioSettings()
     {
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.SetMasterVolume(masterVolume);
-            Debug.Log($"SettingsManager: Applied master volume: {masterVolume:F2}");
+            Debug.Log($"SettingsManager: Pielietots galvenais skaļums: {masterVolume:F2}");
         }
         else
         {
             AudioListener.volume = masterVolume;
-            Debug.LogWarning("SettingsManager: Applied volume via AudioListener fallback");
+            Debug.LogWarning("SettingsManager: Pielietots skaļums caur AudioListener rezerves variantu");
         }
     }
 
-    // ADDED: Property accessors for UI
+    //  Īpašību piekļuves metodes lietotāja saskarnei
     public float MasterVolume => masterVolume;
 
-    // ADDED: Apply audio settings with delay to ensure AudioManager is ready
+    //  Pielietot audio iestatījumus ar aizturi, lai nodrošinātu, ka AudioManager ir gatavs
     private System.Collections.IEnumerator ApplyAudioSettingsDelayed()
     {
-        // Wait for AudioManager to be initialized
+        // Gaidīt, līdz AudioManager tiek inicializēts
         float timeout = 5f;
         float elapsed = 0f;
         
@@ -157,11 +157,11 @@ public class SettingsManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("SettingsManager: AudioManager not found after timeout, settings may not be applied");
+            Debug.LogWarning("SettingsManager: AudioManager nav atrasts pēc taimauta, iestatījumi var nebūt pielietoti");
         }
     }
 
-    // ADDED: Method to set up slider listeners
+    //  Metode slaideru klausītāju uzstādīšanai
     public void SetupAudioSliderListeners()
     {
         if (musicSlider != null)
@@ -169,7 +169,7 @@ public class SettingsManager : MonoBehaviour
             musicSlider.onValueChanged.RemoveAllListeners();
             musicSlider.onValueChanged.AddListener(SetMasterVolume);
             musicSlider.value = masterVolume;
-            Debug.Log("SettingsManager: Set up music slider listener");
+            Debug.Log("SettingsManager: Uzstādīts mūzikas slaidera klausītājs");
         }
         
         if (sfxSlider != null)
@@ -177,7 +177,7 @@ public class SettingsManager : MonoBehaviour
             sfxSlider.onValueChanged.RemoveAllListeners();
             sfxSlider.onValueChanged.AddListener(SetMasterVolume);
             sfxSlider.value = masterVolume;
-            Debug.Log("SettingsManager: Set up SFX slider listener");
+            Debug.Log("SettingsManager: Uzstādīts SFX slaidera klausītājs");
         }
         
         if (masterVolumeSlider != null)
@@ -185,7 +185,7 @@ public class SettingsManager : MonoBehaviour
             masterVolumeSlider.onValueChanged.RemoveAllListeners();
             masterVolumeSlider.onValueChanged.AddListener(SetMasterVolume);
             masterVolumeSlider.value = masterVolume;
-            Debug.Log("SettingsManager: Set up master volume slider listener");
+            Debug.Log("SettingsManager: Uzstādīts galvenā skaļuma slaidera klausītājs");
         }
     }
 }

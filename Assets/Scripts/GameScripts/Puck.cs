@@ -1,19 +1,20 @@
 using UnityEngine;
 using Unity.Netcode;
-using HockeyGame.Game; // FIXED: Add namespace for GoalTrigger
+using HockeyGame.Game; // Pievienota namespace priekš GoalTrigger
 
+// Šī klase pārvalda hokeja ripas uzvedību, tās fizikas īpašības un mijiedarbību ar spēlētājiem
+// Ripa var būt brīvi kustoša vai turēta spēlētāju rokās, un tiek sinhronizēta starp visiem tīkla klientiem
 public class Puck : NetworkBehaviour
 {
-    [Header("Puck Settings")]
-    [SerializeField] private float friction = 0.95f;
-    [SerializeField] private float minVelocity = 0.1f;
-    [SerializeField] private bool enableDebugLogs = true;
+    [Header("Ripas iestatījumi")]
+    [SerializeField] private float friction = 0.95f; // Berzes koeficients, kas palēnina ripu
+    [SerializeField] private float minVelocity = 0.1f; // Minimālais ātrums, zem kura ripa apstājas
+    [SerializeField] private bool enableDebugLogs = true; // Vai atļaut atkļūdošanas ziņojumus
     
-    private Rigidbody puckRigidbody;
-    private PuckPickup currentHolder;
-    private bool isHeld = false;
-    
-    // Network variable to sync held state
+    private Rigidbody puckRigidbody; // Ripas fiziskais ķermenis
+    private PuckPickup currentHolder; // Spēlētājs, kas šobrīd tur ripu
+    private bool isHeld = false; // Vai ripa ir turēta kāda spēlētāja rokās
+    // Tīkla mainīgais, lai sinhronizētu turēšanas stāvokli
     private NetworkVariable<bool> networkIsHeld = new NetworkVariable<bool>(false);
     
     private void Awake()
@@ -23,63 +24,61 @@ public class Puck : NetworkBehaviour
         {
             puckRigidbody = gameObject.AddComponent<Rigidbody>();
         }
+        // Nodrošina pareizu ripas fiziku
+        puckRigidbody.mass = 0.16f; // Standarta hokeja ripas masa
+        puckRigidbody.linearDamping = 0.5f; // Lineārā kustības slāpēšana
+        puckRigidbody.angularDamping = 0.5f; // Rotācijas slāpēšana
         
-        // Ensure proper puck physics
-        puckRigidbody.mass = 0.16f; // Standard hockey puck mass
-        puckRigidbody.linearDamping = 0.5f;
-        puckRigidbody.angularDamping = 0.5f;
-        
-        // Ensure proper tag and layer
+        // Nodrošina pareizu tagu un slāni
         if (!CompareTag("Puck"))
         {
             tag = "Puck";
         }
         
-        if (gameObject.layer != 7) // Layer 7 for pucks
+        if (gameObject.layer != 7) // 7. slānis ripām
         {
             gameObject.layer = 7;
         }
-        
         if (enableDebugLogs)
         {
-            Debug.Log($"Puck: Initialized with mass {puckRigidbody.mass}kg on layer {gameObject.layer}");
+            Debug.Log($"Puck: Inicializēta ar masu {puckRigidbody.mass}kg {gameObject.layer}. slānī");
         }
     }
     
     private void Update()
     {
-        // Sync local state with network state
+        // Sinhronizē lokālo stāvokli ar tīkla stāvokli
         bool networkState = networkIsHeld.Value;
         if (isHeld != networkState)
         {
             isHeld = networkState;
             if (enableDebugLogs)
             {
-                Debug.Log($"Puck: Synced held state to network: {isHeld}");
+                Debug.Log($"Puck: Sinhronizēts turēšanas stāvoklis ar tīklu: {isHeld}");
             }
         }
     }
     
     private void FixedUpdate()
     {
-        // FIXED: Only apply physics when NOT kinematic and NOT held
+        //  Piemēro fiziku tikai kad ripa NAV kinematic un NAV turēta
         if (puckRigidbody == null || puckRigidbody.isKinematic || isHeld)
         {
             return;
         }
         
-        // Apply friction to slow down the puck over time
+        // Piemēro berzi, lai ripa ar laiku palēninātos
         if (puckRigidbody.linearVelocity.magnitude > minVelocity)
         {
             puckRigidbody.linearVelocity *= friction;
         }
         else
         {
-            // Stop very slow movement
+            // Aptur ļoti lēnu kustību
             puckRigidbody.linearVelocity = Vector3.zero;
         }
         
-        // Apply angular friction
+        // Piemēro rotācijas berzi
         if (puckRigidbody.angularVelocity.magnitude > 0.1f)
         {
             puckRigidbody.angularVelocity *= friction;
@@ -89,7 +88,7 @@ public class Puck : NetworkBehaviour
             puckRigidbody.angularVelocity = Vector3.zero;
         }
         
-        // Keep puck on ice level
+        // Notur ripu uz ledus līmeņa
         Vector3 pos = transform.position;
         if (pos.y != 0.71f)
         {
@@ -98,136 +97,139 @@ public class Puck : NetworkBehaviour
         }
     }
     
+    // Pārbauda, vai ripa ir turēta
     public bool IsHeld()
     {
         return isHeld;
     }
     
+    // Metode, kas tiek izsaukta, kad spēlētājs paņem ripu
     public void PickupByPlayer(PuckPickup pickup)
     {
         if (enableDebugLogs)
         {
-            Debug.Log($"Puck: PickupByPlayer called by {pickup.name}");
+            Debug.Log($"Puck: PickupByPlayer izsaukta no {pickup.name}");
         }
         
         currentHolder = pickup;
         isHeld = true;
         
-        // Update network state if we're the server
+        // Atjaunina tīkla stāvokli, ja esam serveris
         if (IsServer)
         {
             networkIsHeld.Value = true;
         }
         
-        // FIXED: Position puck in front of player immediately
+        // Pozicionē ripu spēlētāja priekšā uzreiz
         Vector3 holdWorldPosition = pickup.transform.position + pickup.transform.forward * 1.5f + Vector3.up * 0.5f;
         transform.position = holdWorldPosition;
         transform.rotation = pickup.transform.rotation;
         
-        // FIXED: Parent to hold position with world position maintenance
+        //  Piestiprina ripu turēšanas pozīcijai, saglabājot pasaules pozīciju
         Transform holdPosition = pickup.GetPuckHoldPosition();
         if (holdPosition != null)
         {
-            // Parent with world position stays to maintain current position
+            // Piestiprina ar pasaules pozīcijas saglabāšanu
             transform.SetParent(holdPosition, true);
             
             if (enableDebugLogs)
             {
-                Debug.Log($"Puck: Parented to hold position at world pos: {transform.position}");
+                Debug.Log($"Puck: Piestiprināta turēšanas pozīcijai pasaules koordinātēs: {transform.position}");
             }
         }
         else
         {
-            // Fallback: parent directly to player
+            // Rezerves variants: piestiprina tieši spēlētājam
             transform.SetParent(pickup.transform, true);
             
             if (enableDebugLogs)
             {
-                Debug.Log($"Puck: Parented directly to player at world pos: {transform.position}");
+                Debug.Log($"Puck: Piestiprināta tieši spēlētājam pasaules koordinātēs: {transform.position}");
             }
         }
         
-        // Configure for pickup
+        // Konfigurē fizikas īpašības paņemšanai
         if (puckRigidbody != null)
         {
-            puckRigidbody.isKinematic = true;
-            puckRigidbody.useGravity = false;
+            puckRigidbody.isKinematic = true; // Izslēdz fizikas ietekmi uz ripu
+            puckRigidbody.useGravity = false; // Izslēdz gravitācijas ietekmi
         }
         
         var collider = GetComponent<Collider>();
         if (collider != null)
         {
-            collider.enabled = false;
+            collider.enabled = false; // Izslēdz sadursmes detektēšanu
         }
         
         if (enableDebugLogs)
         {
-            Debug.Log($"Puck: Successfully picked up at final position {transform.position}");
+            Debug.Log($"Puck: Veiksmīgi paņemta gala pozīcijā {transform.position}");
         }
     }
 
+    // Metode ripas atlaišanai no spēlētāja
     public void ReleaseFromPlayer(Vector3 position, Vector3 velocity)
     {
         if (enableDebugLogs)
         {
-            Debug.Log($"Puck: ReleaseFromPlayer called at {position} with velocity {velocity}");
+            Debug.Log($"Puck: ReleaseFromPlayer izsaukta pozīcijā {position} ar ātrumu {velocity}");
         }
         
         currentHolder = null;
         isHeld = false;
         
-        // Update network state if we're the server
+        // Atjaunina tīkla stāvokli, ja esam serveris
         if (IsServer)
         {
             networkIsHeld.Value = false;
         }
         
-        // FIXED: Unparent first, then set position
+        //  Vispirms atvieno no vecāka, tad iestata pozīciju
         transform.SetParent(null);
         
-        // FIXED: Ensure proper release position (in front of player, not at (0,0,0))
+        //  Nodrošina pareizu atlaišanas pozīciju (spēlētāja priekšā, nevis (0,0,0))
         if (position == Vector3.zero)
         {
-            // Emergency fallback if position is zero
+            // Avārijas rezerves variants, ja pozīcija ir nulle
             position = new Vector3(0f, 0.71f, 0f);
-            Debug.LogWarning("Puck: Release position was zero, using center as fallback");
+            Debug.LogWarning("Puck: Atlaišanas pozīcija bija nulle, izmanto centru kā rezerves variantu");
         }
         
         transform.position = position;
         transform.rotation = Quaternion.identity;
         
-        // Configure for release
+        // Konfigurē ripu atlaišanai
         var collider = GetComponent<Collider>();
         if (collider != null)
         {
-            collider.enabled = true;
+            collider.enabled = true; // Ieslēdz sadursmes detektēšanu
         }
         
         if (puckRigidbody != null)
         {
-            puckRigidbody.isKinematic = false;
-            puckRigidbody.useGravity = true;
-            puckRigidbody.linearVelocity = velocity;
-            puckRigidbody.angularVelocity = Vector3.zero;
+            puckRigidbody.isKinematic = false; // Ieslēdz fizikas ietekmi
+            puckRigidbody.useGravity = true; // Ieslēdz gravitāciju
+            puckRigidbody.linearVelocity = velocity; // Piešķir ripaai ātrumu
+            puckRigidbody.angularVelocity = Vector3.zero; // Noņem rotācijas ātrumu
         }
         
         if (enableDebugLogs)
         {
-            Debug.Log($"Puck: Successfully released at position {transform.position} with velocity {velocity}");
+            Debug.Log($"Puck: Veiksmīgi atlaista pozīcijā {transform.position} ar ātrumu {velocity}");
         }
     }
     
-    // ADDED: Method to force clear held state (for shooting system)
+    //  Metode, lai piespiedu kārtā notīrītu turēšanas stāvokli (šaušanas sistēmai)
     public void SetHeld(bool held)
     {
         if (enableDebugLogs)
         {
-            Debug.Log($"Puck: SetHeld called with value: {held}");
+            Debug.Log($"Puck: SetHeld izsaukta ar vērtību: {held}");
         }
         
         isHeld = held;
         
-        // Update network state if we're the server
+        // Atjaunina tīkla stāvokli, ja esam serveris
         if (IsServer)
         {
             networkIsHeld.Value = held;
@@ -237,7 +239,7 @@ public class Puck : NetworkBehaviour
         {
             currentHolder = null;
             
-            // Only enable physics if we're not kinematic for other reasons
+            // Ieslēdz fiziku tikai ja ripa nav kinematic citu iemeslu dēļ
             if (puckRigidbody != null && puckRigidbody.isKinematic)
             {
                 puckRigidbody.isKinematic = false;
@@ -250,7 +252,7 @@ public class Puck : NetworkBehaviour
                 collider.enabled = true;
             }
             
-            // Only unparent if we're actually parented to a hold position
+            // Atvieno tikai ja ripa ir piestiprināta turēšanas pozīcijai
             if (transform.parent != null && 
                 (transform.parent.name.Contains("Hold") || transform.parent.name.Contains("Puck")))
             {
@@ -259,14 +261,14 @@ public class Puck : NetworkBehaviour
         }
     }
     
-    // ADDED: Method to apply shooting force properly
+    //  Metode, lai pareizi piemērotu šaušanas spēku
     public void ApplyShootForce(Vector3 force)
     {
         if (puckRigidbody == null || puckRigidbody.isKinematic)
         {
             if (enableDebugLogs)
             {
-                Debug.LogWarning($"Puck: Cannot apply shoot force - rigidbody is null or kinematic");
+                Debug.LogWarning($"Puck: Nevar piemērot šaušanas spēku - rigidbody ir null vai kinematic");
             }
             return;
         }
@@ -275,27 +277,27 @@ public class Puck : NetworkBehaviour
         
         if (enableDebugLogs)
         {
-            Debug.Log($"Puck: Applied shoot force {force}, resulting velocity: {puckRigidbody.linearVelocity}");
+            Debug.Log($"Puck: Piemērots šaušanas spēks {force}, rezultāta ātrums: {puckRigidbody.linearVelocity}");
         }
     }
     
-    // ADDED: Reset puck to center (for goals)
+    //  Atiestata ripu uz centru (pēc vārtu guvuma)
     public void ResetToCenter()
     {
         if (enableDebugLogs)
         {
-            Debug.Log("Puck: Resetting to center");
+            Debug.Log("Puck: Notiek atiestatīšana uz centru");
         }
         
-        // Clear held state
+        // Notīra turēšanas stāvokli
         SetHeld(false);
         
-        // Position at center
+        // Pozicionē centrā
         Vector3 centerPos = new Vector3(0f, 0.71f, 0f);
         transform.position = centerPos;
         transform.rotation = Quaternion.identity;
         
-        // Stop all movement
+        // Aptur visu kustību
         if (puckRigidbody != null)
         {
             puckRigidbody.linearVelocity = Vector3.zero;
@@ -303,41 +305,43 @@ public class Puck : NetworkBehaviour
         }
     }
     
+    // Apstrādā sadursmes ar citiem objektiem
     private void OnCollisionEnter(Collision collision)
     {
-        // Handle collisions with walls, players, etc.
+        // Apstrādā sadursmes ar sienām, spēlētājiem utt.
         if (enableDebugLogs && !isHeld)
         {
-            Debug.Log($"Puck: Collided with {collision.gameObject.name}");
+            Debug.Log($"Puck: Sadūrās ar {collision.gameObject.name}");
         }
     }
     
+    // Apstrādā iekļūšanu trigeru zonās
     private void OnTriggerEnter(Collider other)
     {
-        // Handle goal detection
+        // Apstrādā vārtu detektēšanu
         if (other.CompareTag("Goal"))
         {
             if (enableDebugLogs)
             {
-                Debug.Log($"Puck: Entered goal trigger {other.name}");
+                Debug.Log($"Puck: Iegāja vārtu trigerī {other.name}");
             }
             
-            // FIXED: Remove reference to non-existent Goal class
-            // Only use GoalTrigger which exists in HockeyGame.Game namespace
+            // Noņemta atsauce uz neeksistējošo Goal klasi
+            // Izmanto tikai GoalTrigger, kas eksistē HockeyGame.Game namespace
             var goalTrigger = other.GetComponent<GoalTrigger>();
             if (goalTrigger != null)
             {
-                // GoalTrigger will handle the goal logic automatically
+                // GoalTrigger automātiski apstrādās vārtu loģiku
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"Puck: Found GoalTrigger component on {other.name}");
+                    Debug.Log($"Puck: Atrasta GoalTrigger komponente uz {other.name}");
                 }
             }
             else
             {
                 if (enableDebugLogs)
                 {
-                    Debug.LogWarning($"Puck: Goal object {other.name} has Goal tag but no GoalTrigger component!");
+                    Debug.LogWarning($"Puck: Vārtu objektam {other.name} ir Goal tags, bet nav GoalTrigger komponentes!");
                 }
             }
         }

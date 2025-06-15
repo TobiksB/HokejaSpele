@@ -5,7 +5,7 @@ public class ScoreManager : NetworkBehaviour
 {
     public static ScoreManager Instance { get; private set; }
     
-    [Header("Score Settings")]
+    [Header("Rezultātu iestatījumi")]
     [SerializeField] private int maxScore = 5;
     
     private NetworkVariable<int> redScore = new NetworkVariable<int>(0);
@@ -15,11 +15,11 @@ public class ScoreManager : NetworkBehaviour
     public event System.Action<string> OnGameEnd;
 
     private void Awake()
-    {
+    {        
         if (Instance == null)
         {
             Instance = this;
-            Debug.Log("ScoreManager: Instance created");
+            Debug.Log("ScoreManager: Instance izveidota");
         }
         else
         {
@@ -34,7 +34,7 @@ public class ScoreManager : NetworkBehaviour
         redScore.OnValueChanged += OnRedScoreChanged;
         blueScore.OnValueChanged += OnBlueScoreChanged;
         
-        Debug.Log("ScoreManager: Network spawned");
+        Debug.Log("ScoreManager: Tīklā izvietots");
     }
 
     public override void OnNetworkDespawn()
@@ -46,42 +46,42 @@ public class ScoreManager : NetworkBehaviour
     }
 
     private void OnRedScoreChanged(int oldValue, int newValue)
-    {
-        Debug.Log($"🏒 RED TEAM SCORED! New score: Red {newValue} - Blue {blueScore.Value}");
+    {        
+        Debug.Log($"SARKANĀ KOMANDA GUVA VĀRTUS! Jauns rezultāts: Sarkanā {newValue} - Zilā {blueScore.Value}");
         
-        // FIXED: Force immediate UI update
+        //  Uzspiest tūlītēju UI atjaunināšanu
         UpdateScoreDisplayImmediate(newValue, blueScore.Value);
         
         if (newValue >= maxScore)
         {
-            Debug.Log($"🏆 GAME OVER! Red team wins {newValue}-{blueScore.Value}!");
+            Debug.Log($"SPĒLE BEIGUSIES! Sarkanā komanda uzvar {newValue}-{blueScore.Value}!");
             OnGameEnd?.Invoke("Red");
         }
     }
 
     private void OnBlueScoreChanged(int oldValue, int newValue)
-    {
-        Debug.Log($"🏒 BLUE TEAM SCORED! New score: Red {redScore.Value} - Blue {newValue}");
+    {        
+        Debug.Log($"ZILĀ KOMANDA GUVA VĀRTUS! Jauns rezultāts: Sarkanā {redScore.Value} - Zilā {newValue}");
         
-        // FIXED: Force immediate UI update
+        //  Uzspiest tūlītēju UI atjaunināšanu
         UpdateScoreDisplayImmediate(redScore.Value, newValue);
         
         if (newValue >= maxScore)
         {
-            Debug.Log($"🏆 GAME OVER! Blue team wins {newValue}-{redScore.Value}!");
+            Debug.Log($"SPĒLE BEIGUSIES! Zilā komanda uzvar {newValue}-{redScore.Value}!");
             OnGameEnd?.Invoke("Blue");
         }
     }
 
-    // FIXED: Add immediate UI update method
+    //  Pievienota tūlītēja UI atjaunināšanas metode
     private void UpdateScoreDisplayImmediate(int redScore, int blueScore)
     {
-        Debug.Log($"📊 SCORE UPDATE: Red {redScore} - Blue {blueScore}");
+        Debug.Log($"REZULTĀTA ATJAUNINĀŠANA: Sarkanā {redScore} - Zilā {blueScore}");
         
-        // Trigger score changed event to update UI immediately
+        // Izraisīt rezultāta maiņas notikumu, lai atjauninātu UI
         OnScoreChanged?.Invoke(redScore, blueScore);
         
-        // FIXED: Try to find UIManager without specific namespace reference
+        //  Mēģināt atrast UIManager bez specifiskas namespace atsauces
         var uiManagers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
         foreach (var uiManager in uiManagers)
         {
@@ -89,23 +89,23 @@ public class ScoreManager : NetworkBehaviour
             {
                 try
                 {
-                    // Use reflection to call UpdateScore if it exists
+                    // Izmanto refleksiju, lai izsauktu UpdateScore, ja tā pastāv
                     var updateScoreMethod = uiManager.GetType().GetMethod("UpdateScore");
                     if (updateScoreMethod != null)
                     {
                         updateScoreMethod.Invoke(uiManager, new object[] { redScore, blueScore });
-                        Debug.Log("📱 ScoreManager: Updated UI via UIManager.UpdateScore()");
+                        Debug.Log("ScoreManager: Atjaunināts UI caur UIManager.UpdateScore()");
                         break;
                     }
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"ScoreManager: Could not update UIManager: {e.Message}");
+                    Debug.LogWarning($"ScoreManager: Nevarēja atjaunināt UIManager: {e.Message}");
                 }
             }
         }
 
-        // PRIORITY: Update TextMeshPro texts first (preferred)
+        //  Vispirms atjaunināt TextMeshPro tekstus (ieteicams)
         var tmpTexts = FindObjectsByType<TMPro.TextMeshProUGUI>(FindObjectsSortMode.None);
         bool redScoreUpdated = false;
         bool blueScoreUpdated = false;
@@ -114,29 +114,29 @@ public class ScoreManager : NetworkBehaviour
         {
             string textName = tmpText.name.ToLower();
             
-            // Update Red team TMP score text
+            // Atjauno Sarkanās komandas TMP rezultāta tekstu
             if (textName.Contains("red") && textName.Contains("score"))
             {
                 tmpText.text = redScore.ToString();
-                Debug.Log($"📱 ScoreManager: Updated RED TMP score text {tmpText.name} to {redScore}");
+                Debug.Log($"ScoreManager: Atjaunināts SARKANĀS komandas TMP rezultāta teksts {tmpText.name} uz {redScore}");
                 redScoreUpdated = true;
             }
-            // Update Blue team TMP score text
+            // Atjauno Zilās komandas rezultāta tekstu (tikai ja TMP nav atrasts)
             else if (textName.Contains("blue") && textName.Contains("score"))
             {
                 tmpText.text = blueScore.ToString();
-                Debug.Log($"📱 ScoreManager: Updated BLUE TMP score text {tmpText.name} to {blueScore}");
+                Debug.Log($"ScoreManager: Atjaunināts ZILĀS komandas TMP rezultāta teksts {tmpText.name} uz {blueScore}");
                 blueScoreUpdated = true;
             }
-            // Fallback: combined TMP score text
+            // Rezerves variants: apvienotais rezultāta teksts
             else if (textName.Contains("score") && !textName.Contains("red") && !textName.Contains("blue"))
             {
                 tmpText.text = $"Red {redScore} - Blue {blueScore}";
-                Debug.Log($"📱 ScoreManager: Updated combined TMP score text {tmpText.name}");
+                Debug.Log($"ScoreManager: Atjaunināts apvienotais TMP rezultāta teksts {tmpText.name}");
             }
         }
 
-        // FALLBACK: Only use regular UI Text if TMP texts not found
+        //  Izmantot parasto UI Text tikai ja TMP teksti nav atrasti
         if (!redScoreUpdated || !blueScoreUpdated)
         {
             var scoreTexts = FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None);
@@ -145,40 +145,40 @@ public class ScoreManager : NetworkBehaviour
             {
                 string textName = scoreText.name.ToLower();
                 
-                // Update Red team score text (only if TMP not found)
+                // Atjaunināt Sarkanās komandas rezultāta tekstu (tikai ja TMP nav atrasts)
                 if (!redScoreUpdated && textName.Contains("red") && textName.Contains("score"))
                 {
                     scoreText.text = redScore.ToString();
-                    Debug.Log($"📱 ScoreManager: Updated RED UI Text score {scoreText.name} to {redScore} (fallback)");
+                    Debug.Log($"ScoreManager: Atjaunināts SARKANĀS komandas UI Text rezultāts {scoreText.name} uz {redScore} (rezerves variants)");
                     redScoreUpdated = true;
                 }
-                // Update Blue team score text (only if TMP not found)
+                // Atjaunināt Zilās komandas rezultāta tekstu (tikai ja TMP nav atrasts)
                 else if (!blueScoreUpdated && textName.Contains("blue") && textName.Contains("score"))
                 {
                     scoreText.text = blueScore.ToString();
-                    Debug.Log($"📱 ScoreManager: Updated BLUE UI Text score {scoreText.name} to {blueScore} (fallback)");
+                    Debug.Log($"ScoreManager: Atjaunināts ZILĀS komandas UI Text rezultāts {scoreText.name} uz {blueScore} (rezerves variants)");
                     blueScoreUpdated = true;
                 }
-                // Fallback: combined score text
+                // Rezerves variants: apvienotais rezultāta teksts
                 else if (textName.Contains("score") && !textName.Contains("red") && !textName.Contains("blue"))
                 {
                     scoreText.text = $"Red {redScore} - Blue {blueScore}";
-                    Debug.Log($"📱 ScoreManager: Updated combined UI Text score {scoreText.name} (fallback)");
+                    Debug.Log($"ScoreManager: Atjaunināts apvienotais UI Text rezultāts {scoreText.name} (rezerves variants)");
                 }
             }
         }
         
-        // ADDED: Log if team scores were successfully updated
+        //  Žurnalēt, ja komandas rezultāti veiksmīgi atjaunināti
         if (redScoreUpdated && blueScoreUpdated)
         {
-            Debug.Log($"✅ ScoreManager: Successfully updated both RED and BLUE team score displays");
+            Debug.Log($"ScoreManager: Veiksmīgi atjaunināti gan SARKANĀS, gan ZILĀS komandas rezultātu rādījumi");
         }
         else
         {
             if (!redScoreUpdated)
-                Debug.LogWarning($"⚠️ ScoreManager: RED team score text not found (looking for 'red' + 'score' in name)");
+                Debug.LogWarning($"ScoreManager: SARKANĀS komandas rezultāta teksts nav atrasts (meklē 'red' + 'score' nosaukumā)");
             if (!blueScoreUpdated)
-                Debug.LogWarning($"⚠️ ScoreManager: BLUE team score text not found (looking for 'blue' + 'score' in name)");
+                Debug.LogWarning($"ScoreManager: ZILĀS komandas rezultāta teksts nav atrasts (meklē 'blue' + 'score' nosaukumā)");
         }
     }
 
@@ -187,24 +187,24 @@ public class ScoreManager : NetworkBehaviour
     {
         if (IsServer)
         {
-            Debug.Log($"🎯 GOAL ATTEMPT: {teamName} team trying to score!");
+            Debug.Log($"VĀRTU MĒĢINĀJUMS: {teamName} komanda mēģina gūt vārtus!");
             
             if (teamName.ToLower() == "red")
             {
                 int oldScore = redScore.Value;
                 redScore.Value++;
-                Debug.Log($"🔴 RED TEAM GOAL! Score changed from {oldScore} to {redScore.Value}");
+                Debug.Log($"SARKANĀS KOMANDAS VĀRTI! Rezultāts mainījies no {oldScore} uz {redScore.Value}");
             }
             else if (teamName.ToLower() == "blue")
             {
                 int oldScore = blueScore.Value;
                 blueScore.Value++;
-                Debug.Log($"🔵 BLUE TEAM GOAL! Score changed from {oldScore} to {blueScore.Value}");
+                Debug.Log($"ZILĀS KOMANDAS VĀRTI! Rezultāts mainījies no {oldScore} uz {blueScore.Value}");
             }
             
-            Debug.Log($"🏒 FINAL SCORE UPDATE: Red {redScore.Value} - Blue {blueScore.Value}");
+            Debug.Log($"GALĪGAIS REZULTĀS: Sarkanā {redScore.Value} - Zilā {blueScore.Value}");
             
-            // FIXED: Force immediate score display update on server
+            // LABOTS: Piespiest tūlītēju rezultāta attēlojuma atjaunināšanu serverī
             UpdateScoreDisplayImmediate(redScore.Value, blueScore.Value);
         }
     }
@@ -261,12 +261,12 @@ public class ScoreManager : NetworkBehaviour
         return blueScore.Value;
     }
 
-    // FIXED: Add overload that accepts team name and score (for compatibility)
+    // : Pievienots pārslodzes variants, kas pieņem komandas nosaukumu un rezultātu (saderībai)
     public void UpdateScoreDisplay(string teamName, int score)
     {
-        Debug.Log($"ScoreManager: UpdateScoreDisplay called for {teamName} with score {score}");
+        Debug.Log($"ScoreManager: UpdateScoreDisplay izsaukts komandai {teamName} ar rezultātu {score}");
         
-        // Update the appropriate team score
+        // Atjaunināt atbilstošās komandas rezultātu
         if (IsServer)
         {
             if (teamName.ToLower() == "red")
@@ -279,7 +279,7 @@ public class ScoreManager : NetworkBehaviour
             }
         }
         
-        // Trigger UI update
+        // Izraisīt UI atjaunināšanu
         UpdateScoreDisplay();
     }
 
@@ -291,20 +291,20 @@ public class ScoreManager : NetworkBehaviour
 
     public void UpdateScoreDisplay()
     {
-        // Trigger score changed event to update UI
+        // Izraisīt rezultāta izmaiņas notikumu, lai atjauninātu UI
         OnScoreChanged?.Invoke(redScore.Value, blueScore.Value);
-        Debug.Log($"ScoreManager: Score display updated - Red {redScore.Value} - Blue {blueScore.Value}");
+        Debug.Log($"ScoreManager: Rezultāta rādījums atjaunināts - Sarkanā {redScore.Value} - Zilā {blueScore.Value}");
     }
 
-    // FIXED: Remove the conflicting UpdateScoreDisplay(int) method that's causing issues
-    // Keep only the specific named methods to avoid signature conflicts
+    // : Noņemta konfliktējošā UpdateScoreDisplay(int) metode, kas rada problēmas
+    // Saglabātas tikai konkrēti nosauktās metodes, lai izvairītos no parakstu konfliktiem
 
-    // FIXED: Remove duplicate UpdateScoreDisplay methods and replace with properly named methods
+    // : Noņemtas dublētās UpdateScoreDisplay metodes un aizstātas ar pareizi nosauktām metodēm
     public void UpdateScoreDisplayWithTeam(string teamName, int score)
     {
-        Debug.Log($"ScoreManager: UpdateScoreDisplayWithTeam called for {teamName} with score {score}");
+        Debug.Log($"ScoreManager: UpdateScoreDisplayWithTeam izsaukts komandai {teamName} ar rezultātu {score}");
         
-        // Update the appropriate team score
+        // Atjaunināt atbilstošās komandas rezultātu
         if (IsServer)
         {
             if (teamName.ToLower() == "red")
@@ -317,15 +317,15 @@ public class ScoreManager : NetworkBehaviour
             }
         }
         
-        // Trigger UI update
+        // Izraisīt UI atjaunināšanu
         UpdateScoreDisplay();
     }
 
-    // FIXED: Rename to avoid duplicate signature
+    // : Pārsaukts, lai izvairītos no dublētiem parakstiem
     public void UpdateScoreDisplayWithTotal(int totalScore)
     {
-        Debug.Log($"ScoreManager: UpdateScoreDisplayWithTotal called with total score {totalScore}");
-        // Just trigger the regular UI update
+        Debug.Log($"ScoreManager: UpdateScoreDisplayWithTotal izsaukts ar kopējo rezultātu {totalScore}");
+        // Vienkārši izraisīt parasto UI atjaunināšanu
         UpdateScoreDisplay();
     }
 
@@ -335,7 +335,7 @@ public class ScoreManager : NetworkBehaviour
         {
             redScore.Value = 0;
             blueScore.Value = 0;
-            Debug.Log("ScoreManager: Scores reset");
+            Debug.Log("ScoreManager: Rezultāti atiestatīti");
         }
     }
 }

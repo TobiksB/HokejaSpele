@@ -3,16 +3,13 @@ using UnityEngine;
 namespace HockeyGame.Game
 {
     public class TrainingPlayerMovement : MonoBehaviour
-    {
-        [Header("Movement Settings")]
-        public float moveSpeed = 8f; // Match online mode speed
-        public float rotationSpeed = 200f; // Match online mode rotation
-        [SerializeField] private float sprintSpeed = 12f; // Match online mode sprint
-        [SerializeField] private float iceFriction = 0.95f; // Less slippery for training
-        [SerializeField] private float acceleration = 8f; // Increased for quicker response
-        [SerializeField] private float deceleration = 8f; // Increased for less sliding
-
-        // Add these properties for initialization positions in TrainingModeManager
+    {        [Header("Movement Settings")]
+        public float moveSpeed = 8f; // Atbilst tiešsaistes režīma ātrumam
+        public float rotationSpeed = 200f; // Atbilst tiešsaistes režīma rotācijai
+        [SerializeField] private float sprintSpeed = 12f; // Atbilst tiešsaistes režīma sprintam
+        [SerializeField] private float iceFriction = 0.95f; // Mazāk slidens treniņam
+        [SerializeField] private float acceleration = 8f; // Palielināts ātrākai atsaucībai
+        [SerializeField] private float deceleration = 8f; // Palielināts mazākai slīdēšanai        // Pievieno šīs īpašības inicializācijas pozīcijām TrainingModeManager
         public Vector3 initialPosition { get; set; }
         public Quaternion initialRotation { get; set; }
 
@@ -23,9 +20,7 @@ namespace HockeyGame.Game
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
-            animator = GetComponent<Animator>();
-
-            // Set up physics for ice hockey - MATCH ONLINE MODE EXACTLY
+            animator = GetComponent<Animator>();            // Iestata fiziku hokejam - PRECĪZI ATBILST TIEŠSAISTES REŽĪMAM
             if (rb != null)
             {
                 rb.useGravity = false;
@@ -35,8 +30,7 @@ namespace HockeyGame.Game
                 rb.angularDamping = 5f; // Match online player angular drag
                 rb.interpolation = RigidbodyInterpolation.Interpolate;
                 rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-                
-                // Force position
+                  // Uzspiež pozīciju
                 Vector3 pos = transform.position;
                 pos.y = 0.71f;
                 transform.position = pos;
@@ -49,19 +43,16 @@ namespace HockeyGame.Game
         }
 
         private void HandleMovementInput()
-        {
-            float horizontal = Input.GetAxis("Horizontal"); // A/D for rotation
-            float vertical = Input.GetAxis("Vertical");     // W/S for movement
+        {            float horizontal = Input.GetAxis("Horizontal"); // A/D rotācijai
+            float vertical = Input.GetAxis("Vertical");     // W/S kustībai
             bool sprint = Input.GetKey(KeyCode.LeftShift);
-            bool quickStop = Input.GetKey(KeyCode.Space);   // Space for quick stopping
+            bool quickStop = Input.GetKey(KeyCode.Space);   // Atstarpe ātrai apturēšanai
 
-            currentSprintState = sprint;
-
-            // Store current velocity before any changes
+            currentSprintState = sprint;            // Saglabā pašreizējo ātrumu pirms jebkādām izmaiņām
             Vector3 currentVel = rb != null ? rb.linearVelocity : Vector3.zero;
             float currentHorizontalSpeed = new Vector3(currentVel.x, 0f, currentVel.z).magnitude;
             
-            // EXACTLY MATCH ONLINE PHYSICS: Rotation handling
+            // PRECĪZI ATBILST TIEŠSAISTES FIZIKAI: Rotācijas apstrāde
             if (Mathf.Abs(horizontal) > 0.01f)
             {
                 float rotationAmount = horizontal * rotationSpeed * Time.deltaTime;
@@ -74,18 +65,16 @@ namespace HockeyGame.Game
             }
 
             if (rb != null)
-            {
-                // PRIORITY 1: Quick stop - EXACTLY MATCH ONLINE MODE
+            {                // PRIORITĀTE 1: Ātrā apstāšanās - PRECĪZI ATBILST TIEŠSAISTES REŽĪMAM
                 if (quickStop)
                 {
-                    // ICE PHYSICS: More gradual stopping (still quick but feels more icy)
+                    // LEDUS FIZIKA: Pakāpeniskāka apstāšanās (joprojām ātra, bet sajūta vairāk ledaina)
                     Vector3 stoppedVel = currentVel * 0.7f;
                     rb.linearVelocity = new Vector3(stoppedVel.x, currentVel.y, stoppedVel.z);
                 }
-                // PRIORITY 2: Movement input - EXACTLY MATCH ONLINE MODE
+                // PRIORITĀTE 2: Kustības ievade - PRECĪZI ATBILST TIEŠSAISTES REŽĪMAM
                 else if (Mathf.Abs(vertical) > 0.1f)
-                {
-                    // ICE PHYSICS: Gradual acceleration instead of instant velocity
+                {                    // LEDUS FIZIKA: Pakāpeniska paātrināšanās, nevis tūlītējs ātrums
                     float targetSpeed = sprint ? sprintSpeed : moveSpeed;
                     Vector3 targetDirection = transform.forward * vertical;
                     Vector3 targetVelocity = targetDirection * targetSpeed;
@@ -93,27 +82,25 @@ namespace HockeyGame.Game
                     Vector3 currentHorizontalVel = new Vector3(currentVel.x, 0f, currentVel.z);
                     Vector3 velocityDiff = targetVelocity - currentHorizontalVel;
                     
-                    // Apply acceleration force - EXACTLY MATCH ONLINE MODE
+                    // Piemēro paātrināšanās spēku - PRECĪZI ATBILST TIEŠSAISTES REŽĪMAM
                     float accelForce = acceleration * Time.deltaTime;
                     Vector3 newVelocity;
                     
                     if (velocityDiff.magnitude > accelForce)
-                    {
-                        // Gradual acceleration
+                    {                        // Pakāpeniska paātrināšanās
                         newVelocity = currentHorizontalVel + velocityDiff.normalized * accelForce;
                     }
                     else
                     {
-                        // Close enough to target
+                        // Pietiekami tuvu mērķim
                         newVelocity = targetVelocity;
                     }
                     
                     rb.linearVelocity = new Vector3(newVelocity.x, currentVel.y, newVelocity.z);
-                }
-                // PRIORITY 3: Ice friction/sliding - EXACTLY MATCH ONLINE MODE
+                }                // PRIORITĀTE 3: Ledus berze/slīdēšana - PRECĪZI ATBILST TIEŠSAISTES REŽĪMAM
                 else if (currentHorizontalSpeed > 0.1f)
                 {
-                    // ICE PHYSICS: Apply gradual deceleration when no input
+                    // LEDUS FIZIKA: Piemēro pakāpenisku palēnināšanos, kad nav ievades
                     Vector3 horizontalVel = new Vector3(currentVel.x, 0f, currentVel.z);
                     float decelAmount = deceleration * Time.deltaTime;
                     
@@ -123,8 +110,7 @@ namespace HockeyGame.Game
                         rb.linearVelocity = new Vector3(decelVel.x, currentVel.y, decelVel.z);
                     }
                     else
-                    {
-                        // Almost stopped
+                    {                        // Gandrīz apstājies
                         rb.linearVelocity = new Vector3(0f, currentVel.y, 0f);
                     }
                 }
@@ -140,8 +126,7 @@ namespace HockeyGame.Game
         }
 
         private void FixedUpdate()
-        {
-            // Keep player at correct Y position - EXACTLY MATCH ONLINE MODE
+        {            // Saglabā spēlētāju pareizajā Y pozīcijā - PRECĪZI ATBILST TIEŠSAISTES REŽĪMAM
             Vector3 pos = transform.position;
             if (Mathf.Abs(pos.y - 0.71f) > 0.01f)
             {
@@ -153,16 +138,14 @@ namespace HockeyGame.Game
                     Vector3 vel = rb.linearVelocity;
                     rb.linearVelocity = new Vector3(vel.x, 0f, vel.z);
                 }
-            }
-
-            // Cap velocity for better control - EXACTLY MATCH ONLINE MODE
+            }            // Ierobežo ātrumu labākai kontrolei - PRECĪZI ATBILST TIEŠSAISTES REŽĪMAM
             if (rb != null)
             {
                 Vector3 vel = rb.linearVelocity;
                 float maxSpeed = currentSprintState ? sprintSpeed : moveSpeed;
                 float horizontalSpeed = new Vector3(vel.x, 0f, vel.z).magnitude;
                 
-                // Allow some overshoot for ice physics but cap at reasonable limit
+                // Atļauj nelielu pārsniegšanu ledus fizikai, bet ierobežo līdz saprātīgam limitam
                 float maxAllowed = maxSpeed * 1.3f; // Same max allowed as in online mode
                 
                 if (horizontalSpeed > maxAllowed)
@@ -172,9 +155,7 @@ namespace HockeyGame.Game
                     rb.linearVelocity = new Vector3(horizontalVel.x, vel.y, horizontalVel.z);
                 }
             }
-        }
-
-        // Method to trigger shooting animation
+        }        // Metode šaušanas animācijas aktivizēšanai
         public void TriggerShootAnimation()
         {
             if (animator != null)
@@ -182,7 +163,7 @@ namespace HockeyGame.Game
                 animator.SetBool("IsShooting", true);
                 animator.SetTrigger("Shoot");
                 
-                // Reset the animation after a delay
+                // Atiestata animāciju pēc aizkaves
                 StartCoroutine(ResetShootAnimation());
             }
         }

@@ -9,14 +9,14 @@ public class MenuManager : MonoBehaviour
 {
     public static MenuManager Instance { get; private set; }
 
-    [Header("Panels")]
+    [Header("Paneļi")]
     [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject gamemodePanel;
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private GameObject createOrJoinPanel;
 
-    [Header("Buttons")]
+    [Header("Pogas")]
     [SerializeField] private Button playButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button exitButton;
@@ -28,11 +28,11 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private Button mode2v2Button;
     [SerializeField] private Button mode4v4Button;
 
-    [Header("Join Lobby UI")]
+    [Header("Pievienošanās Lobijam UI")]
     [SerializeField] private TMP_InputField joinLobbyCodeInput;
     [SerializeField] private Button joinLobbyConfirmButton;
 
-    [Header("Debug")]
+    [Header("Atkļūdošana")]
     [SerializeField] private Button debugConsoleButton;
     [SerializeField] private DebugConsole debugConsole;
     [SerializeField] private BuildLogger buildLogger;
@@ -43,11 +43,11 @@ public class MenuManager : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton pattern
+        // Singletona šablons
         if (Instance == null)
         {
             Instance = this;
-            // DontDestroyOnLoad(gameObject); // REMOVE THIS LINE
+            // DontDestroyOnLoad(gameObject); // NOŅEMT ŠO RINDU
         }
         else if (Instance != this)
         {
@@ -58,31 +58,31 @@ public class MenuManager : MonoBehaviour
 
     private void Start()
     {
-        // CRITICAL: Verify we're in MainMenu scene and destroy any cameras
+        // Pārbaudiet, vai esam MainMenu ainā, un iznīciniet visas kameras
         string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         if (currentScene != "MainMenu")
         {
-            Debug.LogWarning($"MenuManager: Not in MainMenu scene ({currentScene}), destroying");
+            Debug.LogWarning($"MenuManager: Nav MainMenu ainā ({currentScene}), iznīcinām");
             Destroy(gameObject);
             return;
         }
         
-        // CRITICAL: Disable any game-related cameras that shouldn't be in MainMenu
+        //  Atspējojiet visas ar spēli saistītās kameras, kurām nevajadzētu būt MainMenu
         Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
         foreach (var cam in allCameras)
         {
             if (cam.name.Contains("Player") || cam.name.Contains("Game") || cam.name.Contains("Local"))
             {
-                Debug.LogError($"DESTROYING game camera {cam.name} found in MainMenu scene!");
+                Debug.LogError($"IZNĪCINĀM spēles kameru {cam.name}, kas atrasta MainMenu ainā!");
                 Destroy(cam.gameObject);
             }
         }
         
-        // Initialize file logger first for debugging
-        FileLogger.LogToFile("=== HOCKEY GAME STARTED IN MAINMENU ===");
-        FileLogger.LogToFile("MenuManager: Initializing game");
+        // Vispirms inicializējiet faila reģistrētāju atkļūdošanai
+        FileLogger.LogToFile("=== HOKEJA SPĒLE SĀKTA GALVENAJĀ IZVĒLNĒ ===");
+        FileLogger.LogToFile("MenuManager: Inicializē spēli");
         
-        // Set up initial panels and ensure they exist in scene
+        // Iestatiet sākotnējos paneļus un pārliecinieties, ka tie eksistē ainā
         foreach (var panel in new[] { mainMenuPanel, gamemodePanel, settingsPanel, lobbyPanel, createOrJoinPanel })
         {
             if (panel != null)
@@ -93,17 +93,17 @@ public class MenuManager : MonoBehaviour
 
         SetupButtonListeners();
 
-        // Add debug console setup
+        // Pievienojiet atkļūdošanas konsoles iestatīšanu
         if (debugConsoleButton) debugConsoleButton.onClick.AddListener(ToggleDebugConsole);
         
-        // Show debug button in builds, hide in editor
+        // Parādiet atkļūdošanas pogu būvējumos, slēpiet redaktorā
         #if !UNITY_EDITOR
         if (debugConsoleButton) debugConsoleButton.gameObject.SetActive(true);
         #else
         if (debugConsoleButton) debugConsoleButton.gameObject.SetActive(false);
         #endif
 
-        // Initialize logger in builds
+        // Inicializējiet reģistrētāju būvējumos
         #if !UNITY_EDITOR
         if (buildLogger == null)
         {
@@ -115,12 +115,12 @@ public class MenuManager : MonoBehaviour
 
         ShowPanel(mainMenuPanel);
         
-        FileLogger.LogToFile("MenuManager: Initialization complete");
+        FileLogger.LogToFile("MenuManager: Inicializācija pabeigta");
     }
 
     private void SetupButtonListeners()
     {
-        // Remove all listeners before adding to prevent stacking/clicking
+        // Noņemiet visus klausītājus pirms pievienošanas, lai novērstu uzkrāšanos/klikšķināšanu
         if (playButton != null)
         {
             playButton.onClick.RemoveAllListeners();
@@ -191,23 +191,23 @@ public class MenuManager : MonoBehaviour
 
         panel.SetActive(true);
         currentActivePanel = panel;
-        Debug.Log($"Showing panel: {panel.name}, Active: {panel.activeInHierarchy}");
+        Debug.Log($"Rāda paneli: {panel.name}, Aktīvs: {panel.activeInHierarchy}");
 
-        // If this is the lobby panel, ensure it's properly initialized
+        // Ja šis ir lobija panelis, pārliecinieties, ka tas ir pareizi inicializēts
         if (panel == lobbyPanel)
         {
-            // Use only the UI.LobbyPanelManager
+            // Izmantojiet tikai UI.LobbyPanelManager
             var lobbyPanelManagerUI = panel.GetComponent<HockeyGame.UI.LobbyPanelManager>();
             
             if (lobbyPanelManagerUI != null)
             {
-                Debug.Log("Found UI.LobbyPanelManager, initializing...");
+                Debug.Log("Atrasts UI.LobbyPanelManager, inicializē...");
                 lobbyPanelManagerUI.ForceInitialize();
             }
             else
             {
-                Debug.LogError("No UI.LobbyPanelManager component found on lobby panel!");
-                Debug.LogError("Please add the HockeyGame.UI.LobbyPanelManager component to your lobby panel GameObject");
+                Debug.LogError("Uz lobija paneļa nav atrasts UI.LobbyPanelManager komponents!");
+                Debug.LogError("Lūdzu, pievienojiet HockeyGame.UI.LobbyPanelManager komponentu savam lobija paneļa GameObject");
             }
         }
     }
@@ -239,7 +239,7 @@ public class MenuManager : MonoBehaviour
     private void SelectGameMode(GameMode mode)
     {
         selectedGameMode = mode;
-        Debug.Log($"Selected game mode: {mode}");
+        Debug.Log($"Izvēlēts spēles režīms: {mode}");
 
         if (mode == GameMode.Training)
         {
@@ -257,7 +257,7 @@ public class MenuManager : MonoBehaviour
 
     private void StartTrainingMode()
     {
-        Debug.Log("Loading TrainingMode scene directly");
+        Debug.Log("Ielādē TrainingMode ainu tieši");
         UnityEngine.SceneManagement.SceneManager.LoadScene("TrainingMode");
     }
 
@@ -265,48 +265,48 @@ public class MenuManager : MonoBehaviour
     {
         try
         {
-            FileLogger.LogToFile("=== CREATING 2v2 LOBBY ===");
-            Debug.Log("Starting 2v2 lobby creation process...");
+            FileLogger.LogToFile("=== VEIDO 2v2 LOBIJU ===");
+            Debug.Log("Sāk 2v2 lobija izveides procesu...");
             
-            // First wait for services initialization
+            // Vispirms gaidiet servisu inicializāciju
             if (!Unity.Services.Core.UnityServices.State.Equals(Unity.Services.Core.ServicesInitializationState.Initialized))
             {
-                FileLogger.LogToFile("Initializing Unity Services...");
-                Debug.Log("Initializing Unity Services...");
+                FileLogger.LogToFile("Inicializē Unity Services...");
+                Debug.Log("Inicializē Unity Services...");
                 await Unity.Services.Core.UnityServices.InitializeAsync();
             }
 
-            // Wait for authentication
+            // Gaidiet autentifikāciju
             if (!Unity.Services.Authentication.AuthenticationService.Instance.IsSignedIn)
             {
-                FileLogger.LogToFile("Signing in anonymously...");
-                Debug.Log("Signing in anonymously...");
+                FileLogger.LogToFile("Piesakās anonīmi...");
+                Debug.Log("Piesakās anonīmi...");
                 await Unity.Services.Authentication.AuthenticationService.Instance.SignInAnonymouslyAsync();
             }
 
-            // CRITICAL: Show panel FIRST and ensure it's fully initialized
-            FileLogger.LogToFile("Showing lobby panel...");
+            //  Parādiet paneli VISPIRMS un pārliecinieties, ka tas ir pilnībā inicializēts
+            FileLogger.LogToFile("Rāda lobija paneli...");
             ShowPanel(lobbyPanel);
-            await Task.Delay(200); // Longer wait for panel activation
+            await Task.Delay(200); // Ilgāka gaidīšana paneļa aktivizēšanai
 
-            // Use only the UI.LobbyPanelManager
+            // Izmantojiet tikai UI.LobbyPanelManager
             var lobbyPanelManagerUI = lobbyPanel.GetComponent<HockeyGame.UI.LobbyPanelManager>();
 
             if (lobbyPanelManagerUI != null)
             {
-                Debug.Log("Using UI.LobbyPanelManager for 2v2 lobby");
+                Debug.Log("Izmanto UI.LobbyPanelManager 2v2 lobijam");
                 lobbyPanelManagerUI.ForceInitialize();
-                await Task.Delay(200); // Wait for full initialization
+                await Task.Delay(200); // Gaidiet pilnīgu inicializāciju
 
-                // CRITICAL: Now create the lobby AFTER UI is ready
-                Debug.Log("UI ready, now creating lobby...");
+                // Tagad izveidot lobiju PĒC tam, kad UI ir gatavs
+                Debug.Log("UI gatavs, tagad veido lobiju...");
                 
                 string lobbyCode = null;
                 int retryCount = 0;
                 while (string.IsNullOrEmpty(lobbyCode) && retryCount < 3)
                 {
-                    int maxPlayers = 4; // Always 4 for 2v2
-                    Debug.Log($"Creating 2v2 lobby attempt {retryCount + 1} for {maxPlayers} players...");
+                    int maxPlayers = 4; // Vienmēr 4 priekš 2v2
+                    Debug.Log($"Veido 2v2 lobiju mēģinājums {retryCount + 1} priekš {maxPlayers} spēlētājiem...");
                     lobbyCode = await LobbyManager.Instance.CreateLobby(maxPlayers);
                     retryCount++;
                     if (string.IsNullOrEmpty(lobbyCode))
@@ -318,9 +318,9 @@ public class MenuManager : MonoBehaviour
                 if (!string.IsNullOrEmpty(lobbyCode))
                 {
                     lobbyPanelManagerUI.SetLobbyCode(lobbyCode);
-                    Debug.Log($"Successfully created 2v2 lobby with code: {lobbyCode}");
+                    Debug.Log($"Veiksmīgi izveidots 2v2 lobijs ar kodu: {lobbyCode}");
                     
-                    // FINAL: Force one more UI update after everything is set up
+                    //  Piespiediet vēl vienu UI atjaunināšanu pēc tam, kad viss ir iestatīts
                     await Task.Delay(100);
                     if (LobbyManager.Instance != null)
                     {
@@ -329,19 +329,19 @@ public class MenuManager : MonoBehaviour
                 }
                 else
                 {
-                    throw new System.Exception("Failed to create 2v2 lobby after multiple attempts");
+                    throw new System.Exception("Neizdevās izveidot 2v2 lobiju pēc vairākiem mēģinājumiem");
                 }
             }
             else
             {
-                throw new System.Exception("UI.LobbyPanelManager component not found! Please add it to your lobby panel.");
+                throw new System.Exception("UI.LobbyPanelManager komponents nav atrasts! Lūdzu, pievienojiet to savam lobija panelim.");
             }
         }
         catch (System.Exception e)
         {
-            FileLogger.LogError($"Error in OpenCreateLobby: {e.Message}");
-            FileLogger.LogError($"Stack trace: {e.StackTrace}");
-            Debug.LogError($"Error in OpenCreateLobby for 2v2: {e.Message}");
+            FileLogger.LogError($"Kļūda OpenCreateLobby: {e.Message}");
+            FileLogger.LogError($"Steka izsekošana: {e.StackTrace}");
+            Debug.LogError($"Kļūda OpenCreateLobby priekš 2v2: {e.Message}");
             ShowPanel(mainMenuPanel);
         }
     }
@@ -355,7 +355,7 @@ public class MenuManager : MonoBehaviour
     {
         if (LobbyManager.Instance == null || string.IsNullOrWhiteSpace(joinLobbyCodeInput.text))
         {
-            Debug.LogError("CLIENT: LobbyManager.Instance is null or joinLobbyCodeInput is empty.");
+            Debug.LogError("KLIENTS: LobbyManager.Instance ir null vai joinLobbyCodeInput ir tukšs.");
             return;
         }
 
@@ -363,60 +363,60 @@ public class MenuManager : MonoBehaviour
         
         try
         {
-            Debug.Log($"CLIENT: ============ STARTING LOBBY JOIN PROCESS ============");
+            Debug.Log($"KLIENTS: ============ SĀKAS LOBIJA PIEVIENOŠANĀS PROCESS ============");
             
-            // DISABLE the join button to prevent multiple clicks
+            //  pievienošanās pogu, lai novērstu vairākus klikšķus
             if (joinLobbyConfirmButton) joinLobbyConfirmButton.interactable = false;
             
-            // CRITICAL: First verify lobby panel exists
+            // : Vispirms pārbaudiet, vai lobija panelis eksistē
             if (lobbyPanel == null)
             {
-                Debug.LogError("CLIENT: ✗ LOBBY PANEL REFERENCE IS NULL!");
-                Debug.LogError("CLIENT: Check MenuManager inspector - lobbyPanel field must be assigned!");
+                Debug.LogError("KLIENTS: ✗ LOBIJA PANEĻA ATSAUCE IR NULL!");
+                Debug.LogError("KLIENTS: Pārbaudiet MenuManager inspektoru - lobbyPanel laukam jābūt piešķirtam!");
                 if (joinLobbyConfirmButton) joinLobbyConfirmButton.interactable = true;
                 return;
             }
 
-            // Step 1: Join the lobby backend (but don't let relay failure stop us)
-            Debug.Log("CLIENT: Step 1 - Joining lobby backend...");
+            // 1. solis: Pievienojieties lobija aizmugurējam API (bet neļaujiet releja kļūmēm mūs apstādināt)
+            Debug.Log("KLIENTS: 1. solis - Pievienojas lobija aizmugurējam API...");
             try
             {
                 await LobbyManager.Instance.JoinLobby(lobbyCode);
-                Debug.Log("CLIENT: ✓ Successfully joined lobby backend");
+                Debug.Log("KLIENTS: ✓ Veiksmīgi pievienojies lobija aizmugurējam API");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"CLIENT: ⚠ Lobby join had issues but continuing: {e.Message}");
-                // Continue anyway - the lobby join might have partially succeeded
+                Debug.LogError($"KLIENTS: ⚠ Lobija pievienošanās bija problēmas, bet turpinām: {e.Message}");
+                // Turpiniet jebkurā gadījumā - lobija pievienošanās varētu būt daļēji izdevusies
             }
             
-            // Step 2: IMMEDIATELY show lobby panel regardless of relay status
-            Debug.Log("CLIENT: Step 2 - IMMEDIATE lobby panel transition...");
-            Debug.Log($"CLIENT: Before transition - Current: {(currentActivePanel ? currentActivePanel.name : "null")}, Target: {lobbyPanel.name}");
+            // 2. solis: nekavējoties parādiet lobija paneli neatkarīgi no releja statusa
+            Debug.Log("KLIENTS: 2. solis - NEKAVĒJOŠA lobija paneļa pāreja...");
+            Debug.Log($"KLIENTS: Pirms pārejas - Pašreizējais: {(currentActivePanel ? currentActivePanel.name : "null")}, Mērķis: {lobbyPanel.name}");
             
-            // Force deactivate current panel
+            // Piespiedu deaktivizējiet pašreizējo paneli
             if (currentActivePanel != null && currentActivePanel != lobbyPanel)
             {
-                Debug.Log($"CLIENT: Deactivating: {currentActivePanel.name}");
+                Debug.Log($"KLIENTS: Deaktivizē: {currentActivePanel.name}");
                 currentActivePanel.SetActive(false);
             }
             
-            // Force activate lobby panel
-            Debug.Log($"CLIENT: Activating: {lobbyPanel.name}");
+            // Piespiedu aktivizējiet lobija paneli
+            Debug.Log($"KLIENTS: Aktivizē: {lobbyPanel.name}");
             lobbyPanel.SetActive(true);
             currentActivePanel = lobbyPanel;
             
-            // CRITICAL: Force immediate Canvas update
+            //  Piespiedu tūlītēja Canvas atjaunināšana
             Canvas.ForceUpdateCanvases();
             
-            // Verify transition worked
-            Debug.Log($"CLIENT: After transition - Current: {(currentActivePanel ? currentActivePanel.name : "null")}, Active: {lobbyPanel.activeInHierarchy}");
+            // Pārbaudiet, vai pāreja strādāja
+            Debug.Log($"KLIENTS: Pēc pārejas - Pašreizējais: {(currentActivePanel ? currentActivePanel.name : "null")}, Aktīvs: {lobbyPanel.activeInHierarchy}");
             
             if (!lobbyPanel.activeInHierarchy)
             {
-                Debug.LogError("CLIENT: ✗ PANEL TRANSITION FAILED! Trying fallback...");
+                Debug.LogError("KLIENTS: ✗ PANEĻA PĀREJA NEIZDEVĀS! Mēģinu rezerves variantu...");
                 
-                // Fallback: Brute force all panels
+                // Rezerves variants: Rupji piespiediet visus paneļus
                 foreach (var panel in new[] { mainMenuPanel, gamemodePanel, settingsPanel, createOrJoinPanel })
                 {
                     if (panel != null) panel.SetActive(false);
@@ -425,81 +425,81 @@ public class MenuManager : MonoBehaviour
                 currentActivePanel = lobbyPanel;
                 Canvas.ForceUpdateCanvases();
                 
-                Debug.Log($"CLIENT: Fallback result - Active: {lobbyPanel.activeInHierarchy}");
+                Debug.Log($"KLIENTS: Rezerves varianta rezultāts - Aktīvs: {lobbyPanel.activeInHierarchy}");
             }
             
-            // Step 3: Initialize managers while panel is showing
-            await Task.Delay(100); // Brief pause for activation
+            // 3. solis: Inicializējiet pārvaldniekus, kamēr panelis tiek rādīts
+            await Task.Delay(100); // Īsa pauze aktivizācijai
             
-            Debug.Log("CLIENT: Step 3 - Initializing managers...");
+            Debug.Log("KLIENTS: 3. solis - Inicializē pārvaldniekus...");
             var lobbyPanelManagerUI = lobbyPanel.GetComponent<HockeyGame.UI.LobbyPanelManager>();
             
-            Debug.Log($"CLIENT: Found UI manager: {lobbyPanelManagerUI != null}");
+            Debug.Log($"KLIENTS: Atrasts UI pārvaldnieks: {lobbyPanelManagerUI != null}");
             
             bool managerInitialized = false;
             
             if (lobbyPanelManagerUI != null)
             {
-                Debug.Log("CLIENT: ✓ Initializing UI.LobbyPanelManager");
+                Debug.Log("KLIENTS: ✓ Inicializē UI.LobbyPanelManager");
                 try
                 {
                     lobbyPanelManagerUI.ForceInitialize();
                     await Task.Delay(50);
                     lobbyPanelManagerUI.SetLobbyCode(lobbyCode);
                     managerInitialized = true;
-                    Debug.Log("CLIENT: ✓ UI manager initialized successfully");
+                    Debug.Log("KLIENTS: ✓ UI pārvaldnieks inicializēts veiksmīgi");
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"CLIENT: ✗ UI manager initialization failed: {e.Message}");
+                    Debug.LogError($"KLIENTS: ✗ UI pārvaldnieka inicializācija neizdevās: {e.Message}");
                 }
             }
             else
             {
-                Debug.LogError("CLIENT: ✗ No UI.LobbyPanelManager found!");
-                Debug.LogError("CLIENT: Please add HockeyGame.UI.LobbyPanelManager component to your lobby panel");
+                Debug.LogError("KLIENTS: ✗ Nav atrasts UI.LobbyPanelManager!");
+                Debug.LogError("KLIENTS: Lūdzu, pievienojiet HockeyGame.UI.LobbyPanelManager komponentu savam lobija panelim");
             }
             
-            // Step 4: Force multiple UI refreshs
+            // 4. solis: Piespiedu vairākkārtējas UI atsvaidzināšanas
             if (managerInitialized)
             {
-                Debug.Log("CLIENT: Step 4 - Multiple UI refresh attempts...");
+                Debug.Log("KLIENTS: 4. solis - Vairāki UI atsvaidzināšanas mēģinājumi...");
                 for (int i = 0; i < 3; i++)
                 {
                     LobbyManager.Instance.RefreshPlayerList();
                     await Task.Delay(100);
-                    Debug.Log($"CLIENT: UI refresh attempt {i + 1}/3");
+                    Debug.Log($"KLIENTS: UI atsvaidzināšanas mēģinājums {i + 1}/3");
                 }
                 
-                Debug.Log("CLIENT: ============ LOBBY JOIN COMPLETED SUCCESSFULLY ============");
+                Debug.Log("KLIENTS: ============ LOBIJA PIEVIENOŠANĀS PABEIGTA VEIKSMĪGI ============");
             }
             else
             {
-                Debug.LogError("CLIENT: ✗ No managers could be initialized!");
+                Debug.LogError("KLIENTS: ✗ Neviens pārvaldnieks nevarēja tikt inicializēts!");
                 
-                // List all components on lobby panel for debugging
+                // Uzskaitiet visus komponentus uz lobija paneļa atkļūdošanai
                 var components = lobbyPanel.GetComponents<Component>();
-                Debug.Log($"CLIENT: Components on lobby panel ({components.Length}):");
+                Debug.Log($"KLIENTS: Komponenti uz lobija paneļa ({components.Length}):");
                 foreach (var comp in components)
                 {
                     Debug.Log($"  - {comp.GetType().Name}");
                 }
             }
             
-            // Final verification
-            Debug.Log($"CLIENT: Final state - Panel: {lobbyPanel.name}, Active: {lobbyPanel.activeInHierarchy}, Current: {(currentActivePanel ? currentActivePanel.name : "null")}");
+            // Galīgā verifikācija
+            Debug.Log($"KLIENTS: Galīgais stāvoklis - Panelis: {lobbyPanel.name}, Aktīvs: {lobbyPanel.activeInHierarchy}, Pašreizējais: {(currentActivePanel ? currentActivePanel.name : "null")}");
             
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"CLIENT: ✗ Failed to join lobby: {e.Message}");
-            Debug.LogError($"CLIENT: Stack trace: {e.StackTrace}");
+            Debug.LogError($"KLIENTS: ✗ Neizdevās pievienoties lobijam: {e.Message}");
+            Debug.LogError($"KLIENTS: Steka izsekošana: {e.StackTrace}");
             
-            // Even on failure, try to show the lobby panel anyway
-            Debug.Log("CLIENT: Emergency fallback - forcing lobby panel show...");
+            // Pat neveiksmīgi, mēģiniet tomēr parādīt lobija paneli
+            Debug.Log("KLIENTS: Ārkārtas rezerves variants - piespriedu lobija paneļa rādīšana...");
             ShowPanel(lobbyPanel);
             
-            // Re-enable the button on failure
+            // Atkārtoti iespējojiet pogu neveiksmīgos gadījumos
             if (joinLobbyConfirmButton) joinLobbyConfirmButton.interactable = true;
         }
     }
@@ -512,7 +512,7 @@ public class MenuManager : MonoBehaviour
         }
         else
         {
-            // Create debug console if it doesn't exist
+            // Izveidojiet atkļūdošanas konsoli, ja tā neeksistē
             var consoleGO = new GameObject("DebugConsole");
             debugConsole = consoleGO.AddComponent<DebugConsole>();
             DontDestroyOnLoad(consoleGO);
@@ -520,33 +520,33 @@ public class MenuManager : MonoBehaviour
         }
     }
 
-    // Add a public method to force panel switch for debugging
+    // Pievienojiet publisku metodi, lai piespiedu kārtā pārslēgtu paneļus atkļūdošanai
     public void ForceShowLobbyPanel()
     {
-        Debug.Log("FORCED: Showing lobby panel");
+        Debug.Log("PIESPIEDU: Rāda lobija paneli");
         ShowPanel(lobbyPanel);
     }
 
     private void DisableAllPlayerCameras()
     {
-        // FIXED: Remove PlayerCamera references and use direct Camera component access
+        //  Noņemiet PlayerCamera atsauces un izmantojiet tiešu Camera komponentes piekļuvi
         var allCameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
         foreach (var camera in allCameras)
         {
-            // Only disable cameras that are not the main menu camera
+            // Atspējojiet tikai tās kameras, kas nav galvenās izvēlnes kamera
             if (camera.gameObject.name.Contains("Player") || 
                 camera.GetComponent<CameraFollow>() != null)
             {
                 camera.gameObject.SetActive(false);
-                Debug.Log($"MenuManager: Disabled player camera: {camera.gameObject.name}");
+                Debug.Log($"MenuManager: Atspējota spēlētāja kamera: {camera.gameObject.name}");
             }
         }
     }
 
-    // Call this when returning to main menu to clean up
+    // Izsauciet šo, kad atgriežaties galvenajā izvēlnē, lai veiktu tīrīšanu
     public void CleanupOnMainMenu()
     {
-        // Optionally reset static instance if you want to reload inspector values
+        // Pēc izvēles atiestatiet statisko gadījumu, ja vēlaties atkārtoti ielādēt inspektora vērtības
         Instance = null;
         Destroy(gameObject);
     }
